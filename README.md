@@ -17,9 +17,11 @@ npm install
 
 ## Use
 
-`st.echarts_chart` accepts a dictionary of objects in the `options` argument.
+`st.echarts_chart` accepts as arguments :
+* **options** as a dictionary of objects
+* **theme** as a prebuilt theme or object 
 
-Check `examples/app.py` for an example.
+Check `examples/` folder for examples.
 
 ## Run development setup
 

@@ -1,24 +1,33 @@
 import React from "react"
-import {ComponentProps, StreamlitComponent, withStreamlitConnection} from "./streamlit"
+import {
+  ComponentProps,
+  StreamlitComponent,
+  withStreamlitConnection,
+} from "./streamlit"
+import { isObject } from "lodash"
 
-import ReactEcharts from "echarts-for-react";
+import echarts from "echarts"
+import ReactEcharts from "echarts-for-react"
 
 class EchartsChart extends StreamlitComponent {
-    public constructor(props: ComponentProps) {
-        super(props);
-    }
+  private customThemeName = "custom_theme"
+  public constructor(props: ComponentProps) {
+    super(props)
 
-    public render = (): React.ReactNode => {
-
-        const options = this.props.args["options"]
-        const theme = this.props.args["theme"]
-        return (
-            <ReactEcharts
-              option={options}
-              theme={theme}
-            />
-        )
+    const themeProp = props.args["theme"]
+    if (isObject(themeProp)) {
+      echarts.registerTheme(this.customThemeName, themeProp)
     }
+  }
+
+  public render = (): React.ReactNode => {
+    const options = this.props.args["options"]
+    const themeName = isObject(this.props.args["theme"])
+      ? this.customThemeName
+      : this.props.args["theme"]
+
+    return <ReactEcharts option={options} theme={themeName} />
+  }
 }
 
 export default withStreamlitConnection(EchartsChart)

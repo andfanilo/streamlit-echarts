@@ -18,14 +18,12 @@ b = (
     )
 )
 options = json.loads(b.dump_options())
-st.echarts_chart(options=options)
+st.echarts_chart(options=options, theme="dark")
 
-options_json = option = {
-    "xAxis": {
-        "type": "category",
-        "data": ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"],
+st.echarts_chart(
+    options=options,
+    theme={
+        "backgroundColor": "#f4cccc",
+        "textStyle": {"color": "rgba(255, 0, 0, 0.8)"},
     },
-    "yAxis": {"type": "value"},
-    "series": [{"data": [820, 932, 901, 934, 1290, 1330, 1320], "type": "line"}],
-}
-st.echarts_chart(options=options_json)
+)
