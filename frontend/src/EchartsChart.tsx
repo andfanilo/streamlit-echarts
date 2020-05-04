@@ -11,8 +11,12 @@ class EchartsChart extends StreamlitComponent {
     public render = (): React.ReactNode => {
 
         const options = this.props.args["options"]
+        const theme = this.props.args["theme"]
         return (
-            <ReactEcharts option={options} />
+            <ReactEcharts
+              option={options}
+              theme={theme}
+            />
         )
     }
 }

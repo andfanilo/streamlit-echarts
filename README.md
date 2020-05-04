@@ -2,6 +2,8 @@
 
 A custom component to run Echarts in Streamlit session !
 
+Based on [echarts-for-react](https://github.com/hustcc/echarts-for-react).
+
 ## Install
 
 ```shell script
