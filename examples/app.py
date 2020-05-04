@@ -14,7 +14,8 @@ b = (
     .set_global_opts(
         title_opts=opts.TitleOpts(
             title="Top cloud providers 2018", subtitle="2017-2018 Revenue"
-        )
+        ),
+        toolbox_opts=opts.ToolboxOpts(),
     )
 )
 options = json.loads(b.dump_options())
