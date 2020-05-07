@@ -9,6 +9,7 @@ from pyecharts.faker import Faker
 st.header("Hello ECharts !")
 st.register_component("echarts_chart", url="http://localhost:3001")
 
+st.subheader("Basic rendering")
 b = (
     Bar()
     .add_xaxis(["Microsoft", "Amazon", "IBM", "Oracle", "Google", "Alibaba"])
@@ -33,6 +34,30 @@ options_json = option = {
 }
 st.echarts_chart(options=options_json)
 
+st.subheader("With custom theme")
+b = (
+    Bar()
+    .add_xaxis(["Microsoft", "Amazon", "IBM", "Oracle", "Google", "Alibaba"])
+    .add_yaxis("2017-2018 Revenue in (billion $)", [21.2, 20.4, 10.3, 6.08, 4, 2.2])
+    .set_global_opts(
+        title_opts=opts.TitleOpts(
+            title="Top cloud providers 2018", subtitle="2017-2018 Revenue"
+        )
+    )
+)
+options = json.loads(b.dump_options())
+st.echarts_chart(options=options, theme="dark")
+
+st.echarts_chart(
+    options=options,
+    theme={
+        "backgroundColor": "#f4cccc",
+        "textStyle": {"color": "rgba(255, 0, 0, 0.8)"},
+    },
+)
+
+
+st.subheader("With animation")
 c = (
     Bar(
         init_opts=opts.InitOpts(
@@ -49,7 +74,7 @@ c = (
 options_animation = json.loads(c.dump_options())
 st.echarts_chart(options=options_animation)
 
-
+st.subheader("With timeline")
 x = Faker.choose()
 tl = Timeline()
 for i in range(2015, 2020):

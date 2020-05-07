@@ -1,24 +1,48 @@
-/**
- * @license
- * Copyright 2018-2020 Streamlit Inc.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *    http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
 import hoistNonReactStatics from "hoist-non-react-statics"
 import React, { ReactNode } from "react"
 import { RenderData, Streamlit } from "./streamlit"
-import { ComponentProps } from "./StreamlitComponent"
+
+/**
+ * Props passed to custom Streamlit components.
+ */
+export interface ComponentProps {
+  /** Named dictionary of arguments passed from Python. */
+  args: any
+
+  /** The component's width. */
+  width: number
+
+  /**
+   * True if the component should be disabled.
+   * All components get disabled while the app is being re-run,
+   * and become re-enabled when the re-run has finished.
+   */
+  disabled: boolean
+}
+
+/**
+ * Optional Streamlit React-based component base class.
+ *
+ * You are not required to extend this base class to create a Streamlit
+ * component. If you decide not to extend it, you should implement the
+ * `componentDidMount` and `componentDidUpdate` functions in your own class,
+ * so that your plugin properly resizes.
+ */
+export class StreamlitComponentBase<S = {}> extends React.PureComponent<
+  ComponentProps,
+  S
+> {
+  public componentDidMount(): void {
+    // After we're rendered for the first time, tell Streamlit that our height
+    // has changed.
+    Streamlit.setFrameHeight()
+  }
+
+  public componentDidUpdate(): void {
+    // After we're updated, tell Streamlit that our height may have changed.
+    Streamlit.setFrameHeight()
+  }
+}
 
 /**
  * Wrapper for React-based Streamlit components.
@@ -39,9 +63,6 @@ export function withStreamlitConnection(
     WrapperProps,
     WrapperState
   > {
-    /** The most recent frameHeight we've sent to Streamlit. */
-    private frameHeight?: number
-
     public constructor(props: WrapperProps) {
       super(props)
       this.state = {
@@ -74,28 +95,6 @@ export function withStreamlitConnection(
     }
 
     /**
-     * Called by the component when its height has changed. This should be
-     * called every time the component changes its DOM - that is, in
-     * componentDidMount and componentDidUpdate.
-     */
-    private updateFrameHeight = (newHeight?: number): void => {
-      if (newHeight === undefined) {
-        // newHeight is optional. If undefined, it defaults to scrollHeight,
-        // which is the entire height of the element minus its border,
-        // scrollbar, and margin.
-        newHeight = document.body.scrollHeight
-      }
-
-      if (this.frameHeight === newHeight) {
-        // Don't send a message if our height hasn't changed.
-        return
-      }
-
-      this.frameHeight = newHeight
-      Streamlit.setFrameHeight(this.frameHeight)
-    }
-
-    /**
      * Streamlit is telling this component to redraw.
      * We save the render data in State, so that it can be passed to the
      * component in our own render() function.
@@ -117,7 +116,7 @@ export function withStreamlitConnection(
         )
       }
 
-      // Don't render until we've gotten our first message from Streamlit
+      // Don't render until we've gotten our first RENDER_EVENT from Streamlit.
       if (this.state.renderData == null) {
         return null
       }
@@ -127,8 +126,6 @@ export function withStreamlitConnection(
           width={window.innerWidth}
           disabled={this.state.renderData.disabled}
           args={this.state.renderData.args}
-          setWidgetValue={Streamlit.setWidgetValue}
-          updateFrameHeight={this.updateFrameHeight}
         />
       )
     }

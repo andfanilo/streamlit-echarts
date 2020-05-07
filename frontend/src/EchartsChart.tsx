@@ -1,19 +1,25 @@
 import React from "react"
-import { ComponentProps, StreamlitComponent, withStreamlitConnection } from "./streamlit"
+import {
+  ComponentProps,
+  StreamlitComponentBase,
+  withStreamlitConnection,
+} from "./streamlit"
 import * as _ from "lodash"
 import deepMapValues from "./utils"
 
 import echarts from "echarts"
 import ReactEcharts from "echarts-for-react"
 
-class EchartsChart extends StreamlitComponent {
+import "./streamlit.css"
+
+class EchartsChart extends StreamlitComponentBase {
   private customThemeName = "custom_theme"
 
   private mapFunctions = (obj: object) => {
     // Map over all strings in options, cast as functions when found
     let funcReg = /function *\(([^()]*)\)[ \n\t]*{(.*)}/gim
 
-    return deepMapValues(obj, function(v: string) {
+    return deepMapValues(obj, function (v: string) {
       let match = funcReg.exec(v.replace(/\n/g, " "))
       if (match) {
         // @ts-ignore
@@ -44,7 +50,7 @@ class EchartsChart extends StreamlitComponent {
     fn = new Function("return " + fn)()
     options["series"][1]["itemStyle"]["color"] = fn
      */
-    return <ReactEcharts option={options} theme={themeName}/>
+    return <ReactEcharts option={options} theme={themeName} />
   }
 }
 
