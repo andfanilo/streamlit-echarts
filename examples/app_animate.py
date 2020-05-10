@@ -19,5 +19,7 @@ b = (
     )
 )
 options = json.loads(b.dump_options())
-st.echarts_chart(options=options, key="echarts")
+st.echarts_chart(
+    options=options, key="echarts"
+)  # Add key argument to not remount component at every Streamlit run
 st.button("Randomize data")

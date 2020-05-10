@@ -23,29 +23,10 @@ const EchartsChart = (props: ComponentProps) => {
       ? customThemeName
       : props.args["theme"]
   }
+
   const themeName = getThemeName(props.args["theme"])
-
-  /*
-  const mapFunctions = (obj: object) => {
-    // Map over all strings in options, cast as functions when found
-    let funcReg = /function *\(([^()]*)\)[ \n\t]*{(.*)}/gim
-
-    return deepMapValues(obj, function(v: string) {
-      let match = funcReg.exec(v.replace(/\n/g, " "))
-      if (match) {
-        // @ts-ignore
-        return new Function(match[1].split(","), match[2])
-      }
-      return v
-      //return _.isFunction(v) ? new Function("return " + v)() : v
-    })
-  }
-
-  let fn = options["series"][0]["itemStyle"]["color"]
-  fn = new Function("return " + fn)()
-  options["series"][1]["itemStyle"]["color"] = fn
-   */
   const options = props.args["options"]
+
   return (
     <>
       <ReactEcharts
