@@ -1,6 +1,6 @@
 import React from "react"
 import { ComponentProps, Streamlit, withStreamlitConnection } from "./streamlit"
-import * as _ from "lodash"
+import { isObject } from "lodash"
 
 import echarts from "echarts"
 import ReactEcharts from "echarts-for-react"
@@ -16,12 +16,10 @@ const EchartsChart = (props: ComponentProps) => {
    */
   const getThemeName = (themeProp: string | object) => {
     const customThemeName = "custom_theme"
-    if (_.isObject(themeProp)) {
+    if (isObject(themeProp)) {
       echarts.registerTheme(customThemeName, themeProp)
     }
-    return _.isObject(props.args["theme"])
-      ? customThemeName
-      : props.args["theme"]
+    return isObject(props.args["theme"]) ? customThemeName : props.args["theme"]
   }
 
   const themeName = getThemeName(props.args["theme"])

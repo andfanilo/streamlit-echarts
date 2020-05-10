@@ -2,15 +2,15 @@
 
 A custom component to run Echarts in Streamlit session.
 
-Based on [echarts-for-react](https://github.com/hustcc/echarts-for-react).
+It's basically a Streamlit wrapper over [echarts-for-react](https://github.com/hustcc/echarts-for-react).
 
 ## Install
 
 ```shell script
 conda create -n streamlit-echarts python=3.7
 conda activate streamlit-echarts
-pip install streamlit-0.58.0-py2.py3-none-any.whl pyecharts
-
+pip install streamlit-0.58.0-py2.py3-none-any.whl 
+pip install pyecharts # optional, if you want to dump options from Python API
 cd frontend
 npm install
 ```
@@ -18,7 +18,7 @@ npm install
 ## Use
 
 `st.echarts_chart` accepts as arguments :
-* **options** as a dictionary of objects
+* **options** as a dictionary of objects. Streamlit will send corresponding JSON to ECharts
 * **theme** as a prebuilt theme or object 
 
 Check `examples/` folder for examples.
@@ -78,4 +78,4 @@ Precompute the `symbolSize` array of values in Python beforehand !
 ```
 
 To implement [Events and Actions in ECharts](https://echarts.apache.org/en/tutorial.html#Events%20and%20Actions%20in%20ECharts)
-you may directly integrate in the React component for now.
+you should directly integrate in the React custom component for now so we don't try to parse JS coming from Python.
