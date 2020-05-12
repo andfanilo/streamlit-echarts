@@ -1,4 +1,5 @@
 import json
+import random
 
 import streamlit as st
 from pyecharts import options as opts
@@ -77,3 +78,21 @@ for i in range(2015, 2020):
     tl.add(bar, "{}年".format(i))
 options_timeline = json.loads(tl.dump_options())
 st.echarts_chart(options=options_timeline)
+
+st.subheader("With a button to push random data")
+b = (
+    Bar()
+    .add_xaxis(["Microsoft", "Amazon", "IBM", "Oracle", "Google", "Alibaba"])
+    .add_yaxis("2017-2018 Revenue in (billion $)", random.sample(range(100), 10))
+    .set_global_opts(
+        title_opts=opts.TitleOpts(
+            title="Top cloud providers 2018", subtitle="2017-2018 Revenue"
+        ),
+        toolbox_opts=opts.ToolboxOpts(),
+    )
+)
+options = json.loads(b.dump_options())
+st.echarts_chart(
+    options=options, key="echarts"
+)  # Add key argument to not remount component at every Streamlit run
+st.button("Randomize data")

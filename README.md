@@ -4,6 +4,8 @@ A custom component to run Echarts in Streamlit session.
 
 It's basically a Streamlit wrapper over [echarts-for-react](https://github.com/hustcc/echarts-for-react).
 
+![](./img/demo.gif)
+
 ## Install
 
 ```shell script
