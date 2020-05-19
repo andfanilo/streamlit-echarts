@@ -8,7 +8,8 @@ from pyecharts.charts import Timeline
 from pyecharts.faker import Faker
 
 st.header("Hello ECharts !")
-st.register_component("echarts_chart", url="http://localhost:3001")
+ec = st.declare_component(url="http://localhost:3001")
+st.register_component("echarts_chart", ec)
 
 st.subheader("Basic rendering")
 b = (
