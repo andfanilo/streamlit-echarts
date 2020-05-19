@@ -1,7 +1,9 @@
 import streamlit as st
 
+ec = st.declare_component(url="http://localhost:3001")
+st.register_component("echarts_chart", ec)
+
 st.header("Hello ECharts !")
-st.register_component("echarts_chart", url="http://localhost:3001")
 
 st.subheader("Basic rendering")
 st.echarts_chart(
