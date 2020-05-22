@@ -5,10 +5,19 @@ import streamlit as st
 from pyecharts import options as opts
 from pyecharts.charts import Bar
 from pyecharts.charts import Timeline
+from pyecharts.charts.chart import Base
 from pyecharts.faker import Faker
 
 st.header("Hello ECharts !")
 ec = st.declare_component(url="http://localhost:3001")
+
+
+@ec
+def wrapper(f, chart: Base, theme: str = "", key=None):
+    options = json.loads(chart.dump_options())
+    return f(options=options, theme=theme, key=key, default=None)
+
+
 st.register_component("echarts_chart", ec)
 
 st.subheader("Basic rendering")
@@ -23,8 +32,7 @@ b = (
         toolbox_opts=opts.ToolboxOpts(),
     )
 )
-options = json.loads(b.dump_options())
-st.echarts_chart(options=options)
+st.echarts_chart(b)
 
 st.subheader("With custom theme")
 b = (
@@ -37,11 +45,10 @@ b = (
         )
     )
 )
-options = json.loads(b.dump_options())
-st.echarts_chart(options=options, theme="dark")
+st.echarts_chart(b, theme="dark")
 
 st.echarts_chart(
-    options=options,
+    b,
     theme={
         "backgroundColor": "#f4cccc",
         "textStyle": {"color": "rgba(255, 0, 0, 0.8)"},
@@ -62,8 +69,7 @@ c = (
     .add_yaxis("商家B", Faker.values())
     .set_global_opts(title_opts=opts.TitleOpts(title="Bar-动画配置基本示例", subtitle="我是副标题"))
 )
-options_animation = json.loads(c.dump_options())
-st.echarts_chart(options=options_animation)
+st.echarts_chart(c)
 
 st.subheader("With timeline")
 x = Faker.choose()
@@ -77,8 +83,7 @@ for i in range(2015, 2020):
         .set_global_opts(title_opts=opts.TitleOpts("某商店{}年营业额".format(i)))
     )
     tl.add(bar, "{}年".format(i))
-options_timeline = json.loads(tl.dump_options())
-st.echarts_chart(options=options_timeline)
+st.echarts_chart(tl)
 
 st.subheader("With a button to push random data")
 b = (
@@ -92,8 +97,7 @@ b = (
         toolbox_opts=opts.ToolboxOpts(),
     )
 )
-options = json.loads(b.dump_options())
 st.echarts_chart(
-    options=options, key="echarts"
+    b, key="echarts"
 )  # Add key argument to not remount component at every Streamlit run
 st.button("Randomize data")
