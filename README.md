@@ -26,8 +26,8 @@ npm install
 Check `examples/` folder for examples.
 
 There's basically 2 ways of generating options :
-* Build Python dict from the desired JSON options
-* Dump options from Pyecharts API
+* Provide a Pyecharts chart, the component will manage the conversion to options (check the [official examples](https://gallery.pyecharts.org/#/))
+* Build a Python dict from the desired options (check the [official examples](https://echarts.apache.org/examples/en/index.html))
 
 ## Run development setup
 
