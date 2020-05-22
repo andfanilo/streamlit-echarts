@@ -6,6 +6,7 @@ import echarts from "echarts"
 import ReactEcharts from "echarts-for-react"
 
 import "./streamlit.css"
+import deepMap from "./utils"
 
 const EchartsChart = (props: ComponentProps) => {
   /**
@@ -22,8 +23,25 @@ const EchartsChart = (props: ComponentProps) => {
     return isObject(props.args["theme"]) ? customThemeName : props.args["theme"]
   }
 
+  const mapOptionValues = (obj: object) => {
+    // Map over all values in options
+    // cast strings as functions when specific pyecharts JS placeholder found
+    let funcReg = new RegExp("--x_x--0_0--\\s*(function\\s*.*)\\s*--x_x--0_0--")
+
+    return deepMap(obj, function (v: string) {
+      //v = v.replace(/(\r\n|\n|\r)/g, "")
+      let match = funcReg.exec(v)
+      if (match) {
+        const funcStr = match[1]
+        return new Function("return " + funcStr)()
+      } else {
+        return v
+      }
+    })
+  }
+
   const themeName = getThemeName(props.args["theme"])
-  const options = props.args["options"]
+  const options = mapOptionValues(props.args["options"])
 
   return (
     <>

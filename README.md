@@ -46,10 +46,10 @@ streamlit run examples/app.py
 
 ## Caveats
 
-Tried to integrate JsCode in Pyecharts but parsing all options to find functions is...troublesome.
-So don't try to put JsCode in your options for now, compute everything in advance.
+Pyecharts uses the `--x_x--0_0--` placeholder around `JsCode`, so we parse every value in options
+looking for `--x_x--0_0-- function(...) {...} --x_x--0_0--` and parse those as a JS function.
 
-Example for :
+If you want to pass JS function as strings, use the `JsCode` module :
 
 ``` 
 series: [
@@ -58,23 +58,8 @@ series: [
         itemStyle: {
             opacity: 0.8
         },
-        symbolSize: function (val) {
-            return val[2] * 40;
-        },
+        symbolSize: JsCode("function (val) { return val[2] * 40;}",
         data: [["14.616","7.241","0.896"],["3.958","5.701","0.955"],["2.768","8.971","0.669"],["9.051","9.710","0.171"],["14.046","4.182","0.536"],["12.295","1.429","0.962"],["4.417","8.167","0.113"],["0.492","4.771","0.785"],["7.632","2.605","0.645"],["14.242","5.042","0.368"]]
-    }
-]
-```
-
-Precompute the `symbolSize` array of values in Python beforehand !
-
-```
-"series": [
-    {
-        "type": "scatter",
-        "itemStyle": {"opacity": 0.8},
-        "symbolSize": [float(val[2]) * 40 for val in data],
-        "data": data,
     }
 ]
 ```

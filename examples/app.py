@@ -1,4 +1,5 @@
 import streamlit as st
+from pyecharts.commons.utils import JsCode
 
 ec = st.declare_component(url="http://localhost:3001")
 st.register_component("echarts_chart", ec)
@@ -66,7 +67,7 @@ pie_options = {
 }
 st.echarts_chart(options=pie_options)
 
-st.subheader("With data zoom")
+st.subheader("With data zoom + JsCode")
 data = [
     ["14.616", "7.241", "0.896"],
     ["3.958", "5.701", "0.955"],
@@ -79,7 +80,7 @@ data = [
     ["7.632", "2.605", "0.645"],
     ["14.242", "5.042", "0.368"],
 ]
-option_datazoom = {
+option_js = {
     "xAxis": {"type": "value"},
     "yAxis": {"type": "value"},
     "dataZoom": [{"type": "slider", "start": 10, "end": 60}],
@@ -87,9 +88,9 @@ option_datazoom = {
         {
             "type": "scatter",
             "itemStyle": {"opacity": 0.8},
-            "symbolSize": [float(val[2]) * 40 for val in data],
+            "symbolSize": JsCode("""function (val) {  return val[2] * 40; }""").js_code,
             "data": data,
         }
     ],
 }
-st.echarts_chart(options=option_datazoom)
+st.echarts_chart(options=option_js)
