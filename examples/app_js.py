@@ -1,44 +1,13 @@
-import datetime
-from typing import Sequence
-
-import simplejson as json
 import streamlit as st
 from pyecharts import options as opts
 from pyecharts.charts import Bar
-from pyecharts.charts.base import Base
 from pyecharts.commons.utils import JsCode
-from pyecharts.commons.utils import remove_key_with_none_value
 from pyecharts.faker import Faker
-from pyecharts.options.series_options import BasicOpts
 
+from streamlit_echarts import st_pyecharts
 
-ec = st.declare_component(url="http://localhost:3001")
-
-
-def default(o):
-    """Copied from pyecharts' rendering to keep it's JS placeholder ^^"
-    """
-    if isinstance(o, (datetime.date, datetime.datetime)):
-        return o.isoformat()
-    if isinstance(o, JsCode):
-        return (
-            o.replace("\\n|\\t", "").replace(r"\\n", "\n").replace(r"\\t", "\t").js_code
-        )
-    if isinstance(o, BasicOpts):
-        if isinstance(o.opts, Sequence):
-            return [remove_key_with_none_value(item) for item in o.opts]
-        else:
-            return remove_key_with_none_value(o.opts)
-
-
-@ec
-def wrapper(f, chart: Base, theme: str = "", key=None):
-    options = json.dumps(chart.get_options(), default=default, ignore_nan=True)
-    return f(options=json.loads(options), theme=theme, key=key, default=None)
-
-
-st.register_component("echarts_chart", ec)
-
+st.subheader("With JsCode")
+st.markdown("Under 50 : red. Between 50 - 100 : blue. Over 100 : green")
 color_function = """
         function (params) {
             if (params.value > 0 && params.value < 50) {
@@ -69,4 +38,4 @@ c = (
     )
     .set_global_opts(title_opts=opts.TitleOpts(title="Bar-自定义柱状颜色"))
 )
-st.echarts_chart(c)
+st_pyecharts(c)

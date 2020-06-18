@@ -5,9 +5,7 @@ from pyecharts import options as opts
 from pyecharts.charts import Geo
 from pyecharts.faker import Faker
 
-st.header("Hello ECharts !")
-ec = st.declare_component(url="http://localhost:3001")
-st.register_component("echarts_chart", ec)
+from streamlit_echarts import st_echarts
 
 st.subheader("With Visual Map")
 g = (
@@ -20,4 +18,4 @@ g = (
     )
 )
 options = json.loads(g.dump_options_with_quotes())
-st.echarts_chart(options=options)
+st_echarts(options=options)

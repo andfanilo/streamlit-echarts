@@ -1,24 +1,14 @@
-import json
 import random
 
 import streamlit as st
 from pyecharts import options as opts
 from pyecharts.charts import Bar
 from pyecharts.charts import Timeline
-from pyecharts.charts.chart import Base
 from pyecharts.faker import Faker
 
-st.header("Hello ECharts !")
-ec = st.declare_component(url="http://localhost:3001")
+from streamlit_echarts import st_pyecharts
 
-
-@ec
-def wrapper(f, chart: Base, theme: str = "", key=None):
-    options = json.loads(chart.dump_options())
-    return f(options=options, theme=theme, key=key, default=None)
-
-
-st.register_component("echarts_chart", ec)
+st.header("Hello Pyecharts !")
 
 st.subheader("Basic rendering")
 b = (
@@ -32,7 +22,7 @@ b = (
         toolbox_opts=opts.ToolboxOpts(),
     )
 )
-st.echarts_chart(b)
+st_pyecharts(b)
 
 st.subheader("With custom theme")
 b = (
@@ -45,9 +35,9 @@ b = (
         )
     )
 )
-st.echarts_chart(b, theme="dark")
+st_pyecharts(b, theme="dark")
 
-st.echarts_chart(
+st_pyecharts(
     b,
     theme={
         "backgroundColor": "#f4cccc",
@@ -69,7 +59,7 @@ c = (
     .add_yaxis("商家B", Faker.values())
     .set_global_opts(title_opts=opts.TitleOpts(title="Bar-动画配置基本示例", subtitle="我是副标题"))
 )
-st.echarts_chart(c)
+st_pyecharts(c)
 
 st.subheader("With timeline")
 x = Faker.choose()
@@ -83,7 +73,7 @@ for i in range(2015, 2020):
         .set_global_opts(title_opts=opts.TitleOpts("某商店{}年营业额".format(i)))
     )
     tl.add(bar, "{}年".format(i))
-st.echarts_chart(tl)
+st_pyecharts(tl)
 
 st.subheader("With a button to push random data")
 b = (
@@ -97,7 +87,7 @@ b = (
         toolbox_opts=opts.ToolboxOpts(),
     )
 )
-st.echarts_chart(
+st_pyecharts(
     b, key="echarts"
 )  # Add key argument to not remount component at every Streamlit run
 st.button("Randomize data")

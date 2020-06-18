@@ -5,8 +5,15 @@ import { isObject } from "lodash"
 import echarts from "echarts"
 import ReactEcharts from "echarts-for-react"
 
-import "./streamlit.css"
 import deepMap from "./utils"
+
+/**
+ * Arguments Streamlit receives from the Python side
+ */
+interface PythonArgs {
+    options: object
+    theme: string | object
+}
 
 const EchartsChart = (props: ComponentProps) => {
   /**
@@ -20,7 +27,7 @@ const EchartsChart = (props: ComponentProps) => {
     if (isObject(themeProp)) {
       echarts.registerTheme(customThemeName, themeProp)
     }
-    return isObject(props.args["theme"]) ? customThemeName : props.args["theme"]
+    return isObject(themeProp) ? customThemeName : themeProp
   }
 
   const mapOptionValues = (obj: object) => {
@@ -40,14 +47,15 @@ const EchartsChart = (props: ComponentProps) => {
     })
   }
 
-  const themeName = getThemeName(props.args["theme"])
-  const options = mapOptionValues(props.args["options"])
+  const {options, theme}: PythonArgs = props.args
+  const cleanTheme = getThemeName(theme)
+  const cleanOptions = mapOptionValues(options)
 
   return (
     <>
       <ReactEcharts
-        option={options}
-        theme={themeName}
+        option={cleanOptions}
+        theme={cleanTheme}
         onChartReady={() => {
           Streamlit.setFrameHeight()
         }}

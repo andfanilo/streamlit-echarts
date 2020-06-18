@@ -1,6 +1,6 @@
 {
   "name": "streamlit_echarts",
-  "version": "0.1.0",
+  "version": "0.0.1",
   "private": true,
   "dependencies": {
     "@testing-library/jest-dom": "^4.2.4",
@@ -10,12 +10,11 @@
     "@types/jest": "^24.0.0",
     "@types/lodash": "^4.14.149",
     "@types/node": "^12.0.0",
-    "@types/react": "^16.9.0",
+    "@types/react": "^16.9.0n",
     "@types/react-dom": "^16.9.0",
-    "@types/reactstrap": "^8.4.2",
     "apache-arrow": "^0.16.0",
     "baseui": "^9.67.2",
-    "bootstrap": "^4.4.1",
+    "event-target-shim": "^5.0.1",
     "echarts": "^4.7.0",
     "echarts-for-react": "^2.0.15-beta.1",
     "echarts-gl": "^1.1.1",
@@ -24,9 +23,6 @@
     "react": "^16.13.1",
     "react-dom": "^16.13.1",
     "react-scripts": "3.4.1",
-    "reactstrap": "^8.4.1",
-    "styletron-engine-atomic": "^1.4.6",
-    "styletron-react": "^5.2.7",
     "typescript": "~3.7.2"
   },
   "scripts": {

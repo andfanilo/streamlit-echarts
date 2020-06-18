@@ -1,0 +1,1 @@
+recursive-include streamlit_echarts/frontend/build *

@@ -9,40 +9,57 @@ It's basically a Streamlit wrapper over [echarts-for-react](https://github.com/h
 ## Install
 
 ```shell script
-conda create -n streamlit-echarts python=3.7
-conda activate streamlit-echarts
-pip install streamlit-0.58.0-py2.py3-none-any.whl 
-pip install pyecharts # optional, if you want to dump options from Python API
+pip install -i https://test.pypi.org/simple/ --no-deps streamlit-echarts
+```
+
+## Run
+
+```shell script
+streamlit run app.py
+```
+
+## Development 
+
+### Install
+
+* JS side
+
+```shell script
 cd frontend
 npm install
 ```
 
-## Use
+* Python side 
 
-`st.echarts_chart` accepts as arguments :
-* **options** as a dictionary of objects. Streamlit will send corresponding JSON to ECharts
-* **theme** as a prebuilt theme or object 
+```shell script
+conda create -n streamlit-echarts python=3.7
+conda activate streamlit-echarts
+pip install streamlit-0.61.0-py2.py3-none-any.whl
+pip install -e .
+```
+
+### Run
+
+* JS side
+
+```shell script
+cd frontend
+npm run start
+```
+
+* Python side
+
+```shell script
+streamlit run examples/app.py
+```
+
+### Usage
 
 Check `examples/` folder for examples.
 
 There's basically 2 ways of generating options :
 * Provide a Pyecharts chart, the component will manage the conversion to options (check the [official examples](https://gallery.pyecharts.org/#/))
 * Build a Python dict from the desired options (check the [official examples](https://echarts.apache.org/examples/en/index.html))
-
-## Run development setup
-
-In a terminal :
-
-```
-cd frontend
-npm run start
-```
-
-In another terminal :
-
-```
-streamlit run examples/app.py
-```
 
 ## Caveats
 

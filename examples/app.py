@@ -1,13 +1,12 @@
 import streamlit as st
 from pyecharts.commons.utils import JsCode
 
-ec = st.declare_component(url="http://localhost:3001")
-st.register_component("echarts_chart", ec)
+from streamlit_echarts import st_echarts
 
 st.header("Hello ECharts !")
 
 st.subheader("Basic rendering")
-st.echarts_chart(
+st_echarts(
     options={
         "xAxis": {
             "type": "category",
@@ -65,7 +64,7 @@ pie_options = {
         }
     ],
 }
-st.echarts_chart(options=pie_options)
+st_echarts(options=pie_options)
 
 st.subheader("With data zoom + JsCode")
 data = [
@@ -93,4 +92,4 @@ option_js = {
         }
     ],
 }
-st.echarts_chart(options=option_js)
+st_echarts(options=option_js)
