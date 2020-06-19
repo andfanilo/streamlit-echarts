@@ -55,7 +55,8 @@ streamlit run examples/app.py
 
 ### Usage
 
-Check `examples/` folder for examples.
+Check `examples/` folder for examples, 
+or copy from [ECharts gallery]() and [Pyecharts gallery](https://gallery.pyecharts.org/#/).
 
 There's basically 2 ways of generating options :
 * Provide a Pyecharts chart, the component will manage the conversion to options (check the [official examples](https://gallery.pyecharts.org/#/))
@@ -63,11 +64,18 @@ There's basically 2 ways of generating options :
 
 ## Caveats
 
-Pyecharts uses the `--x_x--0_0--` placeholder around `JsCode`, so we parse every value in options
-looking for `--x_x--0_0-- function(...) {...} --x_x--0_0--` and parse those as a JS function.
+### Theme definition
 
-If you want to pass JS function as strings, use the `JsCode` module :
+* Defining the theme in Pyecharts when instantiating chart like `Bar(init_opts=opts.InitOpts(theme=ThemeType.LIGHT))` 
+does not work, you need to call theme in `st_pyecharts(c, theme=ThemeType.LIGHT)`.
 
+### On Javascript functions 
+
+Pyecharts uses `JsCode` to indicate javascript code, so in the custom component we parse every value in options
+looking the specific `JsCode` placeholder and parse those as a JS function.
+
+As such if you want to pass JS function as strings from Python args, use the `JsCode` module to wrap code with this placeholder :
+* In Python dict, wrap with placeholder by calling `JsCode(function).jscode`.
 ``` 
 series: [
     {
@@ -75,11 +83,22 @@ series: [
         itemStyle: {
             opacity: 0.8
         },
-        symbolSize: JsCode("function (val) { return val[2] * 40;}",
+        symbolSize: JsCode("function (val) { return val[2] * 40;}").js_code,
         data: [["14.616","7.241","0.896"],["3.958","5.701","0.955"],["2.768","8.971","0.669"],["9.051","9.710","0.171"],["14.046","4.182","0.536"],["12.295","1.429","0.962"],["4.417","8.167","0.113"],["0.492","4.771","0.785"],["7.632","2.605","0.645"],["14.242","5.042","0.368"]]
     }
 ]
 ```
+* In Pyecharts, JsCode automatically calls `.jscode` when dumping options.
+```
+.set_series_opts(
+        label_opts=opts.LabelOpts(
+            position="right",
+            formatter=JsCode(
+                "function(x){return Number(x.data.percent * 100).toFixed() + '%';}"
+            ),
+        )
+    )
+``` 
 
 To implement [Events and Actions in ECharts](https://echarts.apache.org/en/tutorial.html#Events%20and%20Actions%20in%20ECharts)
 you should directly integrate in the React custom component for now so we don't try to parse JS coming from Python.
