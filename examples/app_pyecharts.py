@@ -15,6 +15,7 @@ def main():
         "Basic rendering": render_basic,
         "Custom themes": render_custom,
         "Filter with legend": render_filter_legend,
+        "Vertical datazoom": render_vertical_datazoom,
         "Timeline": render_timeline,
         "Chart with randomization": render_randomize,
     }
@@ -86,6 +87,20 @@ def render_filter_legend():
             )
         )
         st_pyecharts(c)
+
+
+def render_vertical_datazoom():
+    with st.echo("below"):
+        c = (
+            Bar()
+            .add_xaxis(Faker.days_attrs)
+            .add_yaxis("商家A", Faker.days_values, color=Faker.rand_color())
+            .set_global_opts(
+                title_opts=opts.TitleOpts(title="Bar-DataZoom（slider-垂直）"),
+                datazoom_opts=opts.DataZoomOpts(orient="vertical"),
+            )
+        )
+        st_pyecharts(c, height="400px")
 
 
 def render_timeline():

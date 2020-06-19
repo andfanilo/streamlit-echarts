@@ -54,5 +54,5 @@ def st_pyecharts(
     """
     options = json.dumps(chart.get_options(), default=default, ignore_nan=True)
     return _component_func(
-        options=json.loads(options), theme=theme, key=key, default=None
+        options=json.loads(options), theme=theme, height=height, width=width, key=key, default=None
     )
