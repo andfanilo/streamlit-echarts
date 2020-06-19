@@ -16,13 +16,10 @@ interface PythonArgs {
 }
 
 const EchartsChart = (props: ComponentProps) => {
-  /**
-   * Deal with theme
-   * If theme prop is an object, register it under "custom_theme" name
-   * If it's a string just return it
-   * If it's None, ECharts component will take care of it
-   */
-  const getThemeName = (themeProp: string | object) => {
+
+  const JS_PLACEHOLDER = "--x_x--0_0--"
+
+  const registerTheme = (themeProp: string | object) => {
     const customThemeName = "custom_theme"
     if (isObject(themeProp)) {
       echarts.registerTheme(customThemeName, themeProp)
@@ -30,13 +27,11 @@ const EchartsChart = (props: ComponentProps) => {
     return isObject(themeProp) ? customThemeName : themeProp
   }
 
-  const mapOptionValues = (obj: object) => {
-    // Map over all values in options
-    // cast strings as functions when specific pyecharts JS placeholder found
-    let funcReg = new RegExp("--x_x--0_0--\\s*(function\\s*.*)\\s*--x_x--0_0--")
+  const convertJavascriptCode = (obj: object) => {
+    let funcReg = new RegExp(`${JS_PLACEHOLDER}\\s*(function\\s*.*)\\s*${JS_PLACEHOLDER}`)
 
+    // Look in all nested values of options for Pyecharts Javascript placeholder
     return deepMap(obj, function (v: string) {
-      //v = v.replace(/(\r\n|\n|\r)/g, "")
       let match = funcReg.exec(v)
       if (match) {
         const funcStr = match[1]
@@ -48,8 +43,8 @@ const EchartsChart = (props: ComponentProps) => {
   }
 
   const {options, theme}: PythonArgs = props.args
-  const cleanTheme = getThemeName(theme)
-  const cleanOptions = mapOptionValues(options)
+  const cleanTheme = registerTheme(theme)
+  const cleanOptions = convertJavascriptCode(options)
 
   return (
     <>
