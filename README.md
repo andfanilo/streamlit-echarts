@@ -102,3 +102,23 @@ series: [
 
 To implement [Events and Actions in ECharts](https://echarts.apache.org/en/tutorial.html#Events%20and%20Actions%20in%20ECharts)
 you should directly integrate in the React custom component for now so we don't try to parse JS coming from Python.
+
+## What if I use Pyecharts ?
+
+If you're using pyecharts, you can directly embed your pyecharts visualization inside `st.html` 
+by passing the output of the chart's `.render_embed()` :
+
+```python
+from pyecharts.charts import Bar
+from pyecharts import options as opts
+import streamlit as st
+
+c = (Bar()
+    .add_xaxis(["Microsoft", "Amazon", "IBM", "Oracle", "Google", "Alibaba"])
+    .add_yaxis('2017-2018 Revenue in (billion $)', [21.2, 20.4, 10.3, 6.08, 4, 2.2])
+    .set_global_opts(title_opts=opts.TitleOpts(title="Top cloud providers 2018", subtitle="2017-2018 Revenue"),
+                     toolbox_opts=opts.ToolboxOpts())
+    .render_embed() # generate a local HTML file
+)
+st.html(c, width=1000, height=1000)
+```
