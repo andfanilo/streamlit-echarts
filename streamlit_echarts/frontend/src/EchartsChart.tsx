@@ -11,8 +11,10 @@ import deepMap from "./utils"
  * Arguments Streamlit receives from the Python side
  */
 interface PythonArgs {
-    options: object
-    theme: string | object
+  options: object
+  theme: string | object
+  height: string
+  width: string
 }
 
 const EchartsChart = (props: ComponentProps) => {
@@ -31,7 +33,7 @@ const EchartsChart = (props: ComponentProps) => {
     let funcReg = new RegExp(`${JS_PLACEHOLDER}\\s*(function\\s*.*)\\s*${JS_PLACEHOLDER}`)
 
     // Look in all nested values of options for Pyecharts Javascript placeholder
-    return deepMap(obj, function (v: string) {
+    return deepMap(obj, function(v: string) {
       let match = funcReg.exec(v)
       if (match) {
         const funcStr = match[1]
@@ -42,7 +44,7 @@ const EchartsChart = (props: ComponentProps) => {
     })
   }
 
-  const {options, theme}: PythonArgs = props.args
+  const { options, theme, height, width }: PythonArgs = props.args
   const cleanTheme = registerTheme(theme)
   const cleanOptions = convertJavascriptCode(options)
 
@@ -50,6 +52,7 @@ const EchartsChart = (props: ComponentProps) => {
     <>
       <ReactEcharts
         option={cleanOptions}
+        style={{ height: height, width: width }}
         theme={cleanTheme}
         onChartReady={() => {
           Streamlit.setFrameHeight()

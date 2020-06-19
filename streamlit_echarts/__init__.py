@@ -1,8 +1,8 @@
-import simplejson as json
 import os
 from typing import Dict
 from typing import Union
 
+import simplejson as json
 import streamlit as st
 from pyecharts.charts.base import Base
 from pyecharts.charts.base import default
@@ -17,20 +17,38 @@ else:
     _component_func = st.declare_component("st_echart", path=build_dir)
 
 
-def st_echarts(options: Dict, theme: str = "", key: str = None):
+def st_echarts(
+    options: Dict,
+    theme: str = "",
+    height: str = "300px",
+    width: str = "100%",
+    key: str = None,
+):
     """Display echarts chart from options dictionary
     :param options: dictionary of echarts options
     :param theme: prebuilt theme as string, or object
+    :param height: height of div wrapper
+    :param width: width of div wrapper
     :param key: assign a key to prevent component remounting
     :return: chart
     """
-    return _component_func(options=options, theme=theme, key=key, default=None)
+    return _component_func(
+        options=options, theme=theme, height=height, width=width, key=key, default=None
+    )
 
 
-def st_pyecharts(chart: Base, theme: Union[str, Dict] = "", key: str = None):
+def st_pyecharts(
+    chart: Base,
+    theme: Union[str, Dict] = "",
+    height: str = "300px",
+    width: str = "100%",
+    key: str = None,
+):
     """Display echarts chart from pyecharts instance
     :param chart: pyecharts instance
     :param theme: prebuilt theme as string, or object
+    :param height: height of div wrapper
+    :param width: width of div wrapper
     :param key: assign a key to prevent component remounting
     :return: chart
     """
