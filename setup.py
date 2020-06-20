@@ -18,7 +18,7 @@ setuptools.setup(
     version="0.0.1",
     author="Fanilo ANDRIANASOLO",
     author_email="andfanilo@gmail.com",
-    description="A Streamlit custom component for a free drawing canvas using Fabric.js.",
+    description="Echarts custom component for Streamlit",
     long_description=readme(),
     long_description_content_type="text/markdown",
     url="https://github.com/andfanilo/streamlit-echarts",
