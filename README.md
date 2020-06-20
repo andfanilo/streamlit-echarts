@@ -70,6 +70,10 @@ streamlit run examples/app.py
 * Defining the theme in Pyecharts when instantiating chart like `Bar(init_opts=opts.InitOpts(theme=ThemeType.LIGHT))` 
 does not work, you need to call theme in `st_pyecharts(c, theme=ThemeType.LIGHT)`.
 
+### Maps definition
+
+* For now only china map is loaded. Need to find a way how to load json maps or from URL.
+
 ### On Javascript functions 
 
 Pyecharts uses `JsCode` to indicate javascript code, so in the custom component we parse every value in options
