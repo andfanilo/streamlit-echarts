@@ -1,5 +1,4 @@
 import os
-import re
 from typing import Dict
 from typing import Union
 
@@ -77,8 +76,5 @@ def st_pyecharts(
 
 class JsCode:
     def __init__(self, js_code: str):
-        self.js_code = "--x_x--0_0--" + js_code + "--x_x--0_0--"
-
-    def replace(self, pattern: str, repl: str):
-        self.js_code = re.sub(pattern, repl, self.js_code)
-        return self
+        js_placeholder = "--x_x--0_0--"
+        self.js_code = f"{js_placeholder}{js_code}{js_placeholder}"

@@ -26,7 +26,9 @@ Check `examples/` folder for examples.
 This library provides 2 functions to display echarts :
 * `st_echarts` to display charts from echarts json options as Python dicts (check the [official examples](https://echarts.apache.org/examples/en/index.html))
 * `st_pyecharts` to display charts from Pyecharts instances (check the [official examples](https://gallery.pyecharts.org/#/))
-* `JsCode` util class (directly extracted from Pyecharts !) to format JsCode.
+* `JsCode` util class (directly extracted from Pyecharts, so you don't need to download `pyecharts` only for JsCode) 
+to format JsCode when using echarts options. 
+  * For `pyecharts` use the usual `from pyecharts.commons.utils import JsCode`.
 
 ## Development 
 
@@ -76,11 +78,12 @@ does not work, you need to call theme in `st_pyecharts(c, theme=ThemeType.LIGHT)
 
 ### On Javascript functions 
 
-Pyecharts uses `JsCode` to indicate javascript code, so in the custom component we parse every value in options
-looking the specific `JsCode` placeholder and parse those as a JS function.
+Pyecharts uses `pyecharts.commons.utils.JsCode` to indicate javascript code by wrapping with a specific placeholder.
+So in the custom component we parse every value in options looking for the specific `JsCode` placeholder then parse those as a JS function.
 
-As such if you want to pass JS function as strings from Python args, use the `JsCode` module to wrap code with this placeholder :
-* In Python dict, wrap with placeholder by calling `JsCode(function).jscode`.
+As such if you want to pass JS function as strings in Python args, you use the corresponding `JsCode` module to wrap code with this placeholder :
+* In Python dict, wrap with `streamlit_echarts.JsCode` by calling `JsCode(function).jscode`. 
+It's a smaller version of `pyecharts.commons.utils.JsCode` so you don't need to download `pyecharts` to use it. 
 ``` 
 series: [
     {
@@ -93,7 +96,7 @@ series: [
     }
 ]
 ```
-* In Pyecharts, JsCode automatically calls `.jscode` when dumping options.
+* In Pyecharts, use `pyecharts.commons.utils.JsCode` directly, JsCode automatically calls `.jscode` when dumping options.
 ```
 .set_series_opts(
         label_opts=opts.LabelOpts(
@@ -104,9 +107,6 @@ series: [
         )
     )
 ``` 
-
-To implement [Events and Actions in ECharts](https://echarts.apache.org/en/tutorial.html#Events%20and%20Actions%20in%20ECharts)
-you should directly integrate in the React custom component for now so we don't try to parse JS coming from Python.
 
 ### st_pyecharts VS using pyecharts with st.html
 

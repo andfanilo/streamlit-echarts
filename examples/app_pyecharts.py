@@ -5,9 +5,9 @@ from pyecharts import options as opts
 from pyecharts.charts import Bar
 from pyecharts.charts import Geo
 from pyecharts.charts import Timeline
+from pyecharts.commons.utils import JsCode
 from pyecharts.faker import Faker
 
-from streamlit_echarts import JsCode
 from streamlit_echarts import st_pyecharts
 
 
@@ -19,6 +19,7 @@ def main():
         "Vertical datazoom": render_vertical_datazoom,
         "Timeline": render_timeline,
         "Chart with randomization": render_randomize,
+        "JsCode coloring": render_js,
         "Map": render_map,
     }
 
