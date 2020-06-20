@@ -6,11 +6,12 @@ from streamlit_echarts import st_echarts
 
 def main():
     PAGES = {
-        "Basic rendering": render_basic,
+        "Basic line rendering": render_basic,
         "Custom pie chart": render_custom_pie,
         "Datazoom": render_datazoom,
         "Dataset": render_dataset,
         "Map": render_map,
+        "Click event": render_event,
     }
 
     st.title("Hello ECharts !")
@@ -21,18 +22,21 @@ def main():
 
 def render_basic():
     with st.echo("below"):
-        st_echarts(
-            options={
-                "xAxis": {
-                    "type": "category",
-                    "data": ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"],
-                },
-                "yAxis": {"type": "value"},
-                "series": [
-                    {"data": [820, 932, 901, 934, 1290, 1330, 1320], "type": "line"}
-                ],
+        options = {
+            "xAxis": {
+                "type": "category",
+                "data": ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"],
             },
-            height="400px",
+            "yAxis": {"type": "value"},
+            "series": [
+                {"data": [820, 932, 901, 934, 1290, 1330, 1320], "type": "line"}
+            ],
+        }
+        st_echarts(
+            options=options, height="400px",
+        )
+        st_echarts(
+            options=options, height="400px", theme="dark",
         )
 
 
@@ -176,6 +180,22 @@ def render_map():
             },
         }
         st_echarts(options)
+
+
+def render_event():
+    with st.echo("below"):
+        st.markdown("Click on chart elements")
+        options = {
+            "xAxis": {
+                "data": ["shirt", "cardign", "chiffon shirt", "pants", "heels", "socks"]
+            },
+            "yAxis": {},
+            "series": [
+                {"name": "sales", "type": "bar", "data": [5, 20, 36, 10, 10, 20]}
+            ],
+        }
+        events = {"click": "function(params, echarts) {alert('click detection');}"}
+        st_echarts(options, events=events)
 
 
 if __name__ == "__main__":

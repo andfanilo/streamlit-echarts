@@ -21,23 +21,28 @@ else:
 def st_echarts(
     options: Dict,
     theme: Union[str, Dict] = "",
+    events: Dict[str, str] = None,
     height: str = "300px",
     width: str = "100%",
     renderer: str = "canvas",
     key: str = None,
 ):
     """Display echarts chart from options dictionary
-    :param options: dictionary of echarts options
+    :param options: dictionary of echarts options. JS code should have been wrapped beforehand.
     :param theme: prebuilt theme as string, or object
+    :param events: dictionary of mouse events to string JS functions. Don't wrap values with JsCode placeholder.
     :param height: height of div wrapper
     :param width: width of div wrapper
     :param renderer: choose canvas or svg
     :param key: assign a key to prevent component remounting
     :return: chart
     """
+    if events is None:
+        events = {}
     return _component_func(
         options=options,
         theme=theme,
+        onEvents={k: JsCode(v).js_code for k, v in events.items()},
         height=height,
         width=width,
         renderer=renderer,
@@ -49,14 +54,16 @@ def st_echarts(
 def st_pyecharts(
     chart: Base,
     theme: Union[str, Dict] = "",
+    events: Dict[str, str] = None,
     height: str = "300px",
     width: str = "100%",
     renderer: str = "canvas",
     key: str = None,
 ):
     """Display echarts chart from pyecharts instance
-    :param chart: pyecharts instance
+    :param chart: pyecharts instance. JS code should have been wrapped beforehand.
     :param theme: prebuilt theme as string, or object
+    :param events: dictionary of mouse events to string JS functions. Don't wrap values with JsCode placeholder.
     :param height: height of div wrapper
     :param width: width of div wrapper
     :param renderer: choose canvas or svg
@@ -67,6 +74,7 @@ def st_pyecharts(
     return st_echarts(
         options=json.loads(options),
         theme=theme,
+        events=events,
         height=height,
         width=width,
         key=key,

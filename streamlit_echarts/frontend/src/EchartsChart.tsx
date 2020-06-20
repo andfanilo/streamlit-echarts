@@ -15,6 +15,7 @@ import deepMap from "./utils"
 interface PythonArgs {
   options: object
   theme: string | object
+  onEvents: object
   height: string
   width: string
   renderer: "canvas" | "svg",
@@ -47,9 +48,10 @@ const EchartsChart = (props: ComponentProps) => {
     })
   }
 
-  const { options, theme, height, width, renderer }: PythonArgs = props.args
+  const { options, theme, onEvents, height, width, renderer }: PythonArgs = props.args
   const cleanTheme = registerTheme(theme)
   const cleanOptions = convertJavascriptCode(options)
+  const cleanOnEvents = convertJavascriptCode(onEvents)
 
   return (
     <>
@@ -62,6 +64,7 @@ const EchartsChart = (props: ComponentProps) => {
         onChartReady={() => {
           Streamlit.setFrameHeight()
         }}
+        onEvents={cleanOnEvents}
         opts={{ renderer: renderer }}
       />
     </>
