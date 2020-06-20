@@ -16,7 +16,7 @@ pip install -i https://test.pypi.org/simple/ --no-deps streamlit-echarts
 ## Run
 
 ```shell script
-streamlit run app.py
+streamlit run examples/app.py
 ```
 
 ## Development 

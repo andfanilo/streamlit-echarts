@@ -137,7 +137,7 @@ def render_dataset():
             "yAxis": {},
             "series": [{"type": "bar"}, {"type": "bar"}, {"type": "bar"}],
         }
-        st_echarts(options)
+        st_echarts(options, renderer="svg")
 
 
 def render_map():

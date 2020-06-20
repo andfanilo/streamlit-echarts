@@ -3,7 +3,7 @@ import { ComponentProps, Streamlit, withStreamlitConnection } from "./streamlit"
 import { isObject } from "lodash"
 
 import echarts from "echarts"
-import 'echarts/map/js/china.js'
+import "echarts/map/js/china.js"
 import ReactEcharts from "echarts-for-react"
 
 import deepMap from "./utils"
@@ -16,6 +16,7 @@ interface PythonArgs {
   theme: string | object
   height: string
   width: string
+  renderer: 'canvas' | 'svg',
 }
 
 const EchartsChart = (props: ComponentProps) => {
@@ -45,7 +46,7 @@ const EchartsChart = (props: ComponentProps) => {
     })
   }
 
-  const { options, theme, height, width }: PythonArgs = props.args
+  const { options, theme, height, width, renderer }: PythonArgs = props.args
   const cleanTheme = registerTheme(theme)
   const cleanOptions = convertJavascriptCode(options)
 
@@ -53,11 +54,14 @@ const EchartsChart = (props: ComponentProps) => {
     <>
       <ReactEcharts
         option={cleanOptions}
+        notMerge={true}
+        lazyUpdate={true}
         style={{ height: height, width: width }}
         theme={cleanTheme}
         onChartReady={() => {
           Streamlit.setFrameHeight()
         }}
+        opts={{ renderer: renderer }}
       />
     </>
   )

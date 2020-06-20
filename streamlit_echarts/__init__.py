@@ -19,9 +19,10 @@ else:
 
 def st_echarts(
     options: Dict,
-    theme: str = "",
+    theme: Union[str, Dict] = "",
     height: str = "300px",
     width: str = "100%",
+    renderer: str = "canvas",
     key: str = None,
 ):
     """Display echarts chart from options dictionary
@@ -29,11 +30,18 @@ def st_echarts(
     :param theme: prebuilt theme as string, or object
     :param height: height of div wrapper
     :param width: width of div wrapper
+    :param renderer: choose canvas or svg
     :param key: assign a key to prevent component remounting
     :return: chart
     """
     return _component_func(
-        options=options, theme=theme, height=height, width=width, key=key, default=None
+        options=options,
+        theme=theme,
+        height=height,
+        width=width,
+        renderer=renderer,
+        key=key,
+        default=None,
     )
 
 
@@ -42,6 +50,7 @@ def st_pyecharts(
     theme: Union[str, Dict] = "",
     height: str = "300px",
     width: str = "100%",
+    renderer: str = "canvas",
     key: str = None,
 ):
     """Display echarts chart from pyecharts instance
@@ -49,10 +58,17 @@ def st_pyecharts(
     :param theme: prebuilt theme as string, or object
     :param height: height of div wrapper
     :param width: width of div wrapper
+    :param renderer: choose canvas or svg
     :param key: assign a key to prevent component remounting
     :return: chart
     """
     options = json.dumps(chart.get_options(), default=default, ignore_nan=True)
     return _component_func(
-        options=json.loads(options), theme=theme, height=height, width=width, key=key, default=None
+        options=json.loads(options),
+        theme=theme,
+        height=height,
+        width=width,
+        key=key,
+        renderer=renderer,
+        default=None,
     )
