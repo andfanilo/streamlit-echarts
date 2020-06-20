@@ -108,7 +108,7 @@ series: [
 To implement [Events and Actions in ECharts](https://echarts.apache.org/en/tutorial.html#Events%20and%20Actions%20in%20ECharts)
 you should directly integrate in the React custom component for now so we don't try to parse JS coming from Python.
 
-### Using pyecharts with st.html
+### st_pyecharts VS using pyecharts with st.html
 
 While this package provides a `st_pyecharts` method, if you're using `pyecharts` you can directly embed your pyecharts visualization inside `st.html` 
 by passing the output of the chart's `.render_embed()`.
@@ -129,4 +129,6 @@ st.html(c, width=1000, height=1000)
 ```
 
 Using `st_pyecharts` is still something you would want if you need to change data regularly 
-without remounting the component. 
+without remounting the component, check for examples `examples/app_pyecharts.py` for `Chart with randomization` example.
+
+![](./img/randomize.gif) 
