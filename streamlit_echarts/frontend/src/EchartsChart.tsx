@@ -3,6 +3,7 @@ import { ComponentProps, Streamlit, withStreamlitConnection } from "./streamlit"
 import { isObject } from "lodash"
 
 import echarts from "echarts"
+import 'echarts/map/js/china.js'
 import ReactEcharts from "echarts-for-react"
 
 import deepMap from "./utils"
