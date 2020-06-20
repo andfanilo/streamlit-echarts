@@ -9,8 +9,7 @@ It's basically a Streamlit wrapper over [echarts-for-react](https://github.com/h
 ## Install
 
 ```shell script
-pip install pyecharts  # <-- optional, if you need to use JsCode
-pip install simplejson  # <-- optional, if you need to use st_pyecharts
+pip install pyecharts simplejson  # <-- optional, if you need to use st_pyecharts
 pip install -i https://test.pypi.org/simple/ --no-deps streamlit-echarts
 ```
 
@@ -19,6 +18,15 @@ pip install -i https://test.pypi.org/simple/ --no-deps streamlit-echarts
 ```shell script
 streamlit run examples/app.py
 ```
+
+### Usage
+
+Check `examples/` folder for examples.
+
+This library provides 2 functions to display echarts :
+* `st_echarts` to display charts from echarts json options as Python dicts (check the [official examples](https://echarts.apache.org/examples/en/index.html))
+* `st_pyecharts` to display charts from Pyecharts instances (check the [official examples](https://gallery.pyecharts.org/#/))
+* `JsCode` util class (directly extracted from Pyecharts !) to format JsCode.
 
 ## Development 
 
@@ -36,7 +44,7 @@ npm install
 ```shell script
 conda create -n streamlit-echarts python=3.7
 conda activate streamlit-echarts
-pip install streamlit-0.61.0-py2.py3-none-any.whl
+pip install pyecharts simplejson streamlit-0.61.0-py2.py3-none-any.whl 
 pip install -e .
 ```
 
@@ -54,15 +62,6 @@ npm run start
 ```shell script
 streamlit run examples/app.py
 ```
-
-### Usage
-
-Check `examples/` folder for examples, 
-or copy from [ECharts gallery]() and [Pyecharts gallery](https://gallery.pyecharts.org/#/).
-
-There's basically 2 ways of generating options :
-* Provide a Pyecharts chart, the component will manage the conversion to options (check the [official examples](https://gallery.pyecharts.org/#/))
-* Build a Python dict from the desired options (check the [official examples](https://echarts.apache.org/examples/en/index.html))
 
 ## Caveats
 
@@ -105,7 +104,7 @@ series: [
 To implement [Events and Actions in ECharts](https://echarts.apache.org/en/tutorial.html#Events%20and%20Actions%20in%20ECharts)
 you should directly integrate in the React custom component for now so we don't try to parse JS coming from Python.
 
-## What if I use Pyecharts ?
+### Using pyecharts with st.html
 
 While this package provides a `st_pyecharts` method, if you're using `pyecharts` you can directly embed your pyecharts visualization inside `st.html` 
 by passing the output of the chart's `.render_embed()`.

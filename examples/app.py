@@ -1,6 +1,6 @@
 import streamlit as st
-from pyecharts.commons.utils import JsCode
 
+from streamlit_echarts import JsCode
 from streamlit_echarts import st_echarts
 
 

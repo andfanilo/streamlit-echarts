@@ -3,10 +3,11 @@ import random
 import streamlit as st
 from pyecharts import options as opts
 from pyecharts.charts import Bar
+from pyecharts.charts import Geo
 from pyecharts.charts import Timeline
-from pyecharts.commons.utils import JsCode
 from pyecharts.faker import Faker
 
+from streamlit_echarts import JsCode
 from streamlit_echarts import st_pyecharts
 
 
@@ -18,6 +19,7 @@ def main():
         "Vertical datazoom": render_vertical_datazoom,
         "Timeline": render_timeline,
         "Chart with randomization": render_randomize,
+        "Map": render_map,
     }
 
     st.header("Hello Pyecharts !")
@@ -177,6 +179,21 @@ def render_js():
             .set_global_opts(title_opts=opts.TitleOpts(title="Bar-自定义柱状颜色"))
         )
         st_pyecharts(c)
+
+
+def render_map():
+    with st.echo("below"):
+        g = (
+            Geo()
+            .add_schema(maptype="china")
+            .add("geo", [list(z) for z in zip(Faker.provinces, Faker.values())])
+            .set_series_opts(label_opts=opts.LabelOpts(is_show=False))
+            .set_global_opts(
+                visualmap_opts=opts.VisualMapOpts(),
+                title_opts=opts.TitleOpts(title="Geo-基本示例"),
+            )
+        )
+        st_pyecharts(g)
 
 
 if __name__ == "__main__":

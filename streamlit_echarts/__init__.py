@@ -1,9 +1,11 @@
 import os
+import re
 from typing import Dict
 from typing import Union
 
 import simplejson as json
 import streamlit as st
+
 from pyecharts.charts.base import Base
 from pyecharts.charts.base import default
 
@@ -63,12 +65,20 @@ def st_pyecharts(
     :return: chart
     """
     options = json.dumps(chart.get_options(), default=default, ignore_nan=True)
-    return _component_func(
+    return st_echarts(
         options=json.loads(options),
         theme=theme,
         height=height,
         width=width,
         key=key,
         renderer=renderer,
-        default=None,
     )
+
+
+class JsCode:
+    def __init__(self, js_code: str):
+        self.js_code = "--x_x--0_0--" + js_code + "--x_x--0_0--"
+
+    def replace(self, pattern: str, repl: str):
+        self.js_code = re.sub(pattern, repl, self.js_code)
+        return self
