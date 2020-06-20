@@ -9,6 +9,7 @@ def main():
         "Basic rendering": render_basic,
         "Custom pie chart": render_custom_pie,
         "Datazoom": render_datazoom,
+        "Dataset": render_dataset,
     }
 
     st.title("Hello ECharts !")
@@ -30,7 +31,7 @@ def render_basic():
                     {"data": [820, 932, 901, 934, 1290, 1330, 1320], "type": "line"}
                 ],
             },
-            height="800px"
+            height="800px",
         )
 
 
@@ -115,6 +116,27 @@ def render_datazoom():
             ],
         }
         st_echarts(options=option_js)
+
+
+def render_dataset():
+    with st.echo("below"):
+        options = {
+            "legend": {},
+            "tooltip": {},
+            "dataset": {
+                "source": [
+                    ["product", "2015", "2016", "2017"],
+                    ["Matcha Latte", 43.3, 85.8, 93.7],
+                    ["Milk Tea", 83.1, 73.4, 55.1],
+                    ["Cheese Cocoa", 86.4, 65.2, 82.5],
+                    ["Walnut Brownie", 72.4, 53.9, 39.1],
+                ]
+            },
+            "xAxis": {"type": "category"},
+            "yAxis": {},
+            "series": [{"type": "bar"}, {"type": "bar"}, {"type": "bar"}],
+        }
+        st_echarts(options)
 
 
 if __name__ == "__main__":

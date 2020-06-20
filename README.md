@@ -9,6 +9,7 @@ It's basically a Streamlit wrapper over [echarts-for-react](https://github.com/h
 ## Install
 
 ```shell script
+pip install pyecharts  # <-- optional, for pyecharts and JsCode
 pip install -i https://test.pypi.org/simple/ --no-deps streamlit-echarts
 ```
 
@@ -105,8 +106,8 @@ you should directly integrate in the React custom component for now so we don't 
 
 ## What if I use Pyecharts ?
 
-If you're using pyecharts, you can directly embed your pyecharts visualization inside `st.html` 
-by passing the output of the chart's `.render_embed()` :
+While this package provides a `st_pyecharts` method, if you're using `pyecharts` you can directly embed your pyecharts visualization inside `st.html` 
+by passing the output of the chart's `.render_embed()`.
 
 ```python
 from pyecharts.charts import Bar
@@ -122,3 +123,6 @@ c = (Bar()
 )
 st.html(c, width=1000, height=1000)
 ```
+
+Using `st_pyecharts` is still something you would want if you need to change data regularly 
+without remounting the component. 
