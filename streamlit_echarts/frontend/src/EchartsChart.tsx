@@ -3,6 +3,7 @@ import { ComponentProps, Streamlit, withStreamlitConnection } from "./streamlit"
 import { isObject } from "lodash"
 
 import echarts from "echarts"
+import "echarts-gl"
 import "echarts/map/js/china.js"
 import ReactEcharts from "echarts-for-react"
 
@@ -16,7 +17,7 @@ interface PythonArgs {
   theme: string | object
   height: string
   width: string
-  renderer: 'canvas' | 'svg',
+  renderer: "canvas" | "svg",
 }
 
 const EchartsChart = (props: ComponentProps) => {
