@@ -7,13 +7,14 @@ from pyecharts.charts import Geo
 from pyecharts.charts import Timeline
 from pyecharts.commons.utils import JsCode
 from pyecharts.faker import Faker
+from pyecharts.globals import ThemeType
 
 from streamlit_echarts import st_pyecharts
 
 
 def main():
     PAGES = {
-        "Basic rendering": render_basic,
+        "Basic bar chart": render_bar,
         "Custom themes": render_custom,
         "Filter with legend": render_filter_legend,
         "Vertical datazoom": render_vertical_datazoom,
@@ -29,7 +30,7 @@ def main():
     PAGES[page]()
 
 
-def render_basic():
+def render_bar():
     with st.echo("below"):
         b = (
             Bar()
@@ -61,7 +62,7 @@ def render_custom():
                 )
             )
         )
-        st_pyecharts(b, theme="dark")
+        st_pyecharts(b, theme=ThemeType.DARK)
 
         st_pyecharts(
             b,
