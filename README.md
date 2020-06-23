@@ -15,20 +15,96 @@ pip install -i https://test.pypi.org/simple/ --no-deps streamlit-echarts
 
 ## Run
 
+Check the `examples/` folder of the project for a quickstart.
+
 ```shell script
 streamlit run examples/app.py
 ```
 
-### Usage
-
-Check `examples/` folder for examples.
+## Usage
 
 This library provides 2 functions to display echarts :
-* `st_echarts` to display charts from echarts json options as Python dicts (check the [official examples](https://echarts.apache.org/examples/en/index.html))
-* `st_pyecharts` to display charts from Pyecharts instances (check the [official examples](https://gallery.pyecharts.org/#/))
-* `JsCode` util class (directly extracted from Pyecharts, so you don't need to download `pyecharts` only for JsCode) 
-to format JsCode when using echarts options. 
-  * For `pyecharts` use the usual `from pyecharts.commons.utils import JsCode`.
+* `st_echarts` to display charts from echarts json options as Python dicts
+* `st_pyecharts` to display charts from Pyecharts instances
+
+### st_echarts API
+
+```
+st_echarts(
+    options: Dict
+    theme: Union[str, Dict]
+    events: Dict[str, str]
+    height: str
+    width: str
+    renderer: str
+    key: str
+)
+```
+
+* **options** : Python dictionary that resembles the JSON counterpart of 
+[echarts options](https://echarts.apache.org/en/tutorial.html#ECharts%20Basic%20Concepts%20Overview).
+For example the basic line chart in JS :
+```javascript
+option = {
+    xAxis: {
+        type: 'category',
+        data: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
+    },
+    yAxis: { type: 'value' },
+    series: [
+      { data: [820, 932, 901, 934, 1290, 1330, 1320], type: 'line' }
+    ]
+};
+```
+is represented in Python : 
+```python
+option = {
+    "xAxis": {
+        "type": "category",
+        "data": ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"],
+    },
+    "yAxis": { "type": "value" },
+    "series": [
+        {"data": [820, 932, 901, 934, 1290, 1330, 1320], "type": "line" }
+    ],
+}
+```
+
+* **theme** :  [echarts theme](https://echarts.apache.org/en/tutorial.html#Overview%20of%20Style%20Customization).
+You can specify built-int themes or pass over style configuration as a Pythcon dict.
+* **events** : Python dictionary which maps an [event](https://echarts.apache.org/en/tutorial.html#Events%20and%20Actions%20in%20ECharts) to a Js function as string.
+For example :
+```python
+{
+    "click": "function(params) { console.log(params.name) }"
+}
+```
+will get mapped to :
+```javascript
+myChart.on('click', function (params) {
+    console.log(params.name);
+});
+```
+* **height** / **width** : size of the div wrapper
+* **renderer** : SVG or canvas
+* **key** : assign a fixed identity if you want to change its arguments over time and not have it be re-created.
+
+### Using st_pyecharts
+
+```python
+def st_pyecharts(
+    chart: Base
+    theme: Union[str, Dict]
+    events: Dict[str, str]
+    height: str
+    width: str
+    renderer: str
+    key: str
+)
+```
+* **chart** : Pyecharts instance
+
+The docs for the remaining inputs are the same as its `st_echarts` counterpart.
 
 ## Development 
 
@@ -78,10 +154,15 @@ does not work, you need to call theme in `st_pyecharts(c, theme=ThemeType.LIGHT)
 
 ### On Javascript functions 
 
-Pyecharts uses `pyecharts.commons.utils.JsCode` to indicate javascript code by wrapping with a specific placeholder.
-So in the custom component we parse every value in options looking for the specific `JsCode` placeholder then parse those as a JS function.
+This library also provies the `JsCode` util class directly from `pyecharts`.
 
-As such if you want to pass JS function as strings in Python args, you use the corresponding `JsCode` module to wrap code with this placeholder :
+This class is used to indicate javascript code by wrapping with a specific placeholder.
+On the custom component side, we parse every value in options looking for this specific placeholder 
+to determine whether a value is a JS function.
+
+As such, if you want to pass JS function as strings in Python args, 
+you use the corresponding `JsCode` module to wrap code with this placeholder :
+
 * In Python dict, wrap with `streamlit_echarts.JsCode` by calling `JsCode(function).jscode`. 
 It's a smaller version of `pyecharts.commons.utils.JsCode` so you don't need to download `pyecharts` to use it. 
 ``` 
