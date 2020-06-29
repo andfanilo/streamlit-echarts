@@ -9,8 +9,7 @@ It's basically a Streamlit wrapper over [echarts-for-react](https://github.com/h
 ## Install
 
 ```shell script
-pip install pyecharts simplejson  # <-- optional, if you need to use st_pyecharts
-pip install -i https://test.pypi.org/simple/ --no-deps streamlit-echarts
+pip install -i https://test.pypi.org/simple/ streamlit-echarts
 ```
 
 ## Run
