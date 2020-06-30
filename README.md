@@ -12,19 +12,54 @@ It's basically a Streamlit wrapper over [echarts-for-react](https://github.com/h
 pip install -i https://test.pypi.org/simple/ streamlit-echarts
 ```
 
-## Run
-
-Check the `examples/` folder of the project for a quickstart.
-
-```shell script
-streamlit run examples/app.py
-```
-
 ## Usage
 
 This library provides 2 functions to display echarts :
 * `st_echarts` to display charts from echarts json options as Python dicts
 * `st_pyecharts` to display charts from Pyecharts instances
+
+Check the `examples/` folder of the project for a more thourough quick start.
+
+**st_echarts example**
+
+```python
+from streamlit_echarts import st_echarts
+
+options = {
+    "xAxis": {
+        "type": "category",
+        "data": ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"],
+    },
+    "yAxis": {"type": "value"},
+    "series": [
+        {"data": [820, 932, 901, 934, 1290, 1330, 1320], "type": "line"}
+    ],
+}
+st_echarts(options=options)
+```
+
+**st_pyecharts example**
+
+```python
+from pyecharts import options as opts
+from pyecharts.charts import Bar
+from streamlit_echarts import st_pyecharts
+
+b = (
+    Bar()
+    .add_xaxis(["Microsoft", "Amazon", "IBM", "Oracle", "Google", "Alibaba"])
+    .add_yaxis(
+        "2017-2018 Revenue in (billion $)", [21.2, 20.4, 10.3, 6.08, 4, 2.2]
+    )
+    .set_global_opts(
+        title_opts=opts.TitleOpts(
+            title="Top cloud providers 2018", subtitle="2017-2018 Revenue"
+        ),
+        toolbox_opts=opts.ToolboxOpts(),
+    )
+)
+st_pyecharts(b)
+```
 
 ### st_echarts API
 
@@ -121,11 +156,12 @@ npm install
 ```shell script
 conda create -n streamlit-echarts python=3.7
 conda activate streamlit-echarts
-pip install pyecharts simplejson streamlit-0.61.0-py2.py3-none-any.whl 
 pip install -e .
 ```
 
 ### Run
+
+Both webpack dev server and Streamlit need to run for development mode.
 
 * JS side
 
@@ -153,17 +189,18 @@ does not work, you need to call theme in `st_pyecharts(c, theme=ThemeType.LIGHT)
 
 ### On Javascript functions 
 
-This library also provies the `JsCode` util class directly from `pyecharts`.
+This library also provides the `JsCode` util class directly from `pyecharts`.
 
-This class is used to indicate javascript code by wrapping with a specific placeholder.
+This class is used to indicate javascript code by wrapping it with a specific placeholder.
 On the custom component side, we parse every value in options looking for this specific placeholder 
 to determine whether a value is a JS function.
 
-As such, if you want to pass JS function as strings in Python args, 
-you use the corresponding `JsCode` module to wrap code with this placeholder :
+As such, if you want to pass JS functions as strings in your options, 
+you should use the corresponding `JsCode` module to wrap code with this placeholder :
 
-* In Python dict, wrap with `streamlit_echarts.JsCode` by calling `JsCode(function).jscode`. 
-It's a smaller version of `pyecharts.commons.utils.JsCode` so you don't need to download `pyecharts` to use it. 
+* In Python dicts representing the JSON option counterpart, 
+wrap any JS string function with `streamlit_echarts.JsCode` by calling `JsCode(function).jscode`. 
+It's a smaller version of `pyecharts.commons.utils.JsCode` so you don't need to install `pyecharts` to use it. 
 ``` 
 series: [
     {

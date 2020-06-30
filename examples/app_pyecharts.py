@@ -1,6 +1,5 @@
 import random
 
-import streamlit as st
 from pyecharts import options as opts
 from pyecharts.charts import Bar
 from pyecharts.charts import Geo
@@ -8,6 +7,7 @@ from pyecharts.charts import Timeline
 from pyecharts.commons.utils import JsCode
 from pyecharts.faker import Faker
 from pyecharts.globals import ThemeType
+import streamlit as st
 
 from streamlit_echarts import st_pyecharts
 
