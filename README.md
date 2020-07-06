@@ -9,7 +9,7 @@ It's basically a Streamlit wrapper over [echarts-for-react](https://github.com/h
 ## Install
 
 ```shell script
-pip install -i https://test.pypi.org/simple/ streamlit-echarts
+pip install streamlit-echarts
 ```
 
 ## Usage
