@@ -225,7 +225,7 @@ series: [
     )
 ``` 
 
-### st_pyecharts VS using pyecharts with st.html
+### st_pyecharts VS using pyecharts with components.html
 
 While this package provides a `st_pyecharts` method, if you're using `pyecharts` you can directly embed your pyecharts visualization inside `st.html` 
 by passing the output of the chart's `.render_embed()`.
@@ -233,7 +233,7 @@ by passing the output of the chart's `.render_embed()`.
 ```python
 from pyecharts.charts import Bar
 from pyecharts import options as opts
-import streamlit as st
+import streamlit.components.v1 as components
 
 c = (Bar()
     .add_xaxis(["Microsoft", "Amazon", "IBM", "Oracle", "Google", "Alibaba"])
@@ -242,7 +242,7 @@ c = (Bar()
                      toolbox_opts=opts.ToolboxOpts())
     .render_embed() # generate a local HTML file
 )
-st.html(c, width=1000, height=1000)
+components.html(c, width=1000, height=1000)
 ```
 
 Using `st_pyecharts` is still something you would want if you need to change data regularly 
