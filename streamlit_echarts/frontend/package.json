@@ -14,15 +14,16 @@
     "@types/react-dom": "^16.9.0",
     "apache-arrow": "^0.16.0",
     "baseui": "^9.67.2",
-    "event-target-shim": "^5.0.1",
     "echarts": "^4.7.0",
     "echarts-for-react": "^2.0.15-beta.1",
     "echarts-gl": "^1.1.1",
+    "event-target-shim": "^5.0.1",
     "hoist-non-react-statics": "^3.3.2",
     "lodash": "^4.17.15",
     "react": "^16.13.1",
     "react-dom": "^16.13.1",
     "react-scripts": "3.4.1",
+    "streamlit-component-lib": "^1.0.0",
     "typescript": "~3.7.2"
   },
   "scripts": {
