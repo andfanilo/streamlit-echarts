@@ -28,15 +28,26 @@ def st_echarts(
     renderer: str = "canvas",
     key: str = None,
 ):
-    """Display echarts chart from options dictionary
-    :param options: dictionary of echarts options. JS code should have been wrapped beforehand.
-    :param theme: prebuilt theme as string, or object
-    :param events: dictionary of mouse events to string JS functions. Don't wrap values with JsCode placeholder.
-    :param height: height of div wrapper
-    :param width: width of div wrapper
-    :param renderer: choose canvas or svg
-    :param key: assign a key to prevent component remounting
-    :return: chart
+    """Display an ECharts instance in Streamlit
+
+    Parameters
+    ----------
+    options: Dict
+        Dictionary of echarts options. JS code should have been wrapped beforehand.
+    theme: str | Dict
+        Prebuilt theme, or object defining theme
+    events: Dict
+        Dictionary of mouse events to string JS functions. 
+        Don't wrap values with JsCode placeholder.
+    height: str
+        Height of ECharts chart
+    width: Image
+        Width of ECharts chart
+    renderer: {'canvas', 'svg'}
+        Renderer for displaying chart
+    key: str
+        An optional string to use as the unique key for the widget. 
+        Assign a key so the component is not remount every time the script is rerun.
     """
     if events is None:
         events = {}
@@ -61,15 +72,26 @@ def st_pyecharts(
     renderer: str = "canvas",
     key: str = None,
 ):
-    """Display echarts chart from pyecharts instance
-    :param chart: pyecharts instance. JS code should have been wrapped beforehand.
-    :param theme: prebuilt theme as string, or object
-    :param events: dictionary of mouse events to string JS functions. Don't wrap values with JsCode placeholder.
-    :param height: height of div wrapper
-    :param width: width of div wrapper
-    :param renderer: choose canvas or svg
-    :param key: assign a key to prevent component remounting
-    :return: chart
+    """Display a PyECharts instance in Streamlit
+
+    Parameters
+    ----------
+    chart: Base
+        PyEcharts instance. JS code should have been wrapped beforehand.
+    theme: str | Dict
+        Prebuilt theme, or object defining theme
+    events: Dict
+        Dictionary of mouse events to string JS functions. 
+        Don't wrap values with JsCode placeholder.
+    height: str
+        Height of ECharts chart
+    width: Image
+        Width of ECharts chart
+    renderer: {'canvas', 'svg'}
+        Renderer for displaying chart
+    key: str
+        An optional string to use as the unique key for the widget. 
+        Assign a key so the component is not remount every time the script is rerun.
     """
     options = json.dumps(chart.get_options(), default=default, ignore_nan=True)
     return st_echarts(
