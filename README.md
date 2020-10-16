@@ -1,5 +1,7 @@
 # Streamlit - ECharts
 
+[![Streamlit App](https://static.streamlit.io/badges/streamlit_badge_black_white.svg)](https://share.streamlit.io/andfanilo/streamlit-echarts-demo/master/app.py)
+
 A custom component to run Echarts in Streamlit session.
 
 It's basically a Streamlit wrapper over [echarts-for-react](https://github.com/hustcc/echarts-for-react).
