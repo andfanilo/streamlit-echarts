@@ -15,7 +15,7 @@ def readme() -> str:
 
 setuptools.setup(
     name="streamlit-echarts",
-    version="0.2.0",
+    version="0.3.0",
     author="Fanilo ANDRIANASOLO",
     author_email="andfanilo@gmail.com",
     description="Echarts custom component for Streamlit",
