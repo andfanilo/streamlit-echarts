@@ -8,6 +8,8 @@ import { isObject } from "lodash"
 
 import echarts from "echarts"
 import "echarts-gl"
+import "echarts-liquidfill"
+import "echarts-wordcloud"
 import "echarts/map/js/china.js"
 import ReactEcharts from "echarts-for-react"
 
