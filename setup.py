@@ -29,6 +29,6 @@ setuptools.setup(
     install_requires=[
         "streamlit >= 0.63",
         "simplejson >= 3.0",
-        "pyecharts >= 1.8",
+        "pyecharts >= 1.9",
     ]
 )
