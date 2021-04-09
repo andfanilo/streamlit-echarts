@@ -21,6 +21,7 @@ def main():
         "Map": render_map,
         "Click event": render_event,
         "Stacked line chart": render_stacked_lines,
+        "Cartesian heatmap": render_cartesian_heatmap,
     }
 
     st.title("Hello ECharts !")
@@ -578,6 +579,71 @@ def render_stacked_lines():
             options=options,
             height="400px",
         )
+
+
+def render_cartesian_heatmap():
+    with st.echo("below"):
+        options = {
+            "tooltip": {"position": "top"},
+            "grid": {"height": "50%", "top": "10%"},
+            "xAxis": {
+                "type": "category",
+                "data": ["Monday", "Tuesday", "Wednesday", "Thursday"],
+                "splitArea": {"show": True},
+            },
+            "yAxis": {
+                "type": "category",
+                "data": ["a", "b", "m", "n", "p", "q"],
+                "splitArea": {"show": True},
+            },
+            "visualMap": {
+                "min": 0,
+                "max": 10,
+                "inRange": {
+                    "color": [  # From smaller to bigger value ->
+                        "#0018F9",
+                        "#FFFFFF",
+                        "#DD2000",
+                    ]
+                },
+                "calculable": True,
+                "orient": "horizontal",
+                "left": "center",
+                "bottom": "15%",
+            },
+            "series": [
+                {
+                    "name": "Punch Card",
+                    "type": "heatmap",
+                    "data": [
+                        [  # xAxis: 'Monday', yAxis: 'a'.
+                            0,
+                            0,
+                            2,
+                        ],
+                        [  # xAxis: 'Thursday', yAxis: 'm'.
+                            "Thursday",
+                            2,
+                            1,
+                        ],
+                        [  # xAxis: 'Wednesday', yAxis: 'p'.
+                            2,
+                            "p",
+                            2,
+                        ],
+                        [3, 3, 5],
+                    ],
+                    "label": {"show": True},
+                    "emphasis": {
+                        "itemStyle": {
+                            "shadowBlur": 10,
+                            "shadowColor": "rgba(0, 0, 0, 0.5)",
+                        }
+                    },
+                },
+            ],
+        }
+        st_echarts(options=options)
 
 
 if __name__ == "__main__":
