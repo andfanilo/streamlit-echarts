@@ -97,6 +97,7 @@ def st_pyecharts(
     height: str = "300px",
     width: str = "100%",
     renderer: str = "canvas",
+    map: Map = None,
     key: str = None,
 ):
     """Display a PyECharts instance in Streamlit
@@ -116,6 +117,8 @@ def st_pyecharts(
         Width of ECharts chart
     renderer: {'canvas', 'svg'}
         Renderer for displaying chart
+    map: Map
+        Details of GeoJSON map to register into echarts
     key: str
         An optional string to use as the unique key for the widget. 
         Assign a key so the component is not remount every time the script is rerun.
@@ -128,5 +131,6 @@ def st_pyecharts(
         height=height,
         width=width,
         renderer=renderer,
+        map=map,
         key=key,
     )
