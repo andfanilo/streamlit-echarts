@@ -7,6 +7,7 @@ import simplejson as json
 import streamlit.components.v1 as components
 from pyecharts.charts.base import Base
 from pyecharts.charts.base import default
+from rjsmin import jsmin
 
 _RELEASE = False  # on packaging, pass this to True
 
@@ -39,7 +40,7 @@ class Map:
 class JsCode:
     def __init__(self, js_code: str):
         js_placeholder = "--x_x--0_0--"
-        self.js_code = f"{js_placeholder}{js_code}{js_placeholder}"
+        self.js_code = f"{js_placeholder}{jsmin(js_code)}{js_placeholder}"
 
 
 def st_echarts(

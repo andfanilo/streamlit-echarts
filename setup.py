@@ -27,6 +27,7 @@ setuptools.setup(
     classifiers=[],
     python_requires=">=3.6",
     install_requires=[
+        "rjsmin == 1.1.0",
         "streamlit >= 0.63",
         "simplejson >= 3.0",
         "pyecharts >= 1.9",
