@@ -17,8 +17,9 @@ pip install streamlit-echarts
 ## Usage
 
 This library provides 2 functions to display echarts :
-* `st_echarts` to display charts from echarts json options as Python dicts
-* `st_pyecharts` to display charts from Pyecharts instances
+
+- `st_echarts` to display charts from echarts json options as Python dicts
+- `st_pyecharts` to display charts from Pyecharts instances
 
 Check the `examples/` folder of the project for a more thourough quick start.
 
@@ -77,22 +78,23 @@ st_echarts(
 )
 ```
 
-* **options** : Python dictionary that resembles the JSON counterpart of 
-[echarts options](https://echarts.apache.org/en/tutorial.html#ECharts%20Basic%20Concepts%20Overview).
-For example the basic line chart in JS :
+- **options** : Python dictionary that resembles the JSON counterpart of
+  [echarts options](https://echarts.apache.org/en/tutorial.html#ECharts%20Basic%20Concepts%20Overview).
+  For example the basic line chart in JS :
+
 ```javascript
 option = {
-    xAxis: {
-        type: 'category',
-        data: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
-    },
-    yAxis: { type: 'value' },
-    series: [
-      { data: [820, 932, 901, 934, 1290, 1330, 1320], type: 'line' }
-    ]
+  xAxis: {
+    type: "category",
+    data: ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"],
+  },
+  yAxis: { type: "value" },
+  series: [{ data: [820, 932, 901, 934, 1290, 1330, 1320], type: "line" }],
 };
 ```
-is represented in Python : 
+
+is represented in Python :
+
 ```python
 option = {
     "xAxis": {
@@ -106,24 +108,48 @@ option = {
 }
 ```
 
-* **theme** :  [echarts theme](https://echarts.apache.org/en/tutorial.html#Overview%20of%20Style%20Customization).
-You can specify built-int themes or pass over style configuration as a Pythcon dict.
-* **events** : Python dictionary which maps an [event](https://echarts.apache.org/en/tutorial.html#Events%20and%20Actions%20in%20ECharts) to a Js function as string.
-For example :
+- **theme** : [echarts theme](https://echarts.apache.org/en/tutorial.html#Overview%20of%20Style%20Customization).
+  You can specify built-int themes or pass over style configuration as a Python dict.
+- **events** : Python dictionary which maps an [event](https://echarts.apache.org/en/tutorial.html#Events%20and%20Actions%20in%20ECharts) to a Js function as string.
+  For example :
+
 ```python
 {
     "click": "function(params) { console.log(params.name) }"
 }
 ```
+
 will get mapped to :
+
 ```javascript
-myChart.on('click', function (params) {
-    console.log(params.name);
+myChart.on("click", function (params) {
+  console.log(params.name);
 });
 ```
-* **height** / **width** : size of the div wrapper
-* **renderer** : SVG or canvas
-* **key** : assign a fixed identity if you want to change its arguments over time and not have it be re-created.
+
+- **height** / **width** : size of the div wrapper
+- **map** : register a map using the dedicated `Map` class
+
+```python
+from streamlit_echarts import Map
+with open("USA.json", "r") as f:
+    map = Map(
+        "USA",
+        json.loads(f.read()),
+        {
+            "Alaska": {"left": -131, "top": 25, "width": 15},
+            "Hawaii": {"left": -110, "top": 28, "width": 5},
+            "Puerto Rico": {"left": -76, "top": 26, "width": 2},
+        },
+    )
+options = {...}
+st_echarts(options, map=map)
+```
+
+You'll find a lot of GeoJSON data inside the [source code of echarts-countries-js](https://github.com/echarts-maps/echarts-countries-js/tree/master/echarts-countries-js).
+
+- **renderer** : SVG or canvas
+- **key** : assign a fixed identity if you want to change its arguments over time and not have it be re-created.
 
 ### Using st_pyecharts
 
@@ -138,22 +164,23 @@ def st_pyecharts(
     key: str
 )
 ```
-* **chart** : Pyecharts instance
+
+- **chart** : Pyecharts instance
 
 The docs for the remaining inputs are the same as its `st_echarts` counterpart.
 
-## Development 
+## Development
 
 ### Install
 
-* JS side
+- JS side
 
 ```shell script
 cd frontend
 npm install
 ```
 
-* Python side 
+- Python side
 
 ```shell script
 conda create -n streamlit-echarts python=3.7
@@ -165,45 +192,50 @@ pip install -e .
 
 Both webpack dev server and Streamlit need to run for development mode.
 
-* JS side
+- JS side
 
 ```shell script
 cd frontend
 npm run start
 ```
 
-* Python side
+- Python side
+
+Demo example is on https://github.com/andfanilo/streamlit-echarts-demo.
 
 ```shell script
-streamlit run examples/app.py
+git clone https://github.com/andfanilo/streamlit-echarts-demo
+cd streamlit-echarts-demo/
+streamlit run app.py
 ```
 
 ## Caveats
 
 ### Theme definition
 
-* Defining the theme in Pyecharts when instantiating chart like `Bar(init_opts=opts.InitOpts(theme=ThemeType.LIGHT))` 
-does not work, you need to call theme in `st_pyecharts(c, theme=ThemeType.LIGHT)`.
+- Defining the theme in Pyecharts when instantiating chart like `Bar(init_opts=opts.InitOpts(theme=ThemeType.LIGHT))`
+  does not work, you need to call theme in `st_pyecharts(c, theme=ThemeType.LIGHT)`.
 
 ### Maps definition
 
-* For now only china map is loaded. Need to find a way how to load json maps or from URL.
+- For now only china map is loaded. Need to find a way how to load json maps or from URL.
 
-### On Javascript functions 
+### On Javascript functions
 
 This library also provides the `JsCode` util class directly from `pyecharts`.
 
 This class is used to indicate javascript code by wrapping it with a specific placeholder.
-On the custom component side, we parse every value in options looking for this specific placeholder 
+On the custom component side, we parse every value in options looking for this specific placeholder
 to determine whether a value is a JS function.
 
-As such, if you want to pass JS functions as strings in your options, 
+As such, if you want to pass JS functions as strings in your options,
 you should use the corresponding `JsCode` module to wrap code with this placeholder :
 
-* In Python dicts representing the JSON option counterpart, 
-wrap any JS string function with `streamlit_echarts.JsCode` by calling `JsCode(function).jscode`. 
-It's a smaller version of `pyecharts.commons.utils.JsCode` so you don't need to install `pyecharts` to use it. 
-``` 
+- In Python dicts representing the JSON option counterpart,
+  wrap any JS string function with `streamlit_echarts.JsCode` by calling `JsCode(function).jscode`.
+  It's a smaller version of `pyecharts.commons.utils.JsCode` so you don't need to install `pyecharts` to use it.
+
+```
 series: [
     {
         type: 'scatter', // this is scatter chart
@@ -215,7 +247,9 @@ series: [
     }
 ]
 ```
-* In Pyecharts, use `pyecharts.commons.utils.JsCode` directly, JsCode automatically calls `.jscode` when dumping options.
+
+- In Pyecharts, use `pyecharts.commons.utils.JsCode` directly, JsCode automatically calls `.jscode` when dumping options.
+
 ```
 .set_series_opts(
         label_opts=opts.LabelOpts(
@@ -225,11 +259,11 @@ series: [
             ),
         )
     )
-``` 
+```
 
 ### st_pyecharts VS using pyecharts with components.html
 
-While this package provides a `st_pyecharts` method, if you're using `pyecharts` you can directly embed your pyecharts visualization inside `st.html` 
+While this package provides a `st_pyecharts` method, if you're using `pyecharts` you can directly embed your pyecharts visualization inside `st.html`
 by passing the output of the chart's `.render_embed()`.
 
 ```python
@@ -247,7 +281,7 @@ c = (Bar()
 components.html(c, width=1000, height=1000)
 ```
 
-Using `st_pyecharts` is still something you would want if you need to change data regularly 
+Using `st_pyecharts` is still something you would want if you need to change data regularly
 without remounting the component, check for examples `examples/app_pyecharts.py` for `Chart with randomization` example.
 
-![](./img/randomize.gif) 
+![](./img/randomize.gif)

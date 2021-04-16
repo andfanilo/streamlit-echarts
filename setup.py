@@ -15,7 +15,7 @@ def readme() -> str:
 
 setuptools.setup(
     name="streamlit-echarts",
-    version="0.3.0",
+    version="0.4.0",
     author="Fanilo ANDRIANASOLO",
     author_email="andfanilo@gmail.com",
     description="Echarts custom component for Streamlit",
@@ -29,6 +29,6 @@ setuptools.setup(
     install_requires=[
         "streamlit >= 0.63",
         "simplejson >= 3.0",
-        "pyecharts >= 1.8",
+        "pyecharts >= 1.9",
     ]
 )
