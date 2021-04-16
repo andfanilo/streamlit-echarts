@@ -109,7 +109,7 @@ option = {
 ```
 
 - **theme** : [echarts theme](https://echarts.apache.org/en/tutorial.html#Overview%20of%20Style%20Customization).
-  You can specify built-int themes or pass over style configuration as a Pythcon dict.
+  You can specify built-int themes or pass over style configuration as a Python dict.
 - **events** : Python dictionary which maps an [event](https://echarts.apache.org/en/tutorial.html#Events%20and%20Actions%20in%20ECharts) to a Js function as string.
   For example :
 
