@@ -128,6 +128,26 @@ myChart.on("click", function (params) {
 ```
 
 - **height** / **width** : size of the div wrapper
+- **map** : register a map using the dedicated `Map` class
+
+```python
+from streamlit_echarts import Map
+with open("USA.json", "r") as f:
+    map = Map(
+        "USA",
+        json.loads(f.read()),
+        {
+            "Alaska": {"left": -131, "top": 25, "width": 15},
+            "Hawaii": {"left": -110, "top": 28, "width": 5},
+            "Puerto Rico": {"left": -76, "top": 26, "width": 2},
+        },
+    )
+options = {...}
+st_echarts(options, map=map)
+```
+
+You'll find a lot of GeoJSON data inside the [source code of echarts-countries-js](https://github.com/echarts-maps/echarts-countries-js/tree/master/echarts-countries-js).
+
 - **renderer** : SVG or canvas
 - **key** : assign a fixed identity if you want to change its arguments over time and not have it be re-created.
 

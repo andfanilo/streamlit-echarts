@@ -6,13 +6,19 @@ import {
 } from "streamlit-component-lib"
 import { isObject } from "lodash"
 
-import * as echarts from 'echarts';
+import * as echarts from "echarts"
 import "echarts-gl"
 import "echarts-liquidfill"
 import "echarts-wordcloud"
 import ReactEcharts from "echarts-for-react"
 
 import deepMap from "./utils"
+
+interface Map {
+  mapName: string
+  geoJson: object
+  specialAreas: object
+}
 
 /**
  * Arguments Streamlit receives from the Python side
@@ -24,6 +30,7 @@ interface PythonArgs {
   height: string
   width: string
   renderer: "canvas" | "svg"
+  map: Map
 }
 
 const EchartsChart = (props: ComponentProps) => {
@@ -61,8 +68,14 @@ const EchartsChart = (props: ComponentProps) => {
     height,
     width,
     renderer,
+    map,
   }: PythonArgs = props.args
   const cleanTheme = registerTheme(theme)
+
+  if (isObject(map)) {
+    echarts.registerMap(map.mapName, map.geoJson, map.specialAreas)
+  }
+
   const cleanOptions = convertJavascriptCode(options)
   const cleanOnEvents = convertJavascriptCode(onEvents)
 
