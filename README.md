@@ -285,3 +285,7 @@ Using `st_pyecharts` is still something you would want if you need to change dat
 without remounting the component, check for examples `examples/app_pyecharts.py` for `Chart with randomization` example.
 
 ![](./img/randomize.gif)
+
+# Support me
+
+<a href="https://www.buymeacoffee.com/andfanilo" target="_blank"><img src="https://cdn.buymeacoffee.com/buttons/default-orange.png" alt="Buy Me A Coffee" height="41" width="174"></a>
