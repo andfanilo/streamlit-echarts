@@ -261,6 +261,8 @@ series: [
     )
 ```
 
+**Note**: you need the JS string to be on one-line. you can use Javascript minifiers like https://javascript-minifier.com/ or https://www.minifier.org/ to transform your Javascript code to a one-liner.
+
 ### st_pyecharts VS using pyecharts with components.html
 
 While this package provides a `st_pyecharts` method, if you're using `pyecharts` you can directly embed your pyecharts visualization inside `st.html`
