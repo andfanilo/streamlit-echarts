@@ -74,7 +74,7 @@ const EchartsChart = (props: ComponentProps) => {
   const cleanTheme = registerTheme(theme)
 
   if (isObject(map)) {
-   // echarts.registerMap(map.mapName, map.geoJson, map.specialAreas)
+      echarts.registerMap(map.mapName, map.geoJson, map.specialAreas)
 
   }
 
