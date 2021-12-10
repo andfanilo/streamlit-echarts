@@ -54,6 +54,7 @@ const EchartsChart = (props: ComponentProps) => {
       let match = funcReg.exec(v)
       if (match) {
         const funcStr = match[1]
+        // eslint-disable-next-line
         return new Function("return " + funcStr)()
       } else {
         return v
@@ -73,11 +74,32 @@ const EchartsChart = (props: ComponentProps) => {
   const cleanTheme = registerTheme(theme)
 
   if (isObject(map)) {
-    echarts.registerMap(map.mapName, map.geoJson, map.specialAreas)
+   // echarts.registerMap(map.mapName, map.geoJson, map.specialAreas)
+
   }
 
   const cleanOptions = convertJavascriptCode(options)
   const cleanOnEvents = convertJavascriptCode(onEvents)
+
+  /*
+  add support for event back to python
+  usage at python side:
+  events={
+    "click": "function(params) { return params.name }",
+    "dblclick":"function(params) { return params.value }"
+  }
+  s=st_pyecharts(b,events=events)
+   */
+  const keys=Object.keys(cleanOnEvents)
+  const getReturnOfcleanOnEvents:any={}
+  keys.forEach(
+    function(key){
+      getReturnOfcleanOnEvents[key]=(params:any)=>{            
+            const s=cleanOnEvents[key](params)            
+            Streamlit.setComponentValue(s)
+        }      
+    }
+  )
 
   return (
     <>
@@ -90,7 +112,7 @@ const EchartsChart = (props: ComponentProps) => {
         onChartReady={() => {
           Streamlit.setFrameHeight()
         }}
-        onEvents={cleanOnEvents}
+        onEvents={getReturnOfcleanOnEvents}
         opts={{ renderer: renderer }}
       />
     </>
