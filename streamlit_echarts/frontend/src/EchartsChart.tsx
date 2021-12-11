@@ -1,4 +1,4 @@
-import React from "react"
+import React, { useEffect, useRef } from "react"
 import {
   ComponentProps,
   Streamlit,
@@ -34,6 +34,8 @@ interface PythonArgs {
 }
 
 const EchartsChart = (props: ComponentProps) => {
+  const echartsElementRef = useRef<ReactEcharts>(null)
+  const echartsInstanceRef = useRef()
   const JS_PLACEHOLDER = "--x_x--0_0--"
 
   const registerTheme = (themeProp: string | object) => {
@@ -79,9 +81,18 @@ const EchartsChart = (props: ComponentProps) => {
   const cleanOptions = convertJavascriptCode(options)
   const cleanOnEvents = convertJavascriptCode(onEvents)
 
+  useEffect(() => {
+    if (null === echartsElementRef.current) {
+      return
+    }
+
+    echartsInstanceRef.current = echartsElementRef.current.getEchartsInstance()
+  })
+
   return (
     <>
       <ReactEcharts
+        ref={echartsElementRef}
         option={cleanOptions}
         notMerge={true}
         lazyUpdate={true}
