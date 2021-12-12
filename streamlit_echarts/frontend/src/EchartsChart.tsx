@@ -71,7 +71,7 @@ const EchartsChart = (props: ComponentProps) => {
    * @returns object with all functions in values evaluated
    */
   const evalStringToFunctionDeepMap = (obj: object) => {
-    return deepMap(obj, evalStringToFunction)
+    return deepMap(obj, evalStringToFunction, {})
   }
 
   const {
