@@ -1,16 +1,16 @@
-import React from "react"
+import React, { useCallback, useEffect, useRef } from "react"
 import {
   ComponentProps,
   Streamlit,
   withStreamlitConnection,
 } from "streamlit-component-lib"
-import { isObject } from "lodash"
+import { isObject, mapValues } from "lodash"
 
 import * as echarts from "echarts"
 import "echarts-gl"
 import "echarts-liquidfill"
 import "echarts-wordcloud"
-import ReactEcharts from "echarts-for-react"
+import ReactEcharts, { EChartsOption } from "echarts-for-react"
 
 import deepMap from "./utils"
 
@@ -24,9 +24,9 @@ interface Map {
  * Arguments Streamlit receives from the Python side
  */
 interface PythonArgs {
-  options: object
+  options: EChartsOption
   theme: string | object
-  onEvents: object
+  onEvents: any
   height: string
   width: string
   renderer: "canvas" | "svg"
@@ -34,6 +34,8 @@ interface PythonArgs {
 }
 
 const EchartsChart = (props: ComponentProps) => {
+  const echartsElementRef = useRef<ReactEcharts>(null)
+  const echartsInstanceRef = useRef()
   const JS_PLACEHOLDER = "--x_x--0_0--"
 
   const registerTheme = (themeProp: string | object) => {
@@ -44,21 +46,32 @@ const EchartsChart = (props: ComponentProps) => {
     return isObject(themeProp) ? customThemeName : themeProp
   }
 
-  const convertJavascriptCode = (obj: object) => {
+  /**
+   * If string can be evaluated as a Function, return activated function. Else return string.
+   * @param s string to evaluate to function
+   * @returns Function if can be evaluated as one, else input string
+   */
+  const evalStringToFunction = (s: string) => {
     let funcReg = new RegExp(
       `${JS_PLACEHOLDER}\\s*(function\\s*.*)\\s*${JS_PLACEHOLDER}`
     )
+    let match = funcReg.exec(s)
+    if (match) {
+      const funcStr = match[1]
+      return new Function("return " + funcStr)()
+    } else {
+      return s
+    }
+  }
 
-    // Look in all nested values of options for Pyecharts Javascript placeholder
-    return deepMap(obj, function (v: string) {
-      let match = funcReg.exec(v)
-      if (match) {
-        const funcStr = match[1]
-        return new Function("return " + funcStr)()
-      } else {
-        return v
-      }
-    })
+  /**
+   * Deep map all values in an object to evaluate all strings as functions
+   * We use this to look in all nested values of options for Pyecharts Javascript placeholder
+   * @param obj object to deep map on
+   * @returns object with all functions in values evaluated
+   */
+  const evalStringToFunctionDeepMap = (obj: object) => {
+    return deepMap(obj, evalStringToFunction, {})
   }
 
   const {
@@ -76,12 +89,32 @@ const EchartsChart = (props: ComponentProps) => {
     echarts.registerMap(map.mapName, map.geoJson, map.specialAreas)
   }
 
-  const cleanOptions = convertJavascriptCode(options)
-  const cleanOnEvents = convertJavascriptCode(onEvents)
+  // no need for memo, react-echarts uses fast-deep-equal to compare option/event change and update on change
+  const cleanOptions = evalStringToFunctionDeepMap(options)
+  const cleanOnEvents: any = {}
+  Object.keys(onEvents).map((key: string) => {
+    const eventFunction = onEvents[key]
+    cleanOnEvents[key] = useCallback(
+      (params: any) => {
+        const s = evalStringToFunction(eventFunction)(params)
+        Streamlit.setComponentValue(s)
+      },
+      [eventFunction]
+    )
+  })
+
+  useEffect(() => {
+    if (null === echartsElementRef.current) {
+      return
+    }
+
+    echartsInstanceRef.current = echartsElementRef.current.getEchartsInstance()
+  })
 
   return (
     <>
       <ReactEcharts
+        ref={echartsElementRef}
         option={cleanOptions}
         notMerge={true}
         lazyUpdate={true}

@@ -2,9 +2,7 @@
 
 [![Streamlit App](https://static.streamlit.io/badges/streamlit_badge_black_white.svg)](https://share.streamlit.io/andfanilo/streamlit-echarts-demo/master/app.py)
 
-A custom component to run Echarts in Streamlit session.
-
-It's basically a Streamlit wrapper over [echarts-for-react](https://github.com/hustcc/echarts-for-react).
+A Streamlit component to display [ECharts](https://echarts.apache.org/en/index.html).
 
 ![](./img/demo.gif)
 
@@ -18,10 +16,10 @@ pip install streamlit-echarts
 
 This library provides 2 functions to display echarts :
 
-- `st_echarts` to display charts from echarts json options as Python dicts
+- `st_echarts` to display charts from ECharts json options as Python dicts
 - `st_pyecharts` to display charts from Pyecharts instances
 
-Check the `examples/` folder of the project for a more thourough quick start.
+Check out the [demo](https://share.streamlit.io/andfanilo/streamlit-echarts-demo/master/app.py) and [source code](https://github.com/andfanilo/streamlit-echarts-demo) for more examples.
 
 **st_echarts example**
 
@@ -64,6 +62,8 @@ b = (
 st_pyecharts(b)
 ```
 
+## API
+
 ### st_echarts API
 
 ```
@@ -74,6 +74,7 @@ st_echarts(
     height: str
     width: str
     renderer: str
+    map: Map
     key: str
 )
 ```
@@ -83,6 +84,7 @@ st_echarts(
   For example the basic line chart in JS :
 
 ```javascript
+// JS code
 option = {
   xAxis: {
     type: "category",
@@ -96,6 +98,7 @@ option = {
 is represented in Python :
 
 ```python
+# Python code
 option = {
     "xAxis": {
         "type": "category",
@@ -127,6 +130,29 @@ myChart.on("click", function (params) {
 });
 ```
 
+Return values from events are sent back to Python, for example:
+
+```python
+option = {
+    "xAxis": {
+        "type": "category",
+        "data": ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"],
+    },
+    "yAxis": { "type": "value" },
+    "series": [
+        {"data": [820, 932, 901, 934, 1290, 1330, 1320], "type": "line" }
+    ],
+}
+events = {
+    "click": "function(params) { console.log(params.name); return params.name }",
+    "dblclick":"function(params) { return [params.type, params.name, params.value] }"
+}
+value = st_echarts(option, events=events)
+st.write(value)  # shows name on bar click and type+name+value on bar double click
+```
+
+The JS code needs to be a one-liner. You can use Javascript minifiers like https://javascript-minifier.com/ or https://www.minifier.org/ to transform your Javascript code to a one-liner.
+
 - **height** / **width** : size of the div wrapper
 - **map** : register a map using the dedicated `Map` class
 
@@ -151,7 +177,7 @@ You'll find a lot of GeoJSON data inside the [source code of echarts-countries-j
 - **renderer** : SVG or canvas
 - **key** : assign a fixed identity if you want to change its arguments over time and not have it be re-created.
 
-### Using st_pyecharts
+### st_pyecharts API
 
 ```python
 def st_pyecharts(
@@ -161,6 +187,7 @@ def st_pyecharts(
     height: str
     width: str
     renderer: str
+    map: Map
     key: str
 )
 ```
@@ -216,10 +243,6 @@ streamlit run app.py
 - Defining the theme in Pyecharts when instantiating chart like `Bar(init_opts=opts.InitOpts(theme=ThemeType.LIGHT))`
   does not work, you need to call theme in `st_pyecharts(c, theme=ThemeType.LIGHT)`.
 
-### Maps definition
-
-- For now only china map is loaded. Need to find a way how to load json maps or from URL.
-
 ### On Javascript functions
 
 This library also provides the `JsCode` util class directly from `pyecharts`.
@@ -261,6 +284,8 @@ series: [
     )
 ```
 
+**Note**: you need the JS string to be on one-line. You can use Javascript minifiers like https://javascript-minifier.com/ or https://www.minifier.org/ to transform your Javascript code to a one-liner.
+
 ### st_pyecharts VS using pyecharts with components.html
 
 While this package provides a `st_pyecharts` method, if you're using `pyecharts` you can directly embed your pyecharts visualization inside `st.html`
@@ -285,3 +310,11 @@ Using `st_pyecharts` is still something you would want if you need to change dat
 without remounting the component, check for examples `examples/app_pyecharts.py` for `Chart with randomization` example.
 
 ![](./img/randomize.gif)
+
+## Credits
+
+- It's really a wrapper around [echarts-for-react](https://github.com/hustcc/echarts-for-react).
+
+# Support me
+
+<a href="https://www.buymeacoffee.com/andfanilo" target="_blank"><img src="https://cdn.buymeacoffee.com/buttons/default-orange.png" alt="Buy Me A Coffee" height="41" width="174"></a>
