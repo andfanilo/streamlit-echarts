@@ -93,11 +93,14 @@ const EchartsChart = (props: ComponentProps) => {
   const cleanOptions = evalStringToFunctionDeepMap(options)
   const cleanOnEvents: any = {}
   Object.keys(onEvents).map((key: string) => {
-    cleanOnEvents[key] = (params: any) => {
-      const eventFunction = onEvents[key]
-      const s = evalStringToFunction(eventFunction)(params)
-      Streamlit.setComponentValue(s)
-    }
+    const eventFunction = onEvents[key]
+    cleanOnEvents[key] = useCallback(
+      (params: any) => {
+        const s = evalStringToFunction(eventFunction)(params)
+        Streamlit.setComponentValue(s)
+      },
+      [eventFunction]
+    )
   })
 
   useEffect(() => {
