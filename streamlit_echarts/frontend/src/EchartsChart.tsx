@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from "react"
+import React, { useCallback, useEffect, useRef } from "react"
 import {
   ComponentProps,
   Streamlit,
@@ -10,7 +10,7 @@ import * as echarts from "echarts"
 import "echarts-gl"
 import "echarts-liquidfill"
 import "echarts-wordcloud"
-import ReactEcharts from "echarts-for-react"
+import ReactEcharts, { EChartsOption } from "echarts-for-react"
 
 import deepMap from "./utils"
 
@@ -24,7 +24,7 @@ interface Map {
  * Arguments Streamlit receives from the Python side
  */
 interface PythonArgs {
-  options: any
+  options: EChartsOption
   theme: string | object
   onEvents: any
   height: string
@@ -91,11 +91,11 @@ const EchartsChart = (props: ComponentProps) => {
 
   // no need for memo, react-echarts uses fast-deep-equal to compare option/event change and update on change
   const cleanOptions = evalStringToFunctionDeepMap(options)
-  const cleanOnEvents = evalStringToFunctionDeepMap(onEvents)
-
-  const getReturnOfcleanOnEvents = mapValues(cleanOnEvents, (eventFunction) => {
-    return (params: any) => {
-      const s = eventFunction(params)
+  const cleanOnEvents: any = {}
+  Object.keys(onEvents).map((key: string) => {
+    cleanOnEvents[key] = (params: any) => {
+      const eventFunction = onEvents[key]
+      const s = evalStringToFunction(eventFunction)(params)
       Streamlit.setComponentValue(s)
     }
   })
@@ -120,7 +120,7 @@ const EchartsChart = (props: ComponentProps) => {
         onChartReady={() => {
           Streamlit.setFrameHeight()
         }}
-        onEvents={getReturnOfcleanOnEvents}
+        onEvents={cleanOnEvents}
         opts={{ renderer: renderer }}
       />
     </>
