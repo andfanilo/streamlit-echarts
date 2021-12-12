@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useRef } from "react"
+import React, { useCallback, useEffect, useMemo, useRef } from "react"
 import {
   ComponentProps,
   Streamlit,
@@ -70,7 +70,7 @@ const EchartsChart = (props: ComponentProps) => {
    * @param obj
    * @returns
    */
-  const evalStringToFunctionInObjValues = (obj: object) => {
+  const evalStringToFunctionDeepMap = (obj: object) => {
     return deepMap(obj, evalStringToFunction)
   }
 
@@ -89,8 +89,12 @@ const EchartsChart = (props: ComponentProps) => {
     echarts.registerMap(map.mapName, map.geoJson, map.specialAreas)
   }
 
-  const cleanOptions = evalStringToFunctionInObjValues(options)
-  const cleanOnEvents = evalStringToFunctionInObjValues(onEvents)
+  const cleanOptions = useMemo(() => evalStringToFunctionDeepMap(options), [
+    options,
+  ])
+  const cleanOnEvents = useMemo(() => evalStringToFunctionDeepMap(onEvents), [
+    onEvents,
+  ])
 
   const getReturnOfcleanOnEvents = mapValues(cleanOnEvents, (eventFunction) => {
     return (params: any) => {
