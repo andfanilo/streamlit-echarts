@@ -4,7 +4,7 @@ import {
   Streamlit,
   withStreamlitConnection,
 } from "streamlit-component-lib"
-import { isObject } from "lodash"
+import { isObject, mapValues } from "lodash"
 
 import * as echarts from "echarts"
 import "echarts-gl"
@@ -80,27 +80,10 @@ const EchartsChart = (props: ComponentProps) => {
 
   const cleanOptions = convertJavascriptCode(options)
   const cleanOnEvents = convertJavascriptCode(onEvents)
-  /*
-  add support for event back to python
-  usage at python side:
-  ```
-  events={
-    "click": "function(params) { alert(params.name);return params.name }",
-    "dblclick":"function(params) { return params.value }"
-  }
-  s=st_pyecharts(b,events=events)
-  ```
-  or, 
-  ```
-  events={
-    "click": "function(params) { return [params.type,params.name,params.value] }"    
-  }
-  s=st_pyecharts(b,events=events)
-   */
-  const getReturnOfcleanOnEvents: any = {}
-  const keys = Object.keys(cleanOnEvents).forEach(function (key) {
-    getReturnOfcleanOnEvents[key] = (params: any) => {
-      const s = cleanOnEvents[key](params)
+
+  const getReturnOfcleanOnEvents = mapValues(cleanOnEvents, (eventFunction) => {
+    return (params: any) => {
+      const s = eventFunction(params)
       Streamlit.setComponentValue(s)
     }
   })

@@ -130,6 +130,27 @@ myChart.on("click", function (params) {
 });
 ```
 
+Return values from events are sent back to Python, for example:
+
+```python
+option = {
+    "xAxis": {
+        "type": "category",
+        "data": ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"],
+    },
+    "yAxis": { "type": "value" },
+    "series": [
+        {"data": [820, 932, 901, 934, 1290, 1330, 1320], "type": "line" }
+    ],
+}
+events = {
+    "click": "function(params) { console.log(params.name); return params.name }",
+    "dblclick":"function(params) { return [params.type, params.name, params.value] }"
+}
+value = st_echarts(option, events=events)
+st.write(value)  # shows name on bar click and type+name+value on bar double click
+```
+
 The JS code needs to be a one-liner. You can use Javascript minifiers like https://javascript-minifier.com/ or https://www.minifier.org/ to transform your Javascript code to a one-liner.
 
 - **height** / **width** : size of the div wrapper
