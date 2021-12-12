@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useMemo, useRef } from "react"
+import React, { useEffect, useRef } from "react"
 import {
   ComponentProps,
   Streamlit,
@@ -24,9 +24,9 @@ interface Map {
  * Arguments Streamlit receives from the Python side
  */
 interface PythonArgs {
-  options: object
+  options: any
   theme: string | object
-  onEvents: object
+  onEvents: any
   height: string
   width: string
   renderer: "canvas" | "svg"
@@ -89,12 +89,9 @@ const EchartsChart = (props: ComponentProps) => {
     echarts.registerMap(map.mapName, map.geoJson, map.specialAreas)
   }
 
-  const cleanOptions = useMemo(() => evalStringToFunctionDeepMap(options), [
-    options,
-  ])
-  const cleanOnEvents = useMemo(() => evalStringToFunctionDeepMap(onEvents), [
-    onEvents,
-  ])
+  // no need for memo, react-echarts uses fast-deep-equal to compare option/event change and update on change
+  const cleanOptions = evalStringToFunctionDeepMap(options)
+  const cleanOnEvents = evalStringToFunctionDeepMap(onEvents)
 
   const getReturnOfcleanOnEvents = mapValues(cleanOnEvents, (eventFunction) => {
     return (params: any) => {
