@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from "react"
+import React, { useCallback, useEffect, useRef } from "react"
 import {
   ComponentProps,
   Streamlit,
@@ -46,21 +46,32 @@ const EchartsChart = (props: ComponentProps) => {
     return isObject(themeProp) ? customThemeName : themeProp
   }
 
-  const convertJavascriptCode = (obj: object) => {
+  /**
+   * If string can be evaluated as a Function, return activated function. Else return string.
+   * @param s string to evaluate to function
+   * @returns
+   */
+  const evalStringToFunction = (s: string) => {
     let funcReg = new RegExp(
       `${JS_PLACEHOLDER}\\s*(function\\s*.*)\\s*${JS_PLACEHOLDER}`
     )
+    let match = funcReg.exec(s)
+    if (match) {
+      const funcStr = match[1]
+      return new Function("return " + funcStr)()
+    } else {
+      return s
+    }
+  }
 
-    // Look in all nested values of options for Pyecharts Javascript placeholder
-    return deepMap(obj, function (v: string) {
-      let match = funcReg.exec(v)
-      if (match) {
-        const funcStr = match[1]
-        return new Function("return " + funcStr)()
-      } else {
-        return v
-      }
-    })
+  /**
+   * Deep map all values in an object to evaluate all strings as functions
+   * We use this to look in all nested values of options for Pyecharts Javascript placeholder
+   * @param obj
+   * @returns
+   */
+  const evalStringToFunctionInObjValues = (obj: object) => {
+    return deepMap(obj, evalStringToFunction)
   }
 
   const {
@@ -78,8 +89,8 @@ const EchartsChart = (props: ComponentProps) => {
     echarts.registerMap(map.mapName, map.geoJson, map.specialAreas)
   }
 
-  const cleanOptions = convertJavascriptCode(options)
-  const cleanOnEvents = convertJavascriptCode(onEvents)
+  const cleanOptions = evalStringToFunctionInObjValues(options)
+  const cleanOnEvents = evalStringToFunctionInObjValues(onEvents)
 
   const getReturnOfcleanOnEvents = mapValues(cleanOnEvents, (eventFunction) => {
     return (params: any) => {
