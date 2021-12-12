@@ -49,7 +49,7 @@ const EchartsChart = (props: ComponentProps) => {
   /**
    * If string can be evaluated as a Function, return activated function. Else return string.
    * @param s string to evaluate to function
-   * @returns
+   * @returns Function if can be evaluated as one, else input string
    */
   const evalStringToFunction = (s: string) => {
     let funcReg = new RegExp(
@@ -67,8 +67,8 @@ const EchartsChart = (props: ComponentProps) => {
   /**
    * Deep map all values in an object to evaluate all strings as functions
    * We use this to look in all nested values of options for Pyecharts Javascript placeholder
-   * @param obj
-   * @returns
+   * @param obj object to deep map on
+   * @returns object with all functions in values evaluated
    */
   const evalStringToFunctionDeepMap = (obj: object) => {
     return deepMap(obj, evalStringToFunction)
