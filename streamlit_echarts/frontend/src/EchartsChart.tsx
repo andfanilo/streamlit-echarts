@@ -4,9 +4,10 @@ import {
   Streamlit,
   withStreamlitConnection,
 } from "streamlit-component-lib"
-import { isObject, mapValues } from "lodash"
+import { isObject } from "lodash"
 
 import * as echarts from "echarts"
+import { transform } from "echarts-stat"
 import "echarts-gl"
 import "echarts-liquidfill"
 import "echarts-wordcloud"
@@ -38,6 +39,11 @@ const EchartsChart = (props: ComponentProps) => {
   const echartsInstanceRef = useRef()
   const JS_PLACEHOLDER = "--x_x--0_0--"
 
+  /**
+   * Register theme and returns its name
+   * @param themeProp 'light' or 'dark' or JSON definition of a theme
+   * @returns
+   */
   const registerTheme = (themeProp: string | object) => {
     const customThemeName = "custom_theme"
     if (isObject(themeProp)) {
@@ -83,7 +89,11 @@ const EchartsChart = (props: ComponentProps) => {
     renderer,
     map,
   }: PythonArgs = props.args
+
   const cleanTheme = registerTheme(theme)
+  echarts.registerTransform(transform.histogram)
+  echarts.registerTransform(transform.clustering)
+  echarts.registerTransform(transform.regression)
 
   if (isObject(map)) {
     echarts.registerMap(map.mapName, map.geoJson, map.specialAreas)
