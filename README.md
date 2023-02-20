@@ -255,7 +255,7 @@ As such, if you want to pass JS functions as strings in your options,
 you should use the corresponding `JsCode` module to wrap code with this placeholder :
 
 - In Python dicts representing the JSON option counterpart,
-  wrap any JS string function with `streamlit_echarts.JsCode` by calling `JsCode(function).jscode`.
+  wrap any JS string function with `streamlit_echarts.JsCode` by calling `JsCode(function).js_code`.
   It's a smaller version of `pyecharts.commons.utils.JsCode` so you don't need to install `pyecharts` to use it.
 
 ```
@@ -271,7 +271,7 @@ series: [
 ]
 ```
 
-- In Pyecharts, use `pyecharts.commons.utils.JsCode` directly, JsCode automatically calls `.jscode` when dumping options.
+- In Pyecharts, use `pyecharts.commons.utils.JsCode` directly, JsCode automatically calls `.js_code` when dumping options.
 
 ```
 .set_series_opts(
