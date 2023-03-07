@@ -22,7 +22,7 @@ setuptools.setup(
     long_description=readme(),
     long_description_content_type="text/markdown",
     url="https://github.com/andfanilo/streamlit-echarts",
-    packages=setuptools.find_packages(),
+    packages=setuptools.find_namespace_packages(),
     include_package_data=True,
     classifiers=[],
     python_requires=">=3.6",
