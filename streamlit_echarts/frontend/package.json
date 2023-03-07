@@ -18,7 +18,7 @@
     "echarts-for-react": "^3.0.0",
     "echarts-gl": "^2.0.1",
     "echarts-liquidfill": "^3.0.0",
-    "echarts-wordcloud": "^2.0.0",
+    "echarts-wordcloud": "git://github.com/ioachim-hub/echarts-wordcloud.git",
     "event-target-shim": "^5.0.1",
     "hoist-non-react-statics": "^3.3.2",
     "lodash": "^4.17.15",
