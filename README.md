@@ -1,5 +1,15 @@
 # Streamlit - ECharts
 
+---
+
+This project is [unmaintained](https://www.youtube.com/watch?v=1RFJF_ETpLk). 
+
+Please add a thumbs up [HERE](https://github.com/streamlit/streamlit/issues/1564) if you wish to see a native implementation.
+
+There is a more recent fork for echarts 5.5 [HERE](https://github.com/CyberQin/streamlit-echarts5). There's also an older [vanilla JS fork](https://github.com/liunux4odoo/streamlit-raw-echarts).
+
+---
+
 [![Streamlit App](https://static.streamlit.io/badges/streamlit_badge_black_white.svg)](https://share.streamlit.io/andfanilo/streamlit-echarts-demo/master/app.py)
 
 A Streamlit component to display [ECharts](https://echarts.apache.org/en/index.html).
