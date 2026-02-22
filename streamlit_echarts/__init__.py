@@ -1,5 +1,12 @@
+import importlib.metadata
+from typing import TYPE_CHECKING
+
 import streamlit as st
-from typing import Dict, Optional, Union
+
+if TYPE_CHECKING:
+    from typing import Dict, Optional, Union
+
+__version__ = importlib.metadata.version("streamlit_echarts")
 
 out = st.components.v2.component(
     "streamlit-echarts.streamlit_echarts",
@@ -28,9 +35,6 @@ class JsCode:
         self.js_code = f"{js_placeholder}{js_code}{js_placeholder}"
 
 
-def on_chart_event_change():
-    """Callback function for when a chart event fires."""
-    pass
 
 
 def st_echarts(
@@ -65,6 +69,22 @@ def st_echarts(
     key: str
         An optional string to use as the unique key for the widget. 
         Assign a key so the component is not remount every time the script is rerun.
+
+    Example
+    -------
+    >>> from streamlit_echarts import st_echarts
+    >>>
+    >>> options = {
+    ...     "xAxis": {
+    ...         "type": "category",
+    ...         "data": ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"],
+    ...     },
+    ...     "yAxis": {"type": "value"},
+    ...     "series": [
+    ...         {"data": [820, 932, 901, 934, 1290, 1330, 1320], "type": "line"}
+    ...     ],
+    ... }
+    >>> st_echarts(options=options)
     """
     if events is None:
         events = {}
@@ -80,7 +100,6 @@ def st_echarts(
             "map": map.to_json() if map is not None else None,
         },
         default={},
-        on_chart_event_change=on_chart_event_change,
         key=key,
     )
 
