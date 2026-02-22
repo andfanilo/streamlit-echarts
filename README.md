@@ -1,6 +1,18 @@
-# streamlit-echarts
+# Streamlit - ECharts
 
 A Streamlit component to display ECharts.
+
+![](./img/demo.gif)
+
+[![Streamlit App](https://static.streamlit.io/badges/streamlit_badge_black_white.svg)](https://share.streamlit.io/andfanilo/streamlit-echarts-demo/master/app.py)
+
+---
+
+This project is in vibecoder best-effort. I consider it [unmaintained](https://www.youtube.com/watch?v=1RFJF_ETpLk) but I may here and then vibecode additional features.
+
+Please add a thumbs up [HERE](https://github.com/streamlit/streamlit/issues/1564) if you wish to see a native implementation.
+
+---
 
 ## Installation instructions
 
