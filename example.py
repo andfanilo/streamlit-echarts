@@ -16,7 +16,12 @@ events = {
     "click": "function(params) { return [params.type, params.name, params.value]; }"
 }
 
-result = st_echarts(options=options, events=events, height="400px")
+result = st_echarts(
+    options=options,
+    events=events,
+    theme="streamlit",
+    height="400px",
+)
 
 st.markdown("---")
 st.subheader("Event Result")
@@ -24,4 +29,3 @@ if result and result.get("chart_event"):
     st.write(f"You clicked on: {result['chart_event']}")
 else:
     st.write("Click on a bar in the chart to see events.")
-

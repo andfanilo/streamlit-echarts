@@ -1,19 +1,26 @@
+from __future__ import annotations
+
+import importlib.metadata
+
 import streamlit as st
-from typing import Dict, Optional, Union
+
+__version__ = importlib.metadata.version("streamlit-echarts")
 
 out = st.components.v2.component(
     "streamlit-echarts.streamlit_echarts",
     js="index-*.js",
     html='<div class="react-root"></div>',
+    isolate_styles=False,
 )
+
 
 class Map:
     def __init__(
-        self, map_name: str, geo_json: Dict, special_areas: Optional[Dict] = None
+        self, map_name: str, geo_json: dict, special_areas: dict | None = None
     ) -> None:
         self.map_name: str = map_name
-        self.geo_json: Dict = geo_json
-        self.special_areas: Optional[Dict] = special_areas
+        self.geo_json: dict = geo_json
+        self.special_areas: dict | None = special_areas
 
     def to_json(self):
         return {
@@ -22,37 +29,33 @@ class Map:
             "specialAreas": self.special_areas,
         }
 
+
 class JsCode:
     def __init__(self, js_code: str):
         js_placeholder = "--x_x--0_0--"
         self.js_code = f"{js_placeholder}{js_code}{js_placeholder}"
 
 
-def on_chart_event_change():
-    """Callback function for when a chart event fires."""
-    pass
-
-
 def st_echarts(
-    options: Dict,
-    theme: Union[str, Dict] = "",
-    events: Dict[str, str] = None,
+    options: dict,
+    theme: str | dict = "",
+    events: dict[str, str] | None = None,
     height: str = "300px",
     width: str = "100%",
     renderer: str = "canvas",
-    map: Map = None,
-    key: str = None,
+    map: Map | None = None,
+    key: str | None = None,
 ):
     """Display an ECharts instance in Streamlit
 
     Parameters
     ----------
-    options: Dict
+    options: dict
         Dictionary of echarts options. JS code should have been wrapped beforehand.
-    theme: str | Dict
+    theme: str | dict
         Prebuilt theme, or object defining theme
-    events: Dict
-        Dictionary of mouse events to string JS functions. 
+    events: dict
+        Dictionary of mouse events to string JS functions.
         Don't wrap values with JsCode placeholder.
     height: str
         Height of ECharts chart
@@ -63,8 +66,24 @@ def st_echarts(
     map: Map
         Details of GeoJSON map to register into echarts
     key: str
-        An optional string to use as the unique key for the widget. 
+        An optional string to use as the unique key for the widget.
         Assign a key so the component is not remount every time the script is rerun.
+
+    Example
+    -------
+    >>> from streamlit_echarts import st_echarts
+    >>>
+    >>> options = {
+    ...     "xAxis": {
+    ...         "type": "category",
+    ...         "data": ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"],
+    ...     },
+    ...     "yAxis": {"type": "value"},
+    ...     "series": [
+    ...         {"data": [820, 932, 901, 934, 1290, 1330, 1320], "type": "line"}
+    ...     ],
+    ... }
+    >>> st_echarts(options=options)
     """
     if events is None:
         events = {}
@@ -80,7 +99,6 @@ def st_echarts(
             "map": map.to_json() if map is not None else None,
         },
         default={},
-        on_chart_event_change=on_chart_event_change,
         key=key,
     )
 

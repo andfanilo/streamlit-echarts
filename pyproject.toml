@@ -11,7 +11,22 @@ license = "MIT"
 license-files = ["LICENSE"]
 requires-python = ">=3.10"
 authors = [{ name = "Fanilo Andrianasolo", email = "contact@andfanilo.com" }]
-dependencies = ["streamlit >= 1.51"]
+classifiers = [
+  "Development Status :: 4 - Beta",
+  "Environment :: Web Environment",
+  "Intended Audience :: Developers",
+  "Programming Language :: Python :: 3.10",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
+  "Programming Language :: Python :: 3.13",
+  "Topic :: Scientific/Engineering :: Visualization",
+]
+dependencies = ["streamlit >= 1.53"]
+
+[project.urls]
+Homepage = "https://github.com/andfanilo/streamlit-echarts"
+"Source Code" = "https://github.com/andfanilo/streamlit-echarts"
+"Bug Tracker" = "https://github.com/andfanilo/streamlit-echarts/issues"
 
 [project.optional-dependencies]
 devel = [

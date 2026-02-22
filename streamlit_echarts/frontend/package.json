@@ -9,6 +9,9 @@
     "clean": "rimraf build",
     "dev": "cross-env NODE_ENV=development vite build --watch",
     "format": "prettier --write src/**/*.{ts,tsx} vite.config.ts",
+    "format:check": "prettier --check 'src/**/*.{ts,tsx}'",
+    "test": "vitest run",
+    "test:watch": "vitest",
     "typecheck": "tsc --noEmit"
   },
   "browserslist": [
@@ -35,10 +38,13 @@
     "@types/react": "^18.3.20",
     "@types/react-dom": "^18.3.6",
     "@vitejs/plugin-react": "^5.1.0",
+    "@vitest/coverage-v8": "^4.0.18",
     "cross-env": "^10.1.0",
+    "jsdom": "^28.1.0",
     "prettier": "^3.6.2",
     "rimraf": "^6.1.0",
     "typescript": "^5.8.3",
-    "vite": "^7.1.12"
+    "vite": "^7.1.12",
+    "vitest": "^4.0.18"
   }
 }
