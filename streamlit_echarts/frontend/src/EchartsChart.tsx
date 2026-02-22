@@ -9,6 +9,7 @@ import "echarts-wordcloud";
 import ReactEcharts, { EChartsOption } from "echarts-for-react";
 
 import deepMap from "./utils";
+import { evalStringToFunction } from "./parsers";
 
 interface Map {
   mapName: string;
@@ -48,7 +49,6 @@ const EchartsChart: FC<Props> = ({
   setTriggerValue,
 }) => {
   const echartsElementRef = useRef<ReactEcharts>(null);
-  const JS_PLACEHOLDER = "--x_x--0_0--";
 
   const registerTheme = (themeProp: string | object) => {
     const customThemeName = "custom_theme";
@@ -100,24 +100,6 @@ const EchartsChart: FC<Props> = ({
   };
 
   /**
-   * If string can be evaluated as a Function, return activated function. Else return string.
-   * @param s string to evaluate to function
-   * @returns Function if can be evaluated as one, else input string
-   */
-  const evalStringToFunction = (s: string) => {
-    let funcReg = new RegExp(
-      `${JS_PLACEHOLDER}\\s*(function\\s*.*)\\s*${JS_PLACEHOLDER}`,
-    );
-    let match = funcReg.exec(s);
-    if (match) {
-      const funcStr = match[1];
-      return new Function("return " + funcStr)();
-    } else {
-      return s;
-    }
-  };
-
-  /**
    * Deep map all values in an object to evaluate all strings as functions
    * We use this to look in all nested values of options for Pyecharts Javascript placeholder
    * @param obj object to deep map on
@@ -144,7 +126,7 @@ const EchartsChart: FC<Props> = ({
     Object.keys(onEvents).forEach((eventKey) => {
       const eventFunction = onEvents[eventKey];
       result[eventKey] = (params: any) => {
-        const s = evalStringToFunction(eventFunction)(params);
+        const s = (evalStringToFunction(eventFunction) as Function)(params);
         setTriggerValue("chart_event", s);
       };
     });

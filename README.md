@@ -94,6 +94,46 @@ uv pip install pyecharts pandas faker
 uv run streamlit run demo_app.py
 ```
 
+## Testing
+
+### Unit Tests (TypeScript)
+
+Fast, dependency-free tests for the JavaScript parsing logic:
+
+```sh
+cd streamlit_echarts/frontend
+npm test
+```
+
+Run in watch mode during development:
+
+```sh
+npm run test:watch
+```
+
+### E2E Tests (Playwright)
+
+Snapshot tests that start a real Streamlit app and compare screenshots. Requires the package to be installed and the frontend to be built first.
+
+```sh
+# Install test dependencies
+uv pip install -r e2e_playwright/test-requirements.txt
+uv run python -m playwright install --with-deps
+
+# Run the tests
+uv run pytest e2e_playwright -n auto
+```
+
+> On first run, missing snapshots are created automatically. Commit them as the new baseline. Re-run to verify.
+
+To **update existing snapshots** (e.g. after intentional UI changes), delete the relevant files from `e2e_playwright/__snapshots__/` and re-run the tests — they will be regenerated automatically. Updated snapshots also appear in `e2e_playwright/test-results/snapshot-updates/` after each run for easy review.
+
+To **clean up Playwright's browser binaries** (freeing up ~500MB+ in `%USERPROFILE%\AppData\Local\ms-playwright`), run:
+
+```sh
+uv run python -m playwright uninstall --all
+```
+
 ## Build and Publish
 
 To package this component for distribution:
@@ -114,7 +154,7 @@ To package this component for distribution:
 3. Test install the built wheel in another project (e.g. `streamlit-echarts-demo`):
 
    ```sh
-   uv pip install ../streamlit-echarts/dist/streamlit_echarts-0.5.0-py3-none-any.whl --force-reinstall
+   uv pip install ../streamlit-echarts/dist/streamlit_echarts-0.6.0-py3-none-any.whl --force-reinstall
    uv run streamlit run app.py
    ```
 
@@ -135,5 +175,5 @@ To package this component for distribution:
 
 ### Expected output
 
-- `dist/streamlit_echarts-0.5.0-py3-none-any.whl`
-- `dist/streamlit_echarts-0.5.0.tar.gz`
+- `dist/streamlit_echarts-0.6.0-py3-none-any.whl`
+- `dist/streamlit_echarts-0.6.0.tar.gz`
