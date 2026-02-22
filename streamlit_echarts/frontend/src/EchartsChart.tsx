@@ -1,50 +1,62 @@
-import React, { useCallback, useEffect, useRef } from "react"
-import {
-  ComponentProps,
-  Streamlit,
-  withStreamlitConnection,
-} from "streamlit-component-lib"
-import { isObject, mapValues } from "lodash"
+import React, { FC, useCallback, useRef } from "react";
+import { FrontendRendererArgs } from "@streamlit/component-v2-lib";
+import { isObject } from "lodash";
 
-import * as echarts from "echarts"
-import "echarts-gl"
-import "echarts-liquidfill"
-import "echarts-wordcloud"
-import ReactEcharts, { EChartsOption } from "echarts-for-react"
+import * as echarts from "echarts";
+import "echarts-gl";
+import "echarts-liquidfill";
+import "echarts-wordcloud";
+import ReactEcharts, { EChartsOption } from "echarts-for-react";
 
-import deepMap from "./utils"
+import deepMap from "./utils";
 
 interface Map {
-  mapName: string
-  geoJson: object
-  specialAreas: object
+  mapName: string;
+  geoJson: any;
+  specialAreas: any;
 }
 
-/**
- * Arguments Streamlit receives from the Python side
- */
-interface PythonArgs {
-  options: EChartsOption
-  theme: string | object
-  onEvents: any
-  height: string
-  width: string
-  renderer: "canvas" | "svg"
-  map: Map
-}
+export type EchartsStateShape = {
+  chart_event?: any;
+};
 
-const EchartsChart = (props: ComponentProps) => {
-  const echartsElementRef = useRef<ReactEcharts>(null)
-  const echartsInstanceRef = useRef()
-  const JS_PLACEHOLDER = "--x_x--0_0--"
+export type EchartsDataShape = {
+  options: EChartsOption;
+  theme: string | object;
+  onEvents: Record<string, string>;
+  height: string;
+  width: string;
+  renderer: "canvas" | "svg";
+  map: Map | null;
+};
+
+type Props = Pick<
+  FrontendRendererArgs<EchartsStateShape, EchartsDataShape>,
+  "setStateValue" | "setTriggerValue"
+> &
+  EchartsDataShape;
+
+const EchartsChart: FC<Props> = ({
+  options,
+  theme,
+  onEvents,
+  height,
+  width,
+  renderer,
+  map,
+  setStateValue,
+  setTriggerValue,
+}) => {
+  const echartsElementRef = useRef<ReactEcharts>(null);
+  const JS_PLACEHOLDER = "--x_x--0_0--";
 
   const registerTheme = (themeProp: string | object) => {
-    const customThemeName = "custom_theme"
+    const customThemeName = "custom_theme";
     if (isObject(themeProp)) {
-      echarts.registerTheme(customThemeName, themeProp)
+      echarts.registerTheme(customThemeName, themeProp);
     }
-    return isObject(themeProp) ? customThemeName : themeProp
-  }
+    return isObject(themeProp) ? customThemeName : themeProp;
+  };
 
   /**
    * If string can be evaluated as a Function, return activated function. Else return string.
@@ -53,16 +65,16 @@ const EchartsChart = (props: ComponentProps) => {
    */
   const evalStringToFunction = (s: string) => {
     let funcReg = new RegExp(
-      `${JS_PLACEHOLDER}\\s*(function\\s*.*)\\s*${JS_PLACEHOLDER}`
-    )
-    let match = funcReg.exec(s)
+      `${JS_PLACEHOLDER}\\s*(function\\s*.*)\\s*${JS_PLACEHOLDER}`,
+    );
+    let match = funcReg.exec(s);
     if (match) {
-      const funcStr = match[1]
-      return new Function("return " + funcStr)()
+      const funcStr = match[1];
+      return new Function("return " + funcStr)();
     } else {
-      return s
+      return s;
     }
-  }
+  };
 
   /**
    * Deep map all values in an object to evaluate all strings as functions
@@ -71,63 +83,42 @@ const EchartsChart = (props: ComponentProps) => {
    * @returns object with all functions in values evaluated
    */
   const evalStringToFunctionDeepMap = (obj: object) => {
-    return deepMap(obj, evalStringToFunction, {})
-  }
+    return deepMap(obj, evalStringToFunction, {});
+  };
 
-  const {
-    options,
-    theme,
-    onEvents,
-    height,
-    width,
-    renderer,
-    map,
-  }: PythonArgs = props.args
-  const cleanTheme = registerTheme(theme)
+  const cleanTheme = registerTheme(theme);
 
   if (isObject(map)) {
-    echarts.registerMap(map.mapName, map.geoJson, map.specialAreas)
+    echarts.registerMap(map.mapName, map.geoJson, map.specialAreas);
   }
 
   // no need for memo, react-echarts uses fast-deep-equal to compare option/event change and update on change
-  const cleanOptions = evalStringToFunctionDeepMap(options)
-  const cleanOnEvents: any = {}
-  Object.keys(onEvents).map((key: string) => {
-    const eventFunction = onEvents[key]
+  const cleanOptions = evalStringToFunctionDeepMap(options);
+  const cleanOnEvents: Record<string, Function> = {};
+
+  Object.keys(onEvents).forEach((key: string) => {
+    const eventFunction = onEvents[key];
     cleanOnEvents[key] = useCallback(
       (params: any) => {
-        const s = evalStringToFunction(eventFunction)(params)
-        Streamlit.setComponentValue(s)
+        const s = evalStringToFunction(eventFunction)(params);
+        setTriggerValue("chart_event", s);
       },
-      [eventFunction]
-    )
-  })
-
-  useEffect(() => {
-    if (null === echartsElementRef.current) {
-      return
-    }
-
-    echartsInstanceRef.current = echartsElementRef.current.getEchartsInstance()
-  })
+      [eventFunction, setTriggerValue],
+    );
+  });
 
   return (
-    <>
-      <ReactEcharts
-        ref={echartsElementRef}
-        option={cleanOptions}
-        notMerge={true}
-        lazyUpdate={true}
-        style={{ height: height, width: width }}
-        theme={cleanTheme}
-        onChartReady={() => {
-          Streamlit.setFrameHeight()
-        }}
-        onEvents={cleanOnEvents}
-        opts={{ renderer: renderer }}
-      />
-    </>
-  )
-}
+    <ReactEcharts
+      ref={echartsElementRef}
+      option={cleanOptions}
+      notMerge={true}
+      lazyUpdate={true}
+      style={{ height: height, width: width }}
+      theme={cleanTheme}
+      onEvents={cleanOnEvents}
+      opts={{ renderer: renderer }}
+    />
+  );
+};
 
-export default withStreamlitConnection(EchartsChart)
+export default EchartsChart;
