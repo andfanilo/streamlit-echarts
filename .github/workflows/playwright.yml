@@ -90,7 +90,7 @@ jobs:
       - name: Run Playwright tests
         run: |
           source venv/bin/activate
-          pytest e2e_playwright -n auto --browser chromium --video retain-on-failure --screenshot only-on-failure --output ./e2e_playwright/test-results/
+          pytest e2e_playwright -n auto --browser chromium --video retain-on-failure --screenshot only-on-failure
 
       - name: Upload test results
         uses: actions/upload-artifact@v4

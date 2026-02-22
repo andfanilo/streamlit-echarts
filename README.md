@@ -128,6 +128,18 @@ uv run pytest e2e_playwright -n auto
 
 To **update existing snapshots** (e.g. after intentional UI changes), delete the relevant files from `e2e_playwright/__snapshots__/` and re-run the tests — they will be regenerated automatically. Updated snapshots also appear in `e2e_playwright/test-results/snapshot-updates/` after each run for easy review.
 
+#### Managing CI snapshot baselines
+
+Snapshots are stored per-platform under `e2e_playwright/__snapshots__/{platform}/` (e.g. `win32`, `linux`). Local snapshots generated on Windows **won't match** the Linux CI runner, so you need to bootstrap Linux baselines separately:
+
+1. Push your branch and let the Playwright CI workflow run — it will **fail** with `"Missing snapshot"` (this is expected)
+2. Download the `playwright-results-*` artifact from the GitHub Actions run page
+3. Inside it, find the generated snapshots under `snapshot-updates/linux/basic_chart/`
+4. Copy them to `e2e_playwright/__snapshots__/linux/basic_chart/` in your repo
+5. Commit and push — the next CI run will compare against these baselines and pass
+
+> Repeat this process whenever you intentionally change the chart's appearance: delete the old Linux baselines, let CI regenerate them, download and commit.
+
 To **clean up Playwright's browser binaries** (freeing up ~500MB+ in `%USERPROFILE%\AppData\Local\ms-playwright`), run:
 
 ```sh
