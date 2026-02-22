@@ -17,9 +17,9 @@ events = {
 }
 
 result = st_echarts(
-    options=options, 
-    events=events, 
-    theme="streamlit", 
+    options=options,
+    events=events,
+    theme="streamlit",
     height="400px",
 )
 
@@ -29,4 +29,3 @@ if result and result.get("chart_event"):
     st.write(f"You clicked on: {result['chart_event']}")
 else:
     st.write("Click on a bar in the chart to see events.")
-

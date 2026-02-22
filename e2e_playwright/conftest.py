@@ -18,7 +18,7 @@ from io import BytesIO
 from pathlib import Path
 from random import randint
 from tempfile import TemporaryFile
-from typing import Any, Callable, Generator, Literal, Protocol
+from typing import Any, Generator, Literal, Protocol
 
 import pytest
 import requests
@@ -93,7 +93,10 @@ def is_port_available(port: int, host: str) -> bool:
 
 
 def find_available_port(
-    min_port: int = 10000, max_port: int = 65535, max_tries: int = 50, host: str = "localhost"
+    min_port: int = 10000,
+    max_port: int = 65535,
+    max_tries: int = 50,
+    host: str = "localhost",
 ) -> int:
     for _ in range(max_tries):
         port = randint(min_port, max_port)
@@ -104,7 +107,9 @@ def find_available_port(
 
 def is_app_server_running(port: int, host: str = "localhost") -> bool:
     try:
-        return requests.get(f"http://{host}:{port}/_stcore/health", timeout=1).text == "ok"
+        return (
+            requests.get(f"http://{host}:{port}/_stcore/health", timeout=1).text == "ok"
+        )
     except Exception:
         return False
 
@@ -145,13 +150,20 @@ def app_server(
             "streamlit",
             "run",
             resolve_test_to_script(request.module),
-            "--server.headless", "true",
-            "--global.developmentMode", "false",
-            "--global.e2eTest", "true",
-            "--server.port", str(app_port),
-            "--browser.gatherUsageStats", "false",
-            "--server.fileWatcherType", "none",
-            "--server.enableStaticServing", "true",
+            "--server.headless",
+            "true",
+            "--global.developmentMode",
+            "false",
+            "--global.e2eTest",
+            "true",
+            "--server.port",
+            str(app_port),
+            "--browser.gatherUsageStats",
+            "false",
+            "--server.fileWatcherType",
+            "none",
+            "--server.enableStaticServing",
+            "true",
             *app_server_extra_args,
         ],
         cwd=".",
@@ -209,7 +221,9 @@ def delete_output_dir(pytestconfig: Any) -> None:
 
 @pytest.fixture(scope="session")
 def output_folder(pytestconfig: Any) -> Path:
-    return Path(get_git_root() / "e2e_playwright" / pytestconfig.getoption("--output")).resolve()
+    return Path(
+        get_git_root() / "e2e_playwright" / pytestconfig.getoption("--output")
+    ).resolve()
 
 
 @pytest.fixture(scope="function")
@@ -221,8 +235,12 @@ def assert_snapshot(
     module_name = request.module.__name__.split(".")[-1]
     test_function_name = request.node.originalname
 
-    snapshot_dir = root_path / "e2e_playwright" / "__snapshots__" / platform / module_name
-    snapshot_failures_dir = output_folder / "snapshot-tests-failures" / platform / module_name
+    snapshot_dir = (
+        root_path / "e2e_playwright" / "__snapshots__" / platform / module_name
+    )
+    snapshot_failures_dir = (
+        output_folder / "snapshot-tests-failures" / platform / module_name
+    )
     snapshot_updates_dir = output_folder / "snapshot-updates" / platform / module_name
 
     suffix = ""
@@ -248,7 +266,7 @@ def assert_snapshot(
             if file_type == "jpg"
             else element.screenshot(type="png", animations="disabled")
         )
-        snapshot_name = (name + suffix if name else default_name)
+        snapshot_name = name + suffix if name else default_name
         snapshot_path = snapshot_dir / f"{snapshot_name}{file_ext}"
         updates_path = snapshot_updates_dir / f"{snapshot_name}{file_ext}"
         failures_dir = snapshot_failures_dir / snapshot_name
@@ -271,8 +289,14 @@ def assert_snapshot(
         img_b = Image.open(snapshot_path)
         img_diff = Image.new("RGBA", img_a.size)
         try:
-            mismatch = pixelmatch(img_a, img_b, img_diff, threshold=pixel_threshold,
-                                  fail_fast=fail_fast, alpha=0)
+            mismatch = pixelmatch(
+                img_a,
+                img_b,
+                img_diff,
+                threshold=pixel_threshold,
+                fail_fast=fail_fast,
+                alpha=0,
+            )
         except ValueError as ex:
             updates_path.parent.mkdir(parents=True, exist_ok=True)
             updates_path.write_bytes(img_bytes)
@@ -324,7 +348,11 @@ def wait_for_app_run(
 
 
 def wait_for_app_loaded(page: Page, embedded: bool = False):
-    page.wait_for_selector("[data-testid='stAppViewContainer']", timeout=30000, state="attached")
+    page.wait_for_selector(
+        "[data-testid='stAppViewContainer']", timeout=30000, state="attached"
+    )
     if not embedded:
-        page.wait_for_selector("[data-testid='stMainMenu']", timeout=20000, state="attached")
+        page.wait_for_selector(
+            "[data-testid='stMainMenu']", timeout=20000, state="attached"
+        )
     wait_for_app_run(page)

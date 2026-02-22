@@ -1,6 +1,6 @@
 """Minimal Streamlit app for E2E testing of the st_echarts component."""
 
-from streamlit_echarts import JsCode, st_echarts
+from streamlit_echarts import st_echarts
 
 import streamlit as st
 
@@ -21,7 +21,9 @@ st_echarts(options=basic_options, height="300px", key="basic_line")
 
 # --- Streamlit theme ---
 st.subheader("Streamlit Theme")
-st_echarts(options=basic_options, theme="streamlit", height="300px", key="streamlit_theme")
+st_echarts(
+    options=basic_options, theme="streamlit", height="300px", key="streamlit_theme"
+)
 
 # --- Dark theme ---
 st.subheader("Dark Theme")

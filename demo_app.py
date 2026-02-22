@@ -12,7 +12,6 @@ from pyecharts.charts import Geo
 from pyecharts.charts import Liquid
 from pyecharts.charts import Timeline
 from pyecharts.charts import WordCloud
-from pyecharts.commons.utils import JsCode
 from pyecharts.faker import Faker
 from pyecharts.globals import ThemeType
 
@@ -78,10 +77,13 @@ def render_basic_line():
             ],
         }
         st_echarts(
-            options=options, height="400px",
+            options=options,
+            height="400px",
         )
         st_echarts(
-            options=options, height="400px", theme="dark",
+            options=options,
+            height="400px",
+            theme="dark",
         )
 
 
@@ -116,7 +118,9 @@ def render_stacked_area():
                     "label": {"backgroundColor": "#6a7985"},
                 },
             },
-            "legend": {"data": ["邮件营销", "联盟广告", "视频广告", "直接访问", "搜索引擎"]},
+            "legend": {
+                "data": ["邮件营销", "联盟广告", "视频广告", "直接访问", "搜索引擎"]
+            },
             "toolbox": {"feature": {"saveAsImage": {}}},
             "grid": {"left": "3%", "right": "4%", "bottom": "3%", "containLabel": True},
             "xAxis": [
@@ -678,7 +682,9 @@ def render_filter_legend_py():
             .add_yaxis("商家A", Faker.values())
             .add_yaxis("商家B", Faker.values())
             .set_global_opts(
-                title_opts=opts.TitleOpts(title="Bar-动画配置基本示例", subtitle="我是副标题")
+                title_opts=opts.TitleOpts(
+                    title="Bar-动画配置基本示例", subtitle="我是副标题"
+                )
             )
         )
         st_echarts(options=json.loads(c.dump_options()))
@@ -708,7 +714,9 @@ def render_timeline_py():
                 .add_xaxis(x)
                 .add_yaxis("商家A", Faker.values())
                 .add_yaxis("商家B", Faker.values())
-                .set_global_opts(title_opts=opts.TitleOpts("某商店{}年营业额".format(i)))
+                .set_global_opts(
+                    title_opts=opts.TitleOpts("某商店{}年营业额".format(i))
+                )
             )
             tl.add(bar, "{}年".format(i))
         st_echarts(options=json.loads(tl.dump_options()))
@@ -738,7 +746,7 @@ def render_randomize_py():
 def render_js_py():
     with st.echo("below"):
         st.markdown(
-            """Overwrite chart colors with JS. 
+            """Overwrite chart colors with JS.
         Under 50 : red. Between 50 - 100 : blue. Over 100 : green"""
         )
         color_function = """
@@ -942,7 +950,8 @@ def render_wordcloud_py():
             .add(series_name="热点分析", data_pair=data, word_size_range=[6, 66])
             .set_global_opts(
                 title_opts=opts.TitleOpts(
-                    title="热点分析", title_textstyle_opts=opts.TextStyleOpts(font_size=23)
+                    title="热点分析",
+                    title_textstyle_opts=opts.TextStyleOpts(font_size=23),
                 ),
                 tooltip_opts=opts.TooltipOpts(is_show=True),
             )

@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import pytest
 from conftest import ImageCompareFunction, wait_for_app_run
 from playwright.sync_api import Page, expect
 
@@ -21,7 +20,9 @@ def test_basic_line_chart_renders(app: Page, assert_snapshot: ImageCompareFuncti
     assert_snapshot(first_chart, name="basic_line_chart")
 
 
-def test_streamlit_theme_chart_renders(app: Page, assert_snapshot: ImageCompareFunction):
+def test_streamlit_theme_chart_renders(
+    app: Page, assert_snapshot: ImageCompareFunction
+):
     """Test that a chart with the built-in streamlit theme renders."""
     wait_for_app_run(app)
 

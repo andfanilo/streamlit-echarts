@@ -13,6 +13,7 @@ out = st.components.v2.component(
     isolate_styles=False,
 )
 
+
 class Map:
     def __init__(
         self, map_name: str, geo_json: dict, special_areas: dict | None = None
@@ -27,6 +28,7 @@ class Map:
             "geoJson": self.geo_json,
             "specialAreas": self.special_areas,
         }
+
 
 class JsCode:
     def __init__(self, js_code: str):
@@ -53,7 +55,7 @@ def st_echarts(
     theme: str | dict
         Prebuilt theme, or object defining theme
     events: dict
-        Dictionary of mouse events to string JS functions. 
+        Dictionary of mouse events to string JS functions.
         Don't wrap values with JsCode placeholder.
     height: str
         Height of ECharts chart
@@ -64,7 +66,7 @@ def st_echarts(
     map: Map
         Details of GeoJSON map to register into echarts
     key: str
-        An optional string to use as the unique key for the widget. 
+        An optional string to use as the unique key for the widget.
         Assign a key so the component is not remount every time the script is rerun.
 
     Example
