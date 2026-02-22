@@ -1,7 +1,7 @@
 /**
  * https://stackoverflow.com/questions/25333918/js-deep-map-function
  */
-import { isObject, transform } from "lodash"
+import { isObject, transform } from "lodash";
 
 /**
  * Run function through every nested value of an object
@@ -14,8 +14,8 @@ function deepMap(obj: any, iterator: Function, context: any) {
   return transform(obj, function (result: any, val, key) {
     result[key] = isObject(val)
       ? deepMap(val, iterator, context)
-      : iterator.call(context, val, key, obj)
-  })
+      : iterator.call(context, val, key, obj);
+  });
 }
 
-export default deepMap
+export default deepMap;
