@@ -16,7 +16,12 @@ events = {
     "click": "function(params) { return [params.type, params.name, params.value]; }"
 }
 
-result = st_echarts(options=options, events=events, height="400px")
+result = st_echarts(
+    options=options, 
+    events=events, 
+    theme="streamlit", 
+    height="400px",
+)
 
 st.markdown("---")
 st.subheader("Event Result")

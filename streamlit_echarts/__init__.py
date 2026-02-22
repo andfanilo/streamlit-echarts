@@ -1,26 +1,25 @@
+from __future__ import annotations
+
 import importlib.metadata
-from typing import TYPE_CHECKING
 
 import streamlit as st
 
-if TYPE_CHECKING:
-    from typing import Dict, Optional, Union
-
-__version__ = importlib.metadata.version("streamlit_echarts")
+__version__ = importlib.metadata.version("streamlit-echarts")
 
 out = st.components.v2.component(
     "streamlit-echarts.streamlit_echarts",
     js="index-*.js",
     html='<div class="react-root"></div>',
+    isolate_styles=False,
 )
 
 class Map:
     def __init__(
-        self, map_name: str, geo_json: Dict, special_areas: Optional[Dict] = None
+        self, map_name: str, geo_json: dict, special_areas: dict | None = None
     ) -> None:
         self.map_name: str = map_name
-        self.geo_json: Dict = geo_json
-        self.special_areas: Optional[Dict] = special_areas
+        self.geo_json: dict = geo_json
+        self.special_areas: dict | None = special_areas
 
     def to_json(self):
         return {
@@ -35,27 +34,25 @@ class JsCode:
         self.js_code = f"{js_placeholder}{js_code}{js_placeholder}"
 
 
-
-
 def st_echarts(
-    options: Dict,
-    theme: Union[str, Dict] = "",
-    events: Dict[str, str] = None,
+    options: dict,
+    theme: str | dict = "",
+    events: dict[str, str] | None = None,
     height: str = "300px",
     width: str = "100%",
     renderer: str = "canvas",
-    map: Map = None,
-    key: str = None,
+    map: Map | None = None,
+    key: str | None = None,
 ):
     """Display an ECharts instance in Streamlit
 
     Parameters
     ----------
-    options: Dict
+    options: dict
         Dictionary of echarts options. JS code should have been wrapped beforehand.
-    theme: str | Dict
+    theme: str | dict
         Prebuilt theme, or object defining theme
-    events: Dict
+    events: dict
         Dictionary of mouse events to string JS functions. 
         Don't wrap values with JsCode placeholder.
     height: str

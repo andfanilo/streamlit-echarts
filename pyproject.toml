@@ -21,7 +21,7 @@ classifiers = [
   "Programming Language :: Python :: 3.13",
   "Topic :: Scientific/Engineering :: Visualization",
 ]
-dependencies = ["streamlit >= 1.51"]
+dependencies = ["streamlit >= 1.53"]
 
 [project.urls]
 Homepage = "https://github.com/andfanilo/streamlit-echarts"
