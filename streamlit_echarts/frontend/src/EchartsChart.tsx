@@ -49,23 +49,32 @@ const EchartsChart: FC<Props> = ({
   setTriggerValue,
 }) => {
   const echartsElementRef = useRef<ReactEcharts>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
 
-  const registerTheme = (themeProp: string | object) => {
+  // Read Streamlit CSS vars from whichever element is available.
+  const getCssVar = (v: string) => {
+    const el =
+      (echartsElementRef.current?.ele as HTMLElement | null) ??
+      containerRef.current ??
+      document.body;
+    return getComputedStyle(el).getPropertyValue(v).trim();
+  };
+
+  // Read CSS vars needed for the "streamlit" theme.
+  // These are the inputs that determine whether we need to re-register.
+  const backgroundColor =
+    theme === "streamlit" ? getCssVar("--st-background-color") : "";
+  const textColor = theme === "streamlit" ? getCssVar("--st-text-color") : "";
+  const font = theme === "streamlit" ? getCssVar("--st-font") : "";
+
+  /**
+   * Memoized theme registration. echarts.registerTheme is only called when the
+   * theme prop or the resolved Streamlit CSS variable values actually change.
+   */
+  const cleanTheme = useMemo<string>(() => {
     const customThemeName = "custom_theme";
 
-    // Built-in "streamlit" theme: reads CSS variables set by Streamlit
-    // so the chart automatically adapts to light/dark mode.
-    if (themeProp === "streamlit") {
-      // Read from the chart element itself (matches streamlit-bokeh pattern).
-      // Falls back to document.body on first render before the ref is attached.
-      const containerEl = echartsElementRef.current?.ele ?? document.body;
-      const style = getComputedStyle(containerEl);
-      const getCssVar = (v: string) => style.getPropertyValue(v).trim();
-
-      const backgroundColor = getCssVar("--st-background-color");
-      const textColor = getCssVar("--st-text-color");
-      const font = getCssVar("--st-font");
-
+    if (theme === "streamlit") {
       const stTheme = {
         color: [
           "#0068C9",
@@ -93,30 +102,32 @@ const EchartsChart: FC<Props> = ({
       return "streamlit";
     }
 
-    if (isObject(themeProp)) {
-      echarts.registerTheme(customThemeName, themeProp);
+    if (isObject(theme)) {
+      echarts.registerTheme(customThemeName, theme);
+      return customThemeName;
     }
-    return isObject(themeProp) ? customThemeName : themeProp;
-  };
 
-  /**
-   * Deep map all values in an object to evaluate all strings as functions
-   * We use this to look in all nested values of options for Pyecharts Javascript placeholder
-   * @param obj object to deep map on
-   * @returns object with all functions in values evaluated
-   */
-  const evalStringToFunctionDeepMap = (obj: object) => {
-    return deepMap(obj, evalStringToFunction, {});
-  };
-
-  const cleanTheme = registerTheme(theme);
+    return theme as string;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [theme, backgroundColor, textColor, font]);
 
   if (isObject(map)) {
     echarts.registerMap(map.mapName, map.geoJson, map.specialAreas);
   }
 
-  // no need for memo, react-echarts uses fast-deep-equal to compare option/event change and update on change
-  const cleanOptions = evalStringToFunctionDeepMap(options);
+  /**
+   * Memoized options parsing. The deepMap + evalStringToFunction pipeline
+   * (regex + new Function) runs only when the serialized options actually
+   * change, skipping the work on every Streamlit rerun when options are
+   * identical.
+   */
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  const cleanOptions = useMemo(
+    () => deepMap(options, evalStringToFunction, {}),
+    // JSON.stringify lets us do a deep-equality check as the memo key.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [JSON.stringify(options)],
+  );
 
   // Build event handler map. useMemo avoids re-creating handlers on every render.
   // Note: useCallback cannot be called inside a forEach (Rules of Hooks), so we
@@ -135,16 +146,18 @@ const EchartsChart: FC<Props> = ({
   }, [onEvents, setTriggerValue]);
 
   return (
-    <ReactEcharts
-      ref={echartsElementRef}
-      option={cleanOptions}
-      notMerge={true}
-      lazyUpdate={true}
-      style={{ height: height, width: width }}
-      theme={cleanTheme}
-      onEvents={cleanOnEvents}
-      opts={{ renderer: renderer }}
-    />
+    <div ref={containerRef}>
+      <ReactEcharts
+        ref={echartsElementRef}
+        option={cleanOptions}
+        notMerge={true}
+        lazyUpdate={true}
+        style={{ height: height, width: width }}
+        theme={cleanTheme}
+        onEvents={cleanOnEvents}
+        opts={{ renderer: renderer }}
+      />
+    </div>
   );
 };
 
