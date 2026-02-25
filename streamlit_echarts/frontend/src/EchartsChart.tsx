@@ -51,6 +51,19 @@ const EchartsChart: FC<Props> = ({
   const echartsElementRef = useRef<ReactEcharts>(null);
   const containerRef = useRef<HTMLDivElement>(null);
 
+  const FALLBACK_PALETTE = [
+    "#0068C9",
+    "#83C9FF",
+    "#FF2B2B",
+    "#FFABAB",
+    "#29B09D",
+    "#7DEFA1",
+    "#FF8700",
+    "#FFD16A",
+    "#6D3FC0",
+    "#D5B5FF",
+  ];
+
   // Read Streamlit CSS vars from whichever element is available.
   const getCssVar = (v: string) => {
     const el =
@@ -66,6 +79,8 @@ const EchartsChart: FC<Props> = ({
     theme === "streamlit" ? getCssVar("--st-background-color") : "";
   const textColor = theme === "streamlit" ? getCssVar("--st-text-color") : "";
   const font = theme === "streamlit" ? getCssVar("--st-font") : "";
+  const categoricalRaw =
+    theme === "streamlit" ? getCssVar("--st-chart-categorical-colors") : "";
 
   /**
    * Memoized theme registration. echarts.registerTheme is only called when the
@@ -75,19 +90,11 @@ const EchartsChart: FC<Props> = ({
     const customThemeName = "custom_theme";
 
     if (theme === "streamlit") {
+      const palette = categoricalRaw
+        ? categoricalRaw.split(",").map((c) => c.trim())
+        : FALLBACK_PALETTE;
       const stTheme = {
-        color: [
-          "#0068C9",
-          "#83C9FF",
-          "#FF2B2B",
-          "#FFABAB",
-          "#29B09D",
-          "#7DEFA1",
-          "#FF8700",
-          "#FFD16A",
-          "#6D3FC0",
-          "#D5B5FF",
-        ],
+        color: palette,
         backgroundColor: backgroundColor || "transparent",
         textStyle: {
           color: textColor || "#31333F",
@@ -109,7 +116,7 @@ const EchartsChart: FC<Props> = ({
 
     return theme as string;
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [theme, backgroundColor, textColor, font]);
+  }, [theme, backgroundColor, textColor, font, categoricalRaw]);
 
   if (isObject(map)) {
     echarts.registerMap(map.mapName, map.geoJson, map.specialAreas);

@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import importlib.metadata
+from collections.abc import Callable
 
 import streamlit as st
 
@@ -45,6 +46,7 @@ def st_echarts(
     renderer: str = "canvas",
     map: Map | None = None,
     key: str | None = None,
+    on_change: Callable[[], None] | None = None,
 ):
     """Display an ECharts instance in Streamlit
 
@@ -68,6 +70,8 @@ def st_echarts(
     key: str
         An optional string to use as the unique key for the widget.
         Assign a key so the component is not remount every time the script is rerun.
+    on_change: callable
+        Optional callback invoked when the component fires a chart event.
 
     Example
     -------
@@ -100,6 +104,7 @@ def st_echarts(
         },
         default={},
         key=key,
+        on_chart_event_change=on_change if on_change else lambda: None,
     )
 
     return component_value
