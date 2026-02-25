@@ -180,6 +180,7 @@ export const setEventsGenerator = () => {
 type ComponentState = {
   chart: echarts.ECharts | null;
   resizeObserver: ResizeObserver | null;
+  intersectionObserver: IntersectionObserver | null;
   getOptions: ReturnType<typeof getOptionsGenerator>;
   setTheme: ReturnType<typeof setThemeGenerator>;
   setEvents: ReturnType<typeof setEventsGenerator>;
@@ -196,6 +197,7 @@ const getOrCreateInstanceState = (
     state = {
       chart: null,
       resizeObserver: null,
+      intersectionObserver: null,
       getOptions: getOptionsGenerator(),
       setTheme: setThemeGenerator(),
       setEvents: setEventsGenerator(),
@@ -259,15 +261,32 @@ const EchartsRenderer: FrontendRenderer<EchartsStateShape, EchartsDataShape> = (
   if (!state.resizeObserver) {
     const chart = state.chart;
     state.resizeObserver = new ResizeObserver(() => {
-      if (chart && !chart.isDisposed()) {
+      if (chart && !chart.isDisposed() && container.offsetParent !== null) {
         chart.resize();
       }
     });
     state.resizeObserver.observe(container);
   }
 
-  // 8. Cleanup function
+  // 8. Set up IntersectionObserver to resize on tab/expander visibility change
+  if (!state.intersectionObserver) {
+    const chart = state.chart;
+    state.intersectionObserver = new IntersectionObserver((entries) => {
+      for (const entry of entries) {
+        if (entry.isIntersecting && chart && !chart.isDisposed()) {
+          chart.resize();
+        }
+      }
+    });
+    state.intersectionObserver.observe(container);
+  }
+
+  // 9. Cleanup function
   return () => {
+    if (state.intersectionObserver) {
+      state.intersectionObserver.disconnect();
+      state.intersectionObserver = null;
+    }
     if (state.resizeObserver) {
       state.resizeObserver.disconnect();
       state.resizeObserver = null;
