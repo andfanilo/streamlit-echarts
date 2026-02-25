@@ -1,9 +1,8 @@
-import react from "@vitejs/plugin-react";
 import process from "node:process";
 import { defineConfig, UserConfig } from "vite";
 
 /**
- * Vite configuration for Streamlit Custom Component v2 development using React.
+ * Vite configuration for Streamlit Custom Component v2 development.
  *
  * @see https://vitejs.dev/config/ for complete Vite configuration options.
  */
@@ -13,7 +12,6 @@ export default defineConfig(() => {
 
   return {
     base: "./",
-    plugins: [react()],
     define: {
       // We are building in library mode, we need to define the NODE_ENV
       // variable to prevent issues when executing the JS.
@@ -24,7 +22,7 @@ export default defineConfig(() => {
       outDir: "build",
       sourcemap: isDev,
       lib: {
-        entry: "./src/index.tsx",
+        entry: "./src/index.ts",
         name: "EchartsChart",
         formats: ["es"],
         fileName: "index-[hash]",

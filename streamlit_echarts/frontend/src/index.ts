@@ -1,0 +1,283 @@
+import {
+  FrontendRenderer,
+  FrontendRendererArgs,
+} from "@streamlit/component-v2-lib";
+
+import * as echarts from "echarts";
+import "echarts-gl";
+import "echarts-liquidfill";
+import "echarts-wordcloud";
+
+import deepMap from "./utils";
+import { evalStringToFunction } from "./parsers";
+
+interface Map {
+  mapName: string;
+  geoJson: any;
+  specialAreas: any;
+}
+
+export type EchartsStateShape = {
+  chart_event?: any;
+};
+
+export type EchartsDataShape = {
+  options: echarts.EChartsOption;
+  theme: string | object;
+  onEvents: Record<string, string>;
+  height: string;
+  width: string;
+  renderer: "canvas" | "svg";
+  map: Map | null;
+};
+
+const FALLBACK_PALETTE = [
+  "#0068C9",
+  "#83C9FF",
+  "#FF2B2B",
+  "#FFABAB",
+  "#29B09D",
+  "#7DEFA1",
+  "#FF8700",
+  "#FFD16A",
+  "#6D3FC0",
+  "#D5B5FF",
+];
+
+/**
+ * Memoized options parser. Runs deepMap + evalStringToFunction only when
+ * the serialized options change.
+ */
+export const getOptionsGenerator = () => {
+  let savedKey: string | null = null;
+  let savedOptions: echarts.EChartsOption | null = null;
+
+  return (options: echarts.EChartsOption) => {
+    const key = JSON.stringify(options);
+    if (key !== savedKey) {
+      savedKey = key;
+      savedOptions = deepMap(options, evalStringToFunction, {});
+      return { data: savedOptions, hasChanged: true };
+    }
+    return { data: savedOptions, hasChanged: false };
+  };
+};
+
+/**
+ * Memoized theme registration. Calls echarts.registerTheme only when the
+ * theme prop or the resolved Streamlit CSS variable values change.
+ * Returns the theme name to pass to echarts.init and whether it changed.
+ */
+export const setThemeGenerator = () => {
+  let currentKey: string | null = null;
+  let currentThemeName: string = "";
+
+  return (
+    theme: string | object,
+    container: HTMLElement,
+  ): { themeName: string; themeChanged: boolean } => {
+    const customThemeName = "custom_theme";
+
+    // Read CSS vars needed for the "streamlit" theme.
+    const getCssVar = (v: string) =>
+      getComputedStyle(container).getPropertyValue(v).trim();
+
+    const backgroundColor =
+      theme === "streamlit" ? getCssVar("--st-background-color") : "";
+    const textColor = theme === "streamlit" ? getCssVar("--st-text-color") : "";
+    const font = theme === "streamlit" ? getCssVar("--st-font") : "";
+    const categoricalRaw =
+      theme === "streamlit" ? getCssVar("--st-chart-categorical-colors") : "";
+
+    const key = JSON.stringify({
+      theme,
+      backgroundColor,
+      textColor,
+      font,
+      categoricalRaw,
+    });
+
+    if (key === currentKey) {
+      return { themeName: currentThemeName, themeChanged: false };
+    }
+
+    currentKey = key;
+
+    if (theme === "streamlit") {
+      const palette = categoricalRaw
+        ? categoricalRaw.split(",").map((c) => c.trim())
+        : FALLBACK_PALETTE;
+      const stTheme = {
+        color: palette,
+        backgroundColor: backgroundColor || "transparent",
+        textStyle: {
+          color: textColor || "#31333F",
+          fontFamily: font || undefined,
+        },
+        title: { textStyle: { color: textColor || "#31333F" } },
+        legend: { textStyle: { color: textColor || "#31333F" } },
+        categoryAxis: { axisLabel: { color: textColor || "#31333F" } },
+        valueAxis: { axisLabel: { color: textColor || "#31333F" } },
+      };
+      echarts.registerTheme("streamlit", stTheme);
+      currentThemeName = "streamlit";
+    } else if (typeof theme === "object" && theme !== null) {
+      echarts.registerTheme(customThemeName, theme);
+      currentThemeName = customThemeName;
+    } else {
+      currentThemeName = theme as string;
+    }
+
+    return { themeName: currentThemeName, themeChanged: true };
+  };
+};
+
+/**
+ * Memoized event wiring. Calls chart.off/chart.on only when the serialized
+ * onEvents change.
+ */
+export const setEventsGenerator = () => {
+  let savedKey: string | null = null;
+  let savedHandlers: Record<string, Function> = {};
+
+  return (
+    chart: echarts.ECharts,
+    onEvents: Record<string, string>,
+    setTriggerValue: FrontendRendererArgs<EchartsStateShape>["setTriggerValue"],
+  ): boolean => {
+    const key = JSON.stringify(onEvents);
+    if (key === savedKey) {
+      return false;
+    }
+
+    // Unbind old handlers
+    for (const eventName of Object.keys(savedHandlers)) {
+      chart.off(eventName);
+    }
+
+    // Build and bind new handlers
+    const handlers: Record<string, Function> = {};
+    for (const eventName of Object.keys(onEvents)) {
+      const handler = (params: any) => {
+        const fn = evalStringToFunction(onEvents[eventName]) as Function;
+        const result = fn(params);
+        setTriggerValue("chart_event", result);
+      };
+      handlers[eventName] = handler;
+      chart.on(eventName, handler as any);
+    }
+
+    savedKey = key;
+    savedHandlers = handlers;
+    return true;
+  };
+};
+
+/**
+ * Component-scoped state keyed by the host element to support multiple
+ * instances.
+ */
+type ComponentState = {
+  chart: echarts.ECharts | null;
+  resizeObserver: ResizeObserver | null;
+  getOptions: ReturnType<typeof getOptionsGenerator>;
+  setTheme: ReturnType<typeof setThemeGenerator>;
+  setEvents: ReturnType<typeof setEventsGenerator>;
+};
+
+const componentState = new WeakMap<HTMLElement | ShadowRoot, ComponentState>();
+
+const getOrCreateInstanceState = (
+  host: HTMLElement | ShadowRoot,
+): ComponentState => {
+  let state = componentState.get(host);
+
+  if (!state) {
+    state = {
+      chart: null,
+      resizeObserver: null,
+      getOptions: getOptionsGenerator(),
+      setTheme: setThemeGenerator(),
+      setEvents: setEventsGenerator(),
+    };
+    componentState.set(host, state);
+  }
+
+  return state;
+};
+
+const EchartsRenderer: FrontendRenderer<EchartsStateShape, EchartsDataShape> = (
+  args,
+) => {
+  const { data, parentElement, setTriggerValue } = args;
+  const { options, theme, onEvents, height, width, renderer, map } = data;
+
+  const container =
+    parentElement.querySelector<HTMLDivElement>(".echarts-container");
+
+  if (!container) {
+    throw new Error("Unexpected: ECharts container element not found");
+  }
+
+  const state = getOrCreateInstanceState(parentElement);
+
+  // 1. Size the container
+  container.style.height = height;
+  container.style.width = width;
+
+  // 2. Register map if provided (idempotent)
+  if (map && typeof map === "object" && map.mapName) {
+    echarts.registerMap(map.mapName, map.geoJson, map.specialAreas);
+  }
+
+  // 3. Resolve theme (memoized). If theme changed, dispose existing chart
+  //    because ECharts requires re-init for theme changes.
+  const { themeName, themeChanged } = state.setTheme(theme, container);
+
+  if (themeChanged && state.chart) {
+    state.chart.dispose();
+    state.chart = null;
+  }
+
+  // 4. Create chart if needed
+  if (!state.chart || state.chart.isDisposed()) {
+    state.chart = echarts.init(container, themeName, { renderer });
+  }
+
+  // 5. Apply options if changed
+  const { data: cleanOptions, hasChanged: optionsChanged } =
+    state.getOptions(options);
+
+  if (optionsChanged) {
+    state.chart.setOption(cleanOptions!, { notMerge: true, lazyUpdate: true });
+  }
+
+  // 6. Wire events (memoized unbind/rebind)
+  state.setEvents(state.chart, onEvents, setTriggerValue);
+
+  // 7. Set up ResizeObserver (once per instance)
+  if (!state.resizeObserver) {
+    const chart = state.chart;
+    state.resizeObserver = new ResizeObserver(() => {
+      if (chart && !chart.isDisposed()) {
+        chart.resize();
+      }
+    });
+    state.resizeObserver.observe(container);
+  }
+
+  // 8. Cleanup function
+  return () => {
+    if (state.resizeObserver) {
+      state.resizeObserver.disconnect();
+      state.resizeObserver = null;
+    }
+    if (state.chart) {
+      state.chart.dispose();
+      state.chart = null;
+    }
+    componentState.delete(parentElement);
+  };
+};
+
+export default EchartsRenderer;
