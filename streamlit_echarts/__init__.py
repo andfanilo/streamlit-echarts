@@ -10,7 +10,7 @@ __version__ = importlib.metadata.version("streamlit-echarts")
 out = st.components.v2.component(
     "streamlit-echarts.streamlit_echarts",
     js="index-*.js",
-    html='<div class="react-root"></div>',
+    html='<div class="echarts-container"></div>',
     isolate_styles=False,
 )
 

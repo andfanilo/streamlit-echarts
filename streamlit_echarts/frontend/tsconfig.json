@@ -14,7 +14,6 @@
     "isolatedModules": true,
     "noEmit": true,
     "noFallthroughCasesInSwitch": true,
-    "jsx": "react-jsx",
     "types": ["vite/client"]
   },
   "include": ["src"]

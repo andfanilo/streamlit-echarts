@@ -8,8 +8,8 @@
     "build:frontend:production": "cross-env NODE_ENV=production vite build",
     "clean": "rimraf build",
     "dev": "cross-env NODE_ENV=development vite build --watch",
-    "format": "prettier --write src/**/*.{ts,tsx} vite.config.ts",
-    "format:check": "prettier --check 'src/**/*.{ts,tsx}'",
+    "format": "prettier --write src/**/*.ts vite.config.ts",
+    "format:check": "prettier --check 'src/**/*.ts'",
     "test": "vitest run",
     "test:watch": "vitest",
     "typecheck": "tsc --noEmit"
@@ -24,20 +24,12 @@
   "dependencies": {
     "@streamlit/component-v2-lib": "^0.2.0",
     "echarts": "^6.0.0",
-    "echarts-for-react": "^3.0.6",
     "echarts-gl": "^2.0.9",
     "echarts-liquidfill": "^3.1.0",
-    "echarts-wordcloud": "^2.1.0",
-    "lodash": "^4.17.21",
-    "react": "^18.3.1",
-    "react-dom": "^18.3.1"
+    "echarts-wordcloud": "^2.1.0"
   },
   "devDependencies": {
-    "@types/lodash": "^4.17.0",
     "@types/node": "^22.14.1",
-    "@types/react": "^18.3.20",
-    "@types/react-dom": "^18.3.6",
-    "@vitejs/plugin-react": "^5.1.0",
     "@vitest/coverage-v8": "^4.0.18",
     "cross-env": "^10.1.0",
     "jsdom": "^28.1.0",
