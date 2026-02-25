@@ -8,33 +8,15 @@ A Streamlit component to display ECharts.
 
 ---
 
-This project is in vibecoder best-effort. I consider it [unmaintained](https://www.youtube.com/watch?v=1RFJF_ETpLk) but I may here and then vibecode additional features.
+## Requirements
 
-Please add a thumbs up [HERE](https://github.com/streamlit/streamlit/issues/1564) if you wish to see a native implementation.
-
----
+- Python >= 3.10
 
 ## Installation instructions
 
 ```sh
 uv venv
 uv pip install streamlit-echarts
-```
-
-### Development install (editable)
-
-When developing locally, install in editable mode so Streamlit picks up **Python** code changes without rebuilding a wheel:
-
-```sh
-uv pip install -e . --force-reinstall
-```
-
-For **frontend** (TypeScript/React) changes, you still need to rebuild. Use Vite's watch mode for automatic rebuilds on save:
-
-```sh
-cd streamlit_echarts/frontend
-npm i --legacy-peer-deps
-npm run dev
 ```
 
 ## Usage instructions
@@ -92,6 +74,34 @@ Note: You will need extra dependencies installed to run all examples in the demo
 ```sh
 uv pip install pyecharts pandas faker
 uv run streamlit run demo_app.py
+```
+
+---
+
+## Project status
+
+This project is in vibecoder best-effort. I consider it [unmaintained](https://www.youtube.com/watch?v=1RFJF_ETpLk) but I may here and then vibecode additional features.
+
+Please add a thumbs up [HERE](https://github.com/streamlit/streamlit/issues/1564) if you wish to see a native implementation.
+
+---
+
+## Development setup
+
+**Prerequisites:** Node.js >= 24 (LTS)
+
+When developing locally, install in editable mode so Streamlit picks up **Python** code changes without rebuilding a wheel:
+
+```sh
+uv pip install -e . --force-reinstall
+```
+
+For **frontend** (TypeScript/React) changes, you still need to rebuild. Use Vite's watch mode for automatic rebuilds on save:
+
+```sh
+cd streamlit_echarts/frontend
+npm i --legacy-peer-deps
+npm run dev
 ```
 
 ## Testing
@@ -179,11 +189,6 @@ To package this component for distribution:
    You will need a PyPI API token. You can pass it via `--token` or set the `UV_PUBLISH_TOKEN` environment variable.
 
    To bump the version, edit `version` in `pyproject.toml` before building.
-
-### Requirements
-
-- Python >= 3.10
-- Node.js >= 24 (LTS)
 
 ### Expected output
 
