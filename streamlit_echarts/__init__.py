@@ -36,6 +36,23 @@ class JsCode:
         js_placeholder = "--x_x--0_0--"
         self.js_code = f"{js_placeholder}{js_code}{js_placeholder}"
 
+    def __str__(self):
+        return self.js_code
+
+    def __repr__(self):
+        return f"JsCode({self.js_code})"
+
+
+def _serialize_options(obj):
+    """Recursively replace JsCode instances with their placeholder string."""
+    if isinstance(obj, JsCode):
+        return obj.js_code
+    if isinstance(obj, dict):
+        return {k: _serialize_options(v) for k, v in obj.items()}
+    if isinstance(obj, list):
+        return [_serialize_options(v) for v in obj]
+    return obj
+
 
 def st_echarts(
     options: dict,
@@ -94,7 +111,7 @@ def st_echarts(
 
     component_value = out(
         data={
-            "options": options,
+            "options": _serialize_options(options),
             "theme": theme,
             "onEvents": {k: JsCode(v).js_code for k, v in events.items()},
             "height": height,
