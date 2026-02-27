@@ -4,7 +4,7 @@ from urllib.request import urlopen
 
 import streamlit as st
 
-from streamlit_echarts import JsCode, Map, st_echarts
+from streamlit_echarts import JsCode, Map, st_echarts, st_pyecharts
 
 # Base bar chart options reused across pages
 OPTIONS = {
@@ -344,7 +344,7 @@ def page_jscode():
 
 
 def page_layouts():
-    st.header("10 & 11. Layout containers")
+    st.header("10. Layout containers")
     st.markdown("Charts inside `st.tabs` and `st.expander` resize correctly when revealed.")
 
     st.subheader("Tabs")
@@ -362,6 +362,68 @@ def page_layouts():
     _show_source(page_layouts)
 
 
+def page_pyecharts():
+    st.header("11. PyECharts")
+    st.markdown(
+        "`st_pyecharts` accepts a PyECharts chart object directly. "
+        "Install with `pip install streamlit-echarts[pyecharts]`."
+    )
+
+    try:
+        from pyecharts.charts import Bar, Line, Pie
+        from pyecharts import options as opts
+    except ImportError:
+        st.error(
+            "This page requires the `pyecharts` package. "
+            "Install it with: `pip install streamlit-echarts[pyecharts]`"
+        )
+        return
+
+    st.subheader("Bar chart")
+    bar = (
+        Bar()
+        .add_xaxis(["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"])
+        .add_yaxis("Sales", [120, 200, 150, 80, 70, 110, 130])
+        .set_global_opts(title_opts=opts.TitleOpts(title="Weekly Sales"))
+    )
+    st_pyecharts(bar, key="pyecharts_bar")
+
+    st.subheader("Line chart")
+    line = (
+        Line()
+        .add_xaxis(["Jan", "Feb", "Mar", "Apr", "May", "Jun"])
+        .add_yaxis("Revenue", [820, 932, 901, 934, 1290, 1330], is_smooth=True)
+        .set_global_opts(title_opts=opts.TitleOpts(title="Monthly Revenue"))
+    )
+    st_pyecharts(line, key="pyecharts_line")
+
+    st.subheader("Pie chart")
+    pie = (
+        Pie()
+        .add(
+            "",
+            [("Shirts", 40), ("Cardigans", 30), ("Chiffon", 20), ("Pants", 10)],
+            radius=["40%", "70%"],
+        )
+        .set_global_opts(title_opts=opts.TitleOpts(title="Product Mix"))
+        .set_series_opts(label_opts=opts.LabelOpts(formatter="{b}: {d}%"))
+    )
+    st_pyecharts(pie, key="pyecharts_pie")
+
+    st.subheader("With events")
+    click_result = st_pyecharts(
+        bar,
+        events={"click": "function(p){return {name: p.name, value: p.value}}"},
+        key="pyecharts_events",
+    )
+    if click_result:
+        st.write("Last click:", click_result)
+    else:
+        st.info("Click a bar to fire a click event.")
+
+    _show_source(page_pyecharts)
+
+
 # ---------------------------------------------------------------------------
 # Navigation
 # ---------------------------------------------------------------------------
@@ -377,6 +439,7 @@ pg = st.navigation([
     st.Page(page_on_change,  title="7. on_change",          icon=":material/notifications:"),
     st.Page(page_map,        title="8. map / Map",          icon=":material/map:"),
     st.Page(page_jscode,     title="9. JsCode",             icon=":material/code:"),
-    st.Page(page_layouts,    title="10–11. layouts",        icon=":material/dashboard:"),
+    st.Page(page_layouts,    title="10. layouts",            icon=":material/dashboard:"),
+    st.Page(page_pyecharts,  title="11. pyecharts",         icon=":material/auto_awesome:"),
 ])
 pg.run()
