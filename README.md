@@ -37,6 +37,38 @@ options = {
 st_echarts(options=options, height="400px")
 ```
 
+## API Reference
+
+### `st_echarts(options, ...)`
+
+| Parameter | Type | Default | Description |
+|---|---|---|---|
+| `options` | `dict` | **required** | ECharts [option object](https://echarts.apache.org/en/option.html) |
+| `theme` | `str \| dict` | `""` | `"streamlit"`, `"dark"`, or a custom theme dict |
+| `events` | `dict[str, str]` | `None` | Map of ECharts event names to JS handler strings; return value becomes the component return value |
+| `height` | `str` | `"300px"` | Any valid CSS height (e.g. `"500px"`, `"50vh"`) |
+| `width` | `str` | `"100%"` | Any valid CSS width (e.g. `"100%"`, `"600px"`) |
+| `renderer` | `"canvas" \| "svg"` | `"canvas"` | ECharts renderer; `"svg"` is better for print/accessibility |
+| `map` | `Map \| None` | `None` | GeoJSON map to register, created via `Map(map_name=..., geo_json=...)` |
+| `key` | `str \| None` | `None` | Stable widget key; prevents remount and animation replay on rerun |
+| `on_change` | `callable \| None` | `None` | Python callback invoked when the component fires a chart event |
+| `on_select` | `"ignore" \| "rerun" \| callable` | `"ignore"` | Selection behavior: `"rerun"` triggers a Streamlit rerun; a callable is invoked on selection change |
+| `selection_mode` | `str \| tuple[str]` | `("points","box","lasso")` | Which interactions to enable: `"points"` (click), `"box"` (rect brush), `"lasso"` (polygon brush) |
+
+### `JsCode(js_string)`
+
+Wraps a JavaScript string so the frontend evaluates it as a live function rather than a plain string. Use wherever ECharts expects a callback (formatters, symbol sizes, color functions, …).
+
+```python
+JsCode("function(params){ return params.value * 2 }")
+```
+
+### `Map(map_name, geo_json, special_areas=None)`
+
+Registers a GeoJSON map with ECharts. Pass the returned object to `st_echarts(map=...)` and reference `map_name` in a `geo` or `map` series.
+
+---
+
 ### Selection / Interactions
 
 Use `on_select` to enable structured selection events, similar to `st.plotly_chart`:
