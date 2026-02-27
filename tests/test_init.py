@@ -4,7 +4,13 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from streamlit_echarts import EMPTY_SELECTION, JsCode, _serialize_options, st_echarts
+from streamlit_echarts import (
+    EMPTY_SELECTION,
+    JsCode,
+    _serialize_options,
+    st_echarts,
+    st_pyecharts,
+)
 
 JS_PLACEHOLDER = "--x_x--0_0--"
 
@@ -119,3 +125,93 @@ class TestStEchartsSelection:
     def test_invalid_on_select_raises(self, mock_out: MagicMock):
         with pytest.raises(ValueError, match="on_select must be"):
             st_echarts(options={"series": []}, on_select="invalid")
+
+
+class TestStPyecharts:
+    """Tests for st_pyecharts wrapper."""
+
+    def _make_mock_chart(self, options: dict | None = None):
+        """Create a mock pyecharts chart with dump_options()."""
+        import json
+
+        if options is None:
+            options = {
+                "xAxis": {"type": "category", "data": ["A", "B"]},
+                "yAxis": {"type": "value"},
+                "series": [{"data": [10, 20], "type": "bar"}],
+            }
+        chart = MagicMock()
+        chart.dump_options.return_value = json.dumps(options)
+        return chart, options
+
+    @patch("streamlit_echarts.out")
+    def test_basic_call_forwards_to_st_echarts(self, mock_out: MagicMock):
+        mock_out.return_value = {}
+        chart, options = self._make_mock_chart()
+
+        with patch("streamlit_echarts.st_pyecharts.__module__", "streamlit_echarts"):
+            # Mock pyecharts import inside st_pyecharts
+            with patch.dict("sys.modules", {"pyecharts": MagicMock(), "pyecharts.charts": MagicMock(), "pyecharts.charts.base": MagicMock()}):
+                st_pyecharts(chart)
+
+        chart.dump_options.assert_called_once()
+        call_kwargs = mock_out.call_args
+        data = call_kwargs.kwargs["data"]
+        assert data["options"] == options
+
+    @patch("streamlit_echarts.out")
+    def test_forwards_theme_and_dimensions(self, mock_out: MagicMock):
+        mock_out.return_value = {}
+        chart, _ = self._make_mock_chart()
+
+        with patch.dict("sys.modules", {"pyecharts": MagicMock(), "pyecharts.charts": MagicMock(), "pyecharts.charts.base": MagicMock()}):
+            st_pyecharts(chart, theme="dark", height="500px", width="80%")
+
+        data = mock_out.call_args.kwargs["data"]
+        assert data["theme"] == "dark"
+        assert data["height"] == "500px"
+        assert data["width"] == "80%"
+
+    @patch("streamlit_echarts.out")
+    def test_forwards_selection_params(self, mock_out: MagicMock):
+        mock_out.return_value = {"selection": EMPTY_SELECTION}
+        chart, _ = self._make_mock_chart()
+
+        with patch.dict("sys.modules", {"pyecharts": MagicMock(), "pyecharts.charts": MagicMock(), "pyecharts.charts.base": MagicMock()}):
+            st_pyecharts(chart, on_select="rerun", selection_mode="points")
+
+        call_kwargs = mock_out.call_args
+        data = call_kwargs.kwargs["data"]
+        assert data["selectionActive"] is True
+        assert data["selectionMode"] == ["points"]
+
+    @patch("streamlit_echarts.out")
+    def test_forwards_events(self, mock_out: MagicMock):
+        mock_out.return_value = {}
+        chart, _ = self._make_mock_chart()
+        events = {"click": "function(params) { alert(params.name); }"}
+
+        with patch.dict("sys.modules", {"pyecharts": MagicMock(), "pyecharts.charts": MagicMock(), "pyecharts.charts.base": MagicMock()}):
+            st_pyecharts(chart, events=events)
+
+        data = mock_out.call_args.kwargs["data"]
+        assert "click" in data["onEvents"]
+
+    def test_import_error_without_pyecharts(self):
+        chart = MagicMock()
+        chart.dump_options.return_value = "{}"
+
+        with patch.dict("sys.modules", {"pyecharts": None, "pyecharts.charts": None, "pyecharts.charts.base": None}):
+            with pytest.raises(ImportError, match="pip install streamlit-echarts\\[pyecharts\\]"):
+                st_pyecharts(chart)
+
+    @patch("streamlit_echarts.out")
+    def test_returns_component_value(self, mock_out: MagicMock):
+        expected = {"selection": {"points": [{"name": "A"}]}}
+        mock_out.return_value = expected
+        chart, _ = self._make_mock_chart()
+
+        with patch.dict("sys.modules", {"pyecharts": MagicMock(), "pyecharts.charts": MagicMock(), "pyecharts.charts.base": MagicMock()}):
+            result = st_pyecharts(chart)
+
+        assert result == expected

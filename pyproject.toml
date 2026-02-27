@@ -29,6 +29,7 @@ Homepage = "https://github.com/andfanilo/streamlit-echarts"
 "Bug Tracker" = "https://github.com/andfanilo/streamlit-echarts/issues"
 
 [project.optional-dependencies]
+pyecharts = ["pyecharts>=2.0"]
 devel = [
   "wheel",
   "pytest==7.4.0",
