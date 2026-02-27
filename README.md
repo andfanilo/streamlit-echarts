@@ -15,8 +15,13 @@ A Streamlit component to display ECharts.
 ## Installation instructions
 
 ```sh
-uv venv
 uv pip install streamlit-echarts
+```
+
+To also use PyECharts charts with `st_pyecharts`:
+
+```sh
+uv pip install streamlit-echarts[pyecharts]
 ```
 
 ## Usage instructions
@@ -55,6 +60,10 @@ st_echarts(options=options, height="400px")
 | `on_select` | `"ignore" \| "rerun" \| callable` | `"ignore"` | Selection behavior: `"rerun"` triggers a Streamlit rerun; a callable is invoked on selection change |
 | `selection_mode` | `str \| tuple[str]` | `("points","box","lasso")` | Which interactions to enable: `"points"` (click), `"box"` (rect brush), `"lasso"` (polygon brush) |
 
+### `st_pyecharts(chart, ...)`
+
+Convenience wrapper that converts a PyECharts chart instance to a dict and calls `st_echarts`. Requires `pip install streamlit-echarts[pyecharts]`. Accepts the same parameters as `st_echarts` (replacing `options` with `chart`).
+
 ### `JsCode(js_string)`
 
 Wraps a JavaScript string so the frontend evaluates it as a live function rather than a plain string. Use wherever ECharts expects a callback (formatters, symbol sizes, color functions, …).
@@ -85,14 +94,19 @@ if selected["point_indices"]:
 
 ### Using with PyECharts
 
-The v2 version of `streamlit-echarts` intentionally drops the `pyecharts` and `simplejson` dependencies to keep the package lightweight. You can still easily render PyECharts figures by dumping their configuration to JSON and passing it as a dictionary:
+Install the optional `pyecharts` extra:
+
+```sh
+uv pip install streamlit-echarts[pyecharts]
+```
+
+Then use `st_pyecharts` to render PyECharts chart instances directly:
 
 ```python
-import json
 import streamlit as st
 from pyecharts import options as opts
 from pyecharts.charts import Bar
-from streamlit_echarts import st_echarts
+from streamlit_echarts import st_pyecharts
 
 b = (
     Bar()
@@ -107,7 +121,17 @@ b = (
     )
 )
 
-# Render by converting the PyECharts instance to a JSON dictionary
+st_pyecharts(b, height="500px")
+```
+
+`st_pyecharts` accepts the same parameters as `st_echarts` (theme, events, on_select, etc.). Under the hood it calls `chart.dump_options()` and passes the result to `st_echarts`.
+
+Alternatively, you can convert PyECharts options manually without installing the extra:
+
+```python
+import json
+from streamlit_echarts import st_echarts
+
 st_echarts(options=json.loads(b.dump_options()), height="500px")
 ```
 

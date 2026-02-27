@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import importlib.metadata
+import json
 from collections.abc import Callable, Iterable
 from typing import Literal
 
@@ -174,3 +175,54 @@ def st_echarts(
     component_value = out(**mount_kwargs)
 
     return component_value
+
+
+def st_pyecharts(
+    chart,
+    theme: str | dict = "",
+    events: dict[str, str] | None = None,
+    height: str = "300px",
+    width: str = "100%",
+    renderer: str = "canvas",
+    map: Map | None = None,
+    key: str | None = None,
+    on_change: Callable[[], None] | None = None,
+    on_select: Literal["ignore", "rerun"] | Callable[[], None] = "ignore",
+    selection_mode: str | Iterable[str] = ("points", "box", "lasso"),
+):
+    """Display a PyECharts chart instance in Streamlit.
+
+    Requires the ``pyecharts`` optional dependency::
+
+        pip install streamlit-echarts[pyecharts]
+
+    Parameters
+    ----------
+    chart
+        A pyecharts chart instance (e.g. ``Bar()``, ``Line()``, etc.).
+    theme, events, height, width, renderer, map, key, on_change, on_select, selection_mode
+        Same as :func:`st_echarts`.
+    """
+    try:
+        from pyecharts.charts.base import Base  # noqa: F401
+    except ImportError:
+        raise ImportError(
+            "st_pyecharts requires the 'pyecharts' package. "
+            "Install it with: pip install streamlit-echarts[pyecharts]"
+        ) from None
+
+    options = json.loads(chart.dump_options())
+
+    return st_echarts(
+        options=options,
+        theme=theme,
+        events=events,
+        height=height,
+        width=width,
+        renderer=renderer,
+        map=map,
+        key=key,
+        on_change=on_change,
+        on_select=on_select,
+        selection_mode=selection_mode,
+    )
