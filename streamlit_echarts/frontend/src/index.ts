@@ -10,6 +10,13 @@ import "echarts-wordcloud";
 
 import deepMap from "./utils";
 import { evalStringToFunction } from "./parsers";
+import {
+  SelectionData,
+  EMPTY_SELECTION,
+  transformClickToSelection,
+  transformBrushToSelection,
+  buildBrushOption,
+} from "./selection";
 
 interface Map {
   mapName: string;
@@ -19,6 +26,7 @@ interface Map {
 
 export type EchartsStateShape = {
   chart_event?: any;
+  selection?: SelectionData;
 };
 
 export type EchartsDataShape = {
@@ -29,6 +37,8 @@ export type EchartsDataShape = {
   width: string;
   renderer: "canvas" | "svg";
   map: Map | null;
+  selectionActive?: boolean;
+  selectionMode?: string[];
 };
 
 const FALLBACK_PALETTE = [
@@ -150,9 +160,9 @@ export const setEventsGenerator = () => {
       return false;
     }
 
-    // Unbind old handlers
+    // Unbind old handlers by reference (not by name) to preserve other listeners
     for (const eventName of Object.keys(savedHandlers)) {
-      chart.off(eventName);
+      chart.off(eventName, savedHandlers[eventName] as any);
     }
 
     // Build and bind new handlers
@@ -174,6 +184,84 @@ export const setEventsGenerator = () => {
 };
 
 /**
+ * Memoized selection wiring. Manages click and brush listeners for the
+ * structured selection API. Uses handler-specific unbind to coexist with
+ * user-defined event handlers.
+ */
+export const setSelectionGenerator = () => {
+  let savedKey: string | null = null;
+  let savedHandlers: { event: string; handler: Function }[] = [];
+
+  return (
+    chart: echarts.ECharts,
+    selectionActive: boolean,
+    selectionMode: string[],
+    setStateValue: FrontendRendererArgs<EchartsStateShape>["setStateValue"],
+  ): boolean => {
+    const key = JSON.stringify({ selectionActive, selectionMode });
+    if (key === savedKey) {
+      return false;
+    }
+
+    // Unbind old handlers by reference
+    for (const { event, handler } of savedHandlers) {
+      chart.off(event, handler as any);
+    }
+    savedHandlers = [];
+
+    if (!selectionActive) {
+      savedKey = key;
+      return true;
+    }
+
+    // Click handler for "points" mode
+    if (selectionMode.includes("points")) {
+      const clickHandler = (params: any) => {
+        const selection = transformClickToSelection(params);
+        setStateValue("selection", selection);
+      };
+      chart.on("click", clickHandler as any);
+      savedHandlers.push({ event: "click", handler: clickHandler });
+    }
+
+    // Brush handlers for "box" and "lasso" modes
+    // ECharts fires brushEnd (areas) BEFORE the final brushSelected (batch),
+    // so we cache areas from brushEnd and trigger state from brushSelected.
+    if (selectionMode.includes("box") || selectionMode.includes("lasso")) {
+      let cachedAreas: any[] = [];
+
+      const brushEndHandler = (params: any) => {
+        cachedAreas = params.areas ?? [];
+        if (cachedAreas.length === 0) {
+          setStateValue("selection", EMPTY_SELECTION);
+        }
+      };
+
+      const brushSelectedHandler = (params: any) => {
+        const batch = params.batch ?? [];
+        if (cachedAreas.length === 0) return;
+        const selection = transformBrushToSelection(
+          batch,
+          cachedAreas,
+          chart,
+        );
+        setStateValue("selection", selection);
+      };
+
+      chart.on("brushEnd", brushEndHandler as any);
+      chart.on("brushSelected", brushSelectedHandler as any);
+      savedHandlers.push(
+        { event: "brushEnd", handler: brushEndHandler },
+        { event: "brushSelected", handler: brushSelectedHandler },
+      );
+    }
+
+    savedKey = key;
+    return true;
+  };
+};
+
+/**
  * Component-scoped state keyed by the host element to support multiple
  * instances.
  */
@@ -184,6 +272,7 @@ type ComponentState = {
   getOptions: ReturnType<typeof getOptionsGenerator>;
   setTheme: ReturnType<typeof setThemeGenerator>;
   setEvents: ReturnType<typeof setEventsGenerator>;
+  setSelection: ReturnType<typeof setSelectionGenerator>;
 };
 
 const componentState = new WeakMap<HTMLElement | ShadowRoot, ComponentState>();
@@ -201,6 +290,7 @@ const getOrCreateInstanceState = (
       getOptions: getOptionsGenerator(),
       setTheme: setThemeGenerator(),
       setEvents: setEventsGenerator(),
+      setSelection: setSelectionGenerator(),
     };
     componentState.set(host, state);
   }
@@ -211,8 +301,18 @@ const getOrCreateInstanceState = (
 const EchartsRenderer: FrontendRenderer<EchartsStateShape, EchartsDataShape> = (
   args,
 ) => {
-  const { data, parentElement, setTriggerValue } = args;
-  const { options, theme, onEvents, height, width, renderer, map } = data;
+  const { data, parentElement, setTriggerValue, setStateValue } = args;
+  const {
+    options,
+    theme,
+    onEvents,
+    height,
+    width,
+    renderer,
+    map,
+    selectionActive = false,
+    selectionMode = [],
+  } = data;
 
   const container =
     parentElement.querySelector<HTMLDivElement>(".echarts-container");
@@ -239,6 +339,9 @@ const EchartsRenderer: FrontendRenderer<EchartsStateShape, EchartsDataShape> = (
   if (themeChanged && state.chart) {
     state.chart.dispose();
     state.chart = null;
+    // Reset memoized generators so stale handler references are cleared
+    state.setEvents = setEventsGenerator();
+    state.setSelection = setSelectionGenerator();
   }
 
   // 4. Create chart if needed
@@ -256,6 +359,19 @@ const EchartsRenderer: FrontendRenderer<EchartsStateShape, EchartsDataShape> = (
 
   // 6. Wire events (memoized unbind/rebind)
   state.setEvents(state.chart, onEvents, setTriggerValue);
+
+  // 6b. Wire selection listeners and overlay brush config
+  const selectionChanged = state.setSelection(
+    state.chart,
+    selectionActive,
+    selectionMode,
+    setStateValue,
+  );
+  if (selectionChanged && selectionActive) {
+    state.chart.setOption(buildBrushOption(selectionMode), {
+      notMerge: false,
+    });
+  }
 
   // 7. Set up ResizeObserver (once per instance)
   if (!state.resizeObserver) {

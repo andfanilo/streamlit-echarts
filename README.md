@@ -2,8 +2,6 @@
 
 A Streamlit component to display ECharts.
 
-![](./img/demo.gif)
-
 [![Streamlit App](https://static.streamlit.io/badges/streamlit_badge_black_white.svg)](https://share.streamlit.io/andfanilo/streamlit-echarts-demo/master/app.py)
 
 ---
@@ -36,6 +34,20 @@ options = {
 
 st_echarts(options=options, height="400px")
 ```
+
+### Selection / Interactions
+
+Use `on_select` to enable structured selection events, similar to `st.plotly_chart`:
+
+```python
+result = st_echarts(options=options, on_select="rerun", selection_mode="points", key="my_chart")
+
+selected = result["selection"]
+if selected["point_indices"]:
+    st.write("Selected indices:", selected["point_indices"])
+```
+
+`selection_mode` accepts `"points"` (click), `"box"` (rect brush), `"lasso"` (polygon brush), or a tuple of multiple modes. See the demo app for more examples.
 
 ### Using with PyECharts
 

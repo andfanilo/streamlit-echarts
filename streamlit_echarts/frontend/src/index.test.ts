@@ -11,10 +11,12 @@ vi.mock("echarts-liquidfill", () => ({}));
 vi.mock("echarts-wordcloud", () => ({}));
 
 import * as echarts from "echarts";
+import type { EchartsStateShape } from "./index";
 import {
   getOptionsGenerator,
   setThemeGenerator,
   setEventsGenerator,
+  setSelectionGenerator,
 } from "./index";
 
 describe("getOptionsGenerator", () => {
@@ -122,7 +124,7 @@ describe("setThemeGenerator", () => {
 describe("setEventsGenerator", () => {
   let setEvents: ReturnType<typeof setEventsGenerator>;
   let mockChart: any;
-  let mockSetTriggerValue: (name: "chart_event", value: any) => void;
+  let mockSetTriggerValue: (name: keyof EchartsStateShape, value: any) => void;
 
   beforeEach(() => {
     setEvents = setEventsGenerator();
@@ -171,7 +173,7 @@ describe("setEventsGenerator", () => {
     const result = setEvents(mockChart, onEvents2, mockSetTriggerValue);
 
     expect(result).toBe(true);
-    expect(mockChart.off).toHaveBeenCalledWith("click");
+    expect(mockChart.off).toHaveBeenCalledWith("click", expect.any(Function));
     expect(mockChart.on).toHaveBeenCalledWith(
       "mouseover",
       expect.any(Function),
@@ -192,6 +194,104 @@ describe("setEventsGenerator", () => {
     expect(mockSetTriggerValue).toHaveBeenCalledWith(
       "chart_event",
       "test-value",
+    );
+  });
+});
+
+describe("setSelectionGenerator", () => {
+  let setSelection: ReturnType<typeof setSelectionGenerator>;
+  let mockChart: any;
+  let mockSetStateValue: any;
+
+  beforeEach(() => {
+    setSelection = setSelectionGenerator();
+    mockChart = {
+      on: vi.fn(),
+      off: vi.fn(),
+      getOption: vi.fn(() => ({ series: [] })),
+      convertFromPixel: vi.fn(),
+    };
+    mockSetStateValue = vi.fn();
+  });
+
+  test("should return true on first call with selectionActive=true", () => {
+    const result = setSelection(
+      mockChart,
+      true,
+      ["points"],
+      mockSetStateValue,
+    );
+    expect(result).toBe(true);
+  });
+
+  test("should return false on same config", () => {
+    setSelection(mockChart, true, ["points"], mockSetStateValue);
+    const result = setSelection(
+      mockChart,
+      true,
+      ["points"],
+      mockSetStateValue,
+    );
+    expect(result).toBe(false);
+  });
+
+  test("should return true when selectionMode changes", () => {
+    setSelection(mockChart, true, ["points"], mockSetStateValue);
+    const result = setSelection(
+      mockChart,
+      true,
+      ["points", "box"],
+      mockSetStateValue,
+    );
+    expect(result).toBe(true);
+  });
+
+  test("should bind click when mode includes points", () => {
+    setSelection(mockChart, true, ["points"], mockSetStateValue);
+    expect(mockChart.on).toHaveBeenCalledWith("click", expect.any(Function));
+  });
+
+  test("should bind brushSelected+brushEnd when mode includes box", () => {
+    setSelection(mockChart, true, ["box"], mockSetStateValue);
+
+    const eventNames = mockChart.on.mock.calls.map((c: any) => c[0]);
+    expect(eventNames).toContain("brushSelected");
+    expect(eventNames).toContain("brushEnd");
+  });
+
+  test("should unbind old handlers on re-wire", () => {
+    setSelection(mockChart, true, ["points"], mockSetStateValue);
+    const clickHandler = mockChart.on.mock.calls[0][1];
+
+    setSelection(mockChart, true, ["box"], mockSetStateValue);
+
+    expect(mockChart.off).toHaveBeenCalledWith("click", clickHandler);
+  });
+
+  test("should not bind handlers when selectionActive=false", () => {
+    setSelection(mockChart, false, ["points"], mockSetStateValue);
+    expect(mockChart.on).not.toHaveBeenCalled();
+  });
+
+  test("should call setStateValue with selection on click", () => {
+    setSelection(mockChart, true, ["points"], mockSetStateValue);
+
+    const clickHandler = mockChart.on.mock.calls[0][1];
+    clickHandler({
+      componentType: "series",
+      dataIndex: 0,
+      seriesIndex: 0,
+      seriesName: "S",
+      data: 42,
+    });
+
+    expect(mockSetStateValue).toHaveBeenCalledWith(
+      "selection",
+      expect.objectContaining({
+        points: expect.arrayContaining([
+          expect.objectContaining({ point_index: 0, value: 42 }),
+        ]),
+      }),
     );
   });
 });

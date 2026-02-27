@@ -1,0 +1,228 @@
+# Streamlit-ECharts Roadmap
+# This file serves as a backlog for future coding agents to enhance the native TS implementation.
+
+features:
+  - id: screenshot_return
+    github_issue: 55
+    title: "Return Chart Screenshot to Python"
+    description: "Allow the component to return a base64 image representation of the chart back to Streamlit."
+    utility: 9
+    complexity: 3
+    implementation_idea: >
+      1. Add 'capture: bool' to EchartsDataShape in Python and TS.
+      2. In index.ts, if capture is true, call chart.getDataURL() after the 'finished' event.
+      3. Use setTriggerValue("screenshot", dataUrl) to send it back.
+    files_to_touch: ["streamlit_echarts/frontend/src/index.ts", "streamlit_echarts/__init__.py"]
+    pitfalls: "Large base64 strings can slow down the Streamlit session state if overused."
+
+  - id: smart_interactions
+    github_issue: 58
+    title: "Smart Bi-directional Interactions"
+    description: "High-performance, named event triggers with structured selection data."
+    utility: 9
+    complexity: 5
+    detailed_plan: "plans/smart-interactions-v2.md"
+    implementation_idea: >
+      1. Use CCv2 named triggers: setTriggerValue(eventName, payload) instead of a single bucket.
+      2. Transform raw ECharts payloads into Python-friendly structures (e.g., series indices).
+      3. Implement debouncing for high-frequency events like 'brushSelected'.
+    files_to_touch: ["streamlit_echarts/frontend/src/index.ts", "streamlit_echarts/__init__.py"]
+    ai_guidance: "Refer to ECharts Brush documentation. Ensure no circular render loops occur when Python reacts to a selection."
+
+  - id: modern_jscode
+    status: done
+    github_issue: 48
+    title: "Modernize JsCode implementation"
+    description: "Support arrow functions and improve robustness of JS evaluation on the frontend."
+    utility: 8
+    complexity: 2
+    detailed_plan: "plans/modern-jscode.md"
+    implementation_idea: >
+      1. Switch from regex to string splitting for placeholder extraction in parsers.ts.
+      2. Use 'new Function("return (" + code + ")")' to support arrow functions.
+      3. Add __str__ to Python JsCode class for better serialization.
+    files_to_touch: ["streamlit_echarts/frontend/src/parsers.ts", "streamlit_echarts/__init__.py"]
+    pitfalls: "eval-like behavior should be handled carefully; ensure JS_PLACEHOLDER is unique enough."
+
+  - id: fix_wrapper_overflow
+    status: done
+    github_issue: 27
+    title: "Fix Wrapper Overflow Clipping"
+    description: "Ensure the div wrapper doesn't hide legends or axis labels when they extend beyond the chart area."
+    resolution: >
+      Not a component bug — ECharts renders inside its own canvas/SVG, so clipping
+      happens at the rendering level, not via CSS overflow on our wrapper. Addressed
+      with user-facing guidance in docs/FAQ.md recommending grid.containLabel,
+      tooltip.confine, and legend truncation options.
+
+  - id: native_fullscreen
+    github_issue: 35
+    title: "Native Fullscreen Support"
+    description: "Add a fullscreen toggle to the chart, matching Streamlit's native chart behavior."
+    utility: 8
+    complexity: 3
+    implementation_idea: >
+      1. Add a 'fullscreen' boolean parameter in Python.
+      2. Use the browser Fullscreen API on the chart container in the frontend.
+      3. Add a small overlay button or trigger it via the ECharts toolbox.
+    files_to_touch: ["streamlit_echarts/frontend/src/index.ts", "streamlit_echarts/__init__.py"]
+
+  - id: pyecharts_grid_support
+    github_issue: 53
+    title: "Enhanced Pyecharts Grid Support"
+    description: "Fix issues where pyecharts Grid/Page components do not render correctly in st_pyecharts."
+    utility: 8
+    complexity: 3
+    implementation_idea: >
+      1. Investigate the JSON structure emitted by pyecharts.Grid.
+      2. Ensure the frontend can handle multiple option sets if pyecharts wraps them differently.
+    files_to_touch: ["streamlit_echarts/__init__.py", "streamlit_echarts/frontend/src/index.ts"]
+
+  - id: fix_save_as_image
+    status: done
+    github_issue: 33
+    title: "Fix Toolbox saveAsImage"
+    description: "Ensure the ECharts toolbox 'saveAsImage' feature works correctly within the Streamlit iframe."
+    resolution: >
+      Marked as a known environment limitation (Streamlit app reruns on internal
+      toolbox anchor clicks). Resolved via documentation in docs/FAQ.md (recommending
+      right-click context menu) and linked the robust fix to id: screenshot_return
+      (GitHub issue #55), which will enable st.download_button via chart.getDataURL().
+
+  - id: echarts_stat_integration
+    github_issue: 25
+    title: "Add echarts-stat Support"
+    description: "Integrate the echarts-stat library for statistical transformations (regression, clustering) directly in the frontend."
+    utility: 8
+    complexity: 5
+    implementation_idea: >
+      1. Add 'echarts-stat' to frontend dependencies.
+      2. Register the transform in index.ts.
+    files_to_touch: ["streamlit_echarts/frontend/package.json", "streamlit_echarts/frontend/src/index.ts"]
+
+  - id: legend_responsiveness
+    github_issue: 28
+    title: "Responsive Legend Layout"
+    description: "Prevent legend overlaps on smaller devices by dynamically adjusting layout or orientation."
+    utility: 7
+    complexity: 4
+    implementation_idea: >
+      1. Detect container width in the frontend.
+      2. If width is below a threshold, override 'legend.orient' to 'horizontal' or move it to the bottom.
+    files_to_touch: ["streamlit_echarts/frontend/src/index.ts"]
+
+  - id: clickable_histogram
+    github_issue: 61
+    title: "Clickable Histogram Examples"
+    description: "Provide clear examples and better support for returning bin selections from histograms."
+    utility: 7
+    complexity: 4
+    implementation_idea: >
+      1. Create a demo app example specifically for bar/histogram selection.
+      2. Ensure 'smart_interactions' captures the correct axis values for histograms.
+    files_to_touch: ["demo_app.py", "streamlit_echarts/frontend/src/index.ts"]
+
+  - id: iframe_scrolling
+    github_issue: 59
+    title: "Enable Iframe Scrolling"
+    description: "Allow users to enable scrolling within the chart iframe when content exceeds the height."
+    utility: 6
+    complexity: 4
+    implementation_idea: >
+      1. Add 'scrolling: bool' parameter to st_echarts.
+      2. Toggle 'overflow: auto' on the root container in the frontend.
+    files_to_touch: ["streamlit_echarts/__init__.py", "streamlit_echarts/frontend/src/index.ts"]
+
+  - id: draggable_nodes_enhancement
+    github_issue: 57
+    title: "Draggable Nodes for All Layouts"
+    description: "Investigate and enable node dragging for non-force layouts (e.g., circular, tree) if supported by ECharts."
+    utility: 6
+    complexity: 5
+    files_to_touch: ["streamlit_echarts/frontend/src/index.ts"]
+
+  - id: mapbox_gl_support
+    github_issue: 37
+    title: "Mapbox-GL Integration"
+    description: "Add support for Mapbox-GL maps within ECharts."
+    utility: 7
+    complexity: 7
+    implementation_idea: >
+      1. Add mapbox-gl and echarts-extension-mapbox-gl to dependencies.
+      2. Provide a way for users to pass their Mapbox access token.
+    files_to_touch: ["streamlit_echarts/frontend/package.json", "streamlit_echarts/frontend/src/index.ts"]
+
+  - id: full_echarts_api
+    github_issue: 4
+    title: "Full Echarts Instance API Support"
+    description: "Expose the full echartsInstance API to Python for dynamic updates without full rerenders."
+    utility: 10
+    complexity: 10
+    implementation_idea: >
+      1. Use a messaging protocol via CCv2 triggers and props.
+      2. Allow Python to send 'commands' (e.g., dispatchAction) that are executed on the existing chart instance.
+    files_to_touch: ["streamlit_echarts/__init__.py", "streamlit_echarts/frontend/src/index.ts"]
+
+  - id: large_data_performance
+    title: "Optimized Path for Large Datasets"
+    description: "Bypass recursive traversal and stringification for large series data."
+    utility: 9
+    complexity: 5
+    implementation_idea: >
+      1. Identify 'series.data' as a 'hot path' that likely doesn't contain JsCode.
+      2. Update deepMap to skip recursion for large numeric arrays.
+      3. Use a more efficient comparison than JSON.stringify for determining if options changed.
+    files_to_touch: ["streamlit_echarts/frontend/src/utils.ts", "streamlit_echarts/frontend/src/index.ts"]
+
+  - id: enhanced_ccv2_theming
+    title: "Deep Streamlit Theme Integration"
+    description: "Leverage more CCv2 CSS variables for a truly native feel."
+    utility: 8
+    complexity: 3
+    implementation_idea: >
+      1. Expand the 'streamlit' theme to use --st-secondary-background-color for tooltips and --st-border-color for axis lines.
+      2. Use --st-gray-700 for labels to match Streamlit's typography more closely.
+      3. Default the 'theme' parameter in Python to 'streamlit' instead of an empty string.
+    files_to_touch: ["streamlit_echarts/frontend/src/index.ts", "streamlit_echarts/__init__.py"]
+
+  - id: responsive_aspect_ratio
+    title: "Aspect-Ratio Aware Resizing"
+    description: "Optionally maintain a fixed aspect ratio while resizing to the container width."
+    utility: 7
+    complexity: 3
+    implementation_idea: >
+      1. Add 'aspect_ratio' parameter to st_echarts.
+      2. In the frontend ResizeObserver, calculate and set the container height based on the new width and target ratio.
+    files_to_touch: ["streamlit_echarts/__init__.py", "streamlit_echarts/frontend/src/index.ts"]
+
+  - id: dataframe_dataset_bridge
+    title: "Native DataFrame to Dataset conversion"
+    description: "Automatically convert Pandas/Polars DataFrames to ECharts 'dataset' format."
+    utility: 8
+    complexity: 4
+    implementation_idea: >
+      1. Create a Python utility to transform DataFrames into the 'source' format for ECharts datasets.
+      2. Allow users to pass a DataFrame directly to st_echarts, which auto-generates a basic series/dataset config.
+    files_to_touch: ["streamlit_echarts/utils/dataset.py", "streamlit_echarts/__init__.py"]
+
+  - id: classic_themes_pack
+    title: "Classic ECharts Themes Pack"
+    description: "Support 'vintage', 'macarons', 'dark', 'shine' themes out of the box."
+    utility: 7
+    complexity: 4
+    implementation_idea: >
+      1. Download the official ECharts theme files.
+      2. Create a themes/ folder in frontend/src.
+      3. In setThemeGenerator, if the theme name matches, load and call registerTheme.
+    files_to_touch: ["streamlit_echarts/frontend/src/index.ts"]
+    dependencies: ["echarts"]
+
+  - id: geo_utility_module
+    title: "Python Geo-Fuzzy Matching"
+    description: "Fuzzy matching city names to coordinates/geoJSON."
+    utility: 7
+    complexity: 6
+    implementation_idea: >
+      1. Create streamlit_echarts/utils/geo.py.
+      2. Include a lightweight mapping of common city names to coordinates.
+    files_to_touch: ["streamlit_echarts/utils/geo.py", "streamlit_echarts/__init__.py"]
