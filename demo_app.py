@@ -1,3 +1,4 @@
+import inspect
 import json
 from urllib.request import urlopen
 
@@ -13,6 +14,12 @@ OPTIONS = {
 }
 
 
+def _show_source(func):
+    """Show the source code of a page function in an expander at the bottom."""
+    with st.expander("Source code"):
+        st.code(inspect.getsource(func), language="python")
+
+
 # ---------------------------------------------------------------------------
 # Pages
 # ---------------------------------------------------------------------------
@@ -23,13 +30,13 @@ def page_options():
         "`options` is the only required argument. "
         "It accepts a plain Python `dict` that maps 1-to-1 to the ECharts option object."
     )
-    with st.echo():
-        options = {
-            "xAxis": {"type": "category", "data": ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]},
-            "yAxis": {"type": "value"},
-            "series": [{"data": [120, 200, 150, 80, 70, 110, 130], "type": "bar"}],
-        }
-        st_echarts(options=options, key="options_demo")
+    options = {
+        "xAxis": {"type": "category", "data": ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]},
+        "yAxis": {"type": "value"},
+        "series": [{"data": [120, 200, 150, 80, 70, 110, 130], "type": "bar"}],
+    }
+    st_echarts(options=options, key="options_demo")
+    _show_source(page_options)
 
 
 def page_height_width():
@@ -42,16 +49,14 @@ def page_height_width():
     col1, col2 = st.columns(2)
     with col1:
         st.caption('height="150px"')
-        with st.echo():
-            st_echarts(options=OPTIONS, height="150px", key="height_small")
+        st_echarts(options=OPTIONS, height="150px", key="height_small")
     with col2:
         st.caption('height="500px"')
-        with st.echo():
-            st_echarts(options=OPTIONS, height="500px", key="height_large")
+        st_echarts(options=OPTIONS, height="500px", key="height_large")
 
     st.caption('width="50%"')
-    with st.echo():
-        st_echarts(options=OPTIONS, width="50%", key="width_half")
+    st_echarts(options=OPTIONS, width="50%", key="width_half")
+    _show_source(page_height_width)
 
 
 def page_renderer():
@@ -61,8 +66,8 @@ def page_renderer():
         '`"svg"` produces a scalable graphic that prints crisply and is accessible to screen readers.'
     )
     renderer = st.radio("renderer", ["canvas", "svg"], horizontal=True, key="renderer_radio")
-    with st.echo():
-        st_echarts(options=OPTIONS, renderer=renderer, key="renderer_demo")
+    st_echarts(options=OPTIONS, renderer=renderer, key="renderer_demo")
+    _show_source(page_renderer)
 
 
 def page_theme():
@@ -78,17 +83,17 @@ def page_theme():
             BUILTIN_THEMES,
             key="theme_selectbox",
         )
-        with st.echo():
-            st_echarts(options=OPTIONS, theme=theme_name, key=f"theme_{theme_name}")
+        st_echarts(options=OPTIONS, theme=theme_name, key=f"theme_{theme_name}")
 
     with tab_dict:
-        with st.echo():
-            CUSTOM_THEME = {
-                "color": ["#e06c75", "#98c379", "#61afef"],
-                "backgroundColor": "#282c34",
-                "textStyle": {"color": "#abb2bf"},
-            }
-            st_echarts(options=OPTIONS, theme=CUSTOM_THEME, key="theme_dict_demo")
+        CUSTOM_THEME = {
+            "color": ["#e06c75", "#98c379", "#61afef"],
+            "backgroundColor": "#282c34",
+            "textStyle": {"color": "#abb2bf"},
+        }
+        st_echarts(options=OPTIONS, theme=CUSTOM_THEME, key="theme_dict_demo")
+
+    _show_source(page_theme)
 
 
 def page_events():
@@ -99,33 +104,28 @@ def page_events():
     )
 
     st.subheader("click event")
-    with st.echo():
-        click_result = st_echarts(
-            options=OPTIONS,
-            events={"click": "function(p){return {name: p.name, value: p.value}}"},
-            key="events_click",
-        )
+    click_result = st_echarts(
+        options=OPTIONS,
+        events={"click": "function(p){return {name: p.name, value: p.value}}"},
+        key="events_click",
+    )
     if click_result:
         st.write("Last click:", click_result)
     else:
         st.info("Click a bar to fire a click event.")
 
-    st.subheader("legendselectchanged event")
-    legend_options = {
-        **OPTIONS,
-        "legend": {"data": ["Series A"]},
-        "series": [{"data": [120, 200, 150, 80, 70, 110, 130], "type": "bar", "name": "Series A"}],
-    }
-    with st.echo():
-        legend_result = st_echarts(
-            options=legend_options,
-            events={"legendselectchanged": "function(p){return {name: p.name, selected: p.selected}}"},
-            key="events_legend",
-        )
-    if legend_result:
-        st.write("Legend changed:", legend_result)
+    st.subheader("mouseover event")
+    mouseover_result = st_echarts(
+        options=OPTIONS,
+        events={"mouseover": "function(p){return {name: p.name, value: p.value}}"},
+        key="events_mouseover",
+    )
+    if mouseover_result:
+        st.write("Last mouseover:", mouseover_result)
     else:
-        st.info("Click the legend item to toggle it.")
+        st.info("Hover over a bar to fire a mouseover event.")
+
+    _show_source(page_events)
 
 
 def page_selection():
@@ -146,21 +146,20 @@ def page_selection():
     ]
 
     st.subheader("Click selection (points) — filter source data")
-    with st.echo():
-        select_result = st_echarts(
-            options=OPTIONS,
-            key="select_points",
-            on_select="rerun",
-            selection_mode="points",
-        )
+    select_result = st_echarts(
+        options=OPTIONS,
+        key="select_points",
+        on_select="rerun",
+        selection_mode="points",
+    )
 
-        # Use point_indices to filter back to source data
-        indices = select_result["selection"]["point_indices"]
-        output = st.empty()
-        if indices:
-            output.table([SALES_DATA[i] for i in indices if i < len(SALES_DATA)])
-        else:
-            output.caption("Click a bar to filter the source data.")
+    # Use point_indices to filter back to source data
+    indices = select_result["selection"]["point_indices"]
+    output = st.empty()
+    if indices:
+        output.table([SALES_DATA[i] for i in indices if i < len(SALES_DATA)])
+    else:
+        output.caption("Click a bar to filter the source data.")
 
     st.subheader("Brush selection (box + lasso) + session state")
     scatter_options = {
@@ -176,13 +175,12 @@ def page_selection():
             }
         ],
     }
-    with st.echo():
-        brush_result = st_echarts(
-            options=scatter_options,
-            key="select_brush",
-            on_select="rerun",
-            selection_mode=("box", "lasso"),
-        )
+    brush_result = st_echarts(
+        options=scatter_options,
+        key="select_brush",
+        on_select="rerun",
+        selection_mode=("box", "lasso"),
+    )
 
     col_return2, col_state2 = st.columns(2)
     with col_return2:
@@ -199,6 +197,8 @@ def page_selection():
             st.json(state_val2["selection"])
         else:
             st.caption("Selection will appear here after brushing.")
+
+    _show_source(page_selection)
 
 
 def page_key():
@@ -220,12 +220,12 @@ def page_key():
     col_no_key, col_with_key = st.columns(2)
     with col_no_key:
         st.caption("No key — may remount and replay animation on rerun")
-        with st.echo():
-            st_echarts(options=OPTIONS)
+        st_echarts(options=OPTIONS)
     with col_with_key:
         st.caption('key="stable" — persists across reruns')
-        with st.echo():
-            st_echarts(options=OPTIONS, key="stable")
+        st_echarts(options=OPTIONS, key="stable")
+
+    _show_source(page_key)
 
 
 def page_on_change():
@@ -239,17 +239,17 @@ def page_on_change():
     if "change_count" not in st.session_state:
         st.session_state.change_count = 0
 
-    with st.echo():
-        def on_chart_change():
-            st.session_state.change_count += 1
+    def on_chart_change():
+        st.session_state.change_count += 1
 
-        st_echarts(
-            options=OPTIONS,
-            events={"click": "function(p){return p.name}"},
-            on_change=on_chart_change,
-            key="on_change_demo",
-        )
+    st_echarts(
+        options=OPTIONS,
+        events={"click": "function(p){return p.name}"},
+        on_change=on_chart_change,
+        key="on_change_demo",
+    )
     st.metric("Times on_change fired", st.session_state.change_count)
+    _show_source(page_on_change)
 
 
 def page_map():
@@ -270,36 +270,37 @@ def page_map():
 
     try:
         world_geo = load_world_geojson()
-        with st.echo():
-            map_obj = Map(map_name="World", geo_json=world_geo)
-            map_options = {
-                "title": {"text": "World Map — random data"},
-                "visualMap": {
-                    "min": 0,
-                    "max": 100,
-                    "inRange": {"color": ["#e0f3f8", "#4575b4"]},
-                },
-                "series": [
-                    {
-                        "type": "map",
-                        "map": "World",
-                        "data": [
-                            {"name": "United States of America", "value": 80},
-                            {"name": "China", "value": 95},
-                            {"name": "Brazil", "value": 60},
-                            {"name": "India", "value": 75},
-                            {"name": "Australia", "value": 50},
-                            {"name": "Germany", "value": 55},
-                            {"name": "France", "value": 45},
-                            {"name": "Russia", "value": 70},
-                        ],
-                        "emphasis": {"label": {"show": True}},
-                    }
-                ],
-            }
-            st_echarts(options=map_options, map=map_obj, height="450px", key="map_demo")
+        map_obj = Map(map_name="World", geo_json=world_geo)
+        map_options = {
+            "title": {"text": "World Map — random data"},
+            "visualMap": {
+                "min": 0,
+                "max": 100,
+                "inRange": {"color": ["#e0f3f8", "#4575b4"]},
+            },
+            "series": [
+                {
+                    "type": "map",
+                    "map": "World",
+                    "data": [
+                        {"name": "United States of America", "value": 80},
+                        {"name": "China", "value": 95},
+                        {"name": "Brazil", "value": 60},
+                        {"name": "India", "value": 75},
+                        {"name": "Australia", "value": 50},
+                        {"name": "Germany", "value": 55},
+                        {"name": "France", "value": 45},
+                        {"name": "Russia", "value": 70},
+                    ],
+                    "emphasis": {"label": {"show": True}},
+                }
+            ],
+        }
+        st_echarts(options=map_options, map=map_obj, height="450px", key="map_demo")
     except Exception as exc:
         st.warning(f"Could not load GeoJSON (network unavailable?): {exc}")
+
+    _show_source(page_map)
 
 
 def page_jscode():
@@ -311,36 +312,35 @@ def page_jscode():
     )
 
     st.subheader("a) Custom tooltip formatter")
-    with st.echo():
-        tooltip_options = {
-            **OPTIONS,
-            "tooltip": {
-                "trigger": "axis",
-                "formatter": JsCode("function(p){return p[0].name + ': ' + p[0].value + ' units'}"),
-            },
-        }
-        st_echarts(options=tooltip_options, key="jscode_tooltip")
+    tooltip_options = {
+        **OPTIONS,
+        "tooltip": {
+            "trigger": "axis",
+            "formatter": JsCode("function(p){return p[0].name + ': ' + p[0].value + ' units'}"),
+        },
+    }
+    st_echarts(options=tooltip_options, key="jscode_tooltip")
 
     st.subheader("b) Dynamic symbol size in scatter")
-    with st.echo():
-        scatter_options = {
-            "xAxis": {"type": "value"},
-            "yAxis": {"type": "value"},
-            "series": [
-                {
-                    "type": "scatter",
-                    "symbolSize": JsCode("function(v){return v[2] * 5}"),
-                    "data": [
-                        [3.0, 4.5, 8],
-                        [7.0, 2.0, 4],
-                        [1.5, 6.0, 12],
-                        [5.5, 5.5, 6],
-                        [9.0, 1.0, 3],
-                    ],
-                }
-            ],
-        }
-        st_echarts(options=scatter_options, key="jscode_scatter")
+    scatter_options = {
+        "xAxis": {"type": "value"},
+        "yAxis": {"type": "value"},
+        "series": [
+            {
+                "type": "scatter",
+                "symbolSize": JsCode("function(v){return v[2] * 5}"),
+                "data": [
+                    [3.0, 4.5, 8],
+                    [7.0, 2.0, 4],
+                    [1.5, 6.0, 12],
+                    [5.5, 5.5, 6],
+                    [9.0, 1.0, 3],
+                ],
+            }
+        ],
+    }
+    st_echarts(options=scatter_options, key="jscode_scatter")
+    _show_source(page_jscode)
 
 
 def page_layouts():
@@ -348,19 +348,18 @@ def page_layouts():
     st.markdown("Charts inside `st.tabs` and `st.expander` resize correctly when revealed.")
 
     st.subheader("Tabs")
-    with st.echo():
-        tab_empty, tab_chart = st.tabs(["No chart here", "Chart here"])
-        with tab_empty:
-            st.write("Switch to the **Chart here** tab.")
-        with tab_chart:
-            st_echarts(options=OPTIONS, key="tab_demo")
+    tab_empty, tab_chart = st.tabs(["No chart here", "Chart here"])
+    with tab_empty:
+        st.write("Switch to the **Chart here** tab.")
+    with tab_chart:
+        st_echarts(options=OPTIONS, key="tab_demo")
     st.caption("Chart correctly sizes itself when its tab becomes visible.")
 
     st.subheader("Expander")
-    with st.echo():
-        with st.expander("Expand to see chart"):
-            st_echarts(options=OPTIONS, key="expander_demo")
+    with st.expander("Expand to see chart"):
+        st_echarts(options=OPTIONS, key="expander_demo")
     st.caption("Chart correctly sizes itself when the expander is opened.")
+    _show_source(page_layouts)
 
 
 # ---------------------------------------------------------------------------
