@@ -249,7 +249,6 @@ export function buildPointFromDataItem(
 
 function buildFinder(
   area: any,
-  chart: ECharts,
   chartOption: EChartsOption,
 ): Record<string, any> {
   // Check for geo chart
@@ -272,7 +271,7 @@ function convertRectArea(
   const range = area.range;
   if (!range || !Array.isArray(range) || range.length < 2) return null;
 
-  const finder = buildFinder(area, chart, chartOption);
+  const finder = buildFinder(area, chartOption);
 
   try {
     const min = chart.convertFromPixel(finder, [range[0][0], range[1][0]]);
@@ -298,7 +297,7 @@ function convertPolygonArea(
   const range = area.range;
   if (!range || !Array.isArray(range)) return null;
 
-  const finder = buildFinder(area, chart, chartOption);
+  const finder = buildFinder(area, chartOption);
 
   try {
     const coordinates: [number, number][] = range.map(
