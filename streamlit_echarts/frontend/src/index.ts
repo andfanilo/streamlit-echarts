@@ -168,10 +168,9 @@ export const setEventsGenerator = () => {
     // Build and bind new handlers
     const handlers: Record<string, Function> = {};
     for (const eventName of Object.keys(onEvents)) {
+      const fn = evalStringToFunction(onEvents[eventName]) as Function;
       const handler = (params: any) => {
-        const fn = evalStringToFunction(onEvents[eventName]) as Function;
-        const result = fn(params);
-        setTriggerValue("chart_event", result);
+        setTriggerValue("chart_event", fn(params));
       };
       handlers[eventName] = handler;
       chart.on(eventName, handler as any);
@@ -375,10 +374,9 @@ const EchartsRenderer: FrontendRenderer<EchartsStateShape, EchartsDataShape> = (
 
   // 7. Set up ResizeObserver (once per instance)
   if (!state.resizeObserver) {
-    const chart = state.chart;
     state.resizeObserver = new ResizeObserver(() => {
-      if (chart && !chart.isDisposed() && container.offsetParent !== null) {
-        chart.resize();
+      if (state.chart && !state.chart.isDisposed() && container.offsetParent !== null) {
+        state.chart.resize();
       }
     });
     state.resizeObserver.observe(container);
@@ -386,11 +384,10 @@ const EchartsRenderer: FrontendRenderer<EchartsStateShape, EchartsDataShape> = (
 
   // 8. Set up IntersectionObserver to resize on tab/expander visibility change
   if (!state.intersectionObserver) {
-    const chart = state.chart;
     state.intersectionObserver = new IntersectionObserver((entries) => {
       for (const entry of entries) {
-        if (entry.isIntersecting && chart && !chart.isDisposed()) {
-          chart.resize();
+        if (entry.isIntersecting && state.chart && !state.chart.isDisposed()) {
+          state.chart.resize();
         }
       }
     });
