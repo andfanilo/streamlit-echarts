@@ -1,7 +1,8 @@
 from __future__ import annotations
 
 import importlib.metadata
-from collections.abc import Callable
+from collections.abc import Callable, Iterable
+from typing import Literal
 
 import streamlit as st
 
@@ -43,6 +44,11 @@ class JsCode:
         return f"JsCode({self.js_code})"
 
 
+EMPTY_SELECTION = {"points": [], "point_indices": [], "series_point_indices": {}, "box": [], "lasso": []}
+
+_VALID_SELECTION_MODES = {"points", "box", "lasso"}
+
+
 def _serialize_options(obj):
     """Recursively replace JsCode instances with their placeholder string."""
     if isinstance(obj, JsCode):
@@ -64,6 +70,8 @@ def st_echarts(
     map: Map | None = None,
     key: str | None = None,
     on_change: Callable[[], None] | None = None,
+    on_select: Literal["ignore", "rerun"] | Callable[[], None] = "ignore",
+    selection_mode: str | Iterable[str] = ("points", "box", "lasso"),
 ):
     """Display an ECharts instance in Streamlit
 
@@ -89,6 +97,13 @@ def st_echarts(
         Assign a key so the component is not remount every time the script is rerun.
     on_change: callable
         Optional callback invoked when the component fires a chart event.
+    on_select: 'ignore' | 'rerun' | callable
+        Controls selection behavior. 'ignore' disables selection (default).
+        'rerun' triggers a Streamlit rerun on selection. A callable is invoked
+        as a callback on selection change.
+    selection_mode: str or iterable of str
+        Which selection interactions to enable. Valid values: 'points', 'box', 'lasso'.
+        Defaults to all three.
 
     Example
     -------
@@ -109,19 +124,53 @@ def st_echarts(
     if events is None:
         events = {}
 
-    component_value = out(
-        data={
-            "options": _serialize_options(options),
-            "theme": theme,
-            "onEvents": {k: JsCode(v).js_code for k, v in events.items()},
-            "height": height,
-            "width": width,
-            "renderer": renderer,
-            "map": map.to_json() if map is not None else None,
-        },
-        default={},
-        key=key,
-        on_chart_event_change=on_change if on_change else lambda: None,
-    )
+    # Normalize and validate selection_mode
+    if isinstance(selection_mode, str):
+        selection_mode = [selection_mode]
+    else:
+        selection_mode = list(selection_mode)
+
+    invalid_modes = set(selection_mode) - _VALID_SELECTION_MODES
+    if invalid_modes:
+        raise ValueError(
+            f"Invalid selection_mode values: {invalid_modes}. "
+            f"Valid values are: {_VALID_SELECTION_MODES}"
+        )
+
+    # Validate on_select
+    if not callable(on_select) and on_select not in ("ignore", "rerun"):
+        raise ValueError(
+            f"on_select must be 'ignore', 'rerun', or a callable, got {on_select!r}"
+        )
+
+    selection_active = on_select != "ignore"
+
+    data = {
+        "options": _serialize_options(options),
+        "theme": theme,
+        "onEvents": {k: JsCode(v).js_code for k, v in events.items()},
+        "height": height,
+        "width": width,
+        "renderer": renderer,
+        "map": map.to_json() if map is not None else None,
+        "selectionActive": selection_active,
+        "selectionMode": list(selection_mode) if selection_active else [],
+    }
+
+    mount_kwargs: dict = {
+        "data": data,
+        "key": key,
+        "on_chart_event_change": on_change if on_change else lambda: None,
+    }
+
+    if selection_active:
+        mount_kwargs["on_selection_change"] = (
+            on_select if callable(on_select) else lambda: None
+        )
+        mount_kwargs["default"] = {"selection": EMPTY_SELECTION}
+    else:
+        mount_kwargs["default"] = {}
+
+    component_value = out(**mount_kwargs)
 
     return component_value

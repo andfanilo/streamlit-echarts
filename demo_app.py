@@ -110,18 +110,22 @@ def page_events():
     else:
         st.info("Click a bar to fire a click event.")
 
-    st.subheader("mouseover event")
-    st.caption("Note: `mouseover` fires on every hover — use `click` for less noise.")
+    st.subheader("legendselectchanged event")
+    legend_options = {
+        **OPTIONS,
+        "legend": {"data": ["Series A"]},
+        "series": [{"data": [120, 200, 150, 80, 70, 110, 130], "type": "bar", "name": "Series A"}],
+    }
     with st.echo():
-        hover_result = st_echarts(
-            options=OPTIONS,
-            events={"mouseover": "function(p){return {name: p.name, value: p.value}}"},
-            key="events_mouseover",
+        legend_result = st_echarts(
+            options=legend_options,
+            events={"legendselectchanged": "function(p){return {name: p.name, selected: p.selected}}"},
+            key="events_legend",
         )
-    if hover_result:
-        st.write("Last hover:", hover_result)
+    if legend_result:
+        st.write("Legend changed:", legend_result)
     else:
-        st.info("Hover over a bar to fire a mouseover event.")
+        st.info("Click the legend item to toggle it.")
 
 
 def page_selection():

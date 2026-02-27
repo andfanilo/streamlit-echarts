@@ -1,6 +1,10 @@
 from __future__ import annotations
 
-from streamlit_echarts import JsCode, _serialize_options
+from unittest.mock import MagicMock, patch
+
+import pytest
+
+from streamlit_echarts import EMPTY_SELECTION, JsCode, _serialize_options, st_echarts
 
 JS_PLACEHOLDER = "--x_x--0_0--"
 
@@ -51,3 +55,67 @@ class TestSerializeOptions:
     def test_plain_values_unchanged(self):
         opts = {"a": 1, "b": "hello", "c": [1, 2], "d": {"nested": True}}
         assert _serialize_options(opts) == opts
+
+
+class TestStEchartsSelection:
+    """Tests for on_select / selection_mode parameters."""
+
+    @patch("streamlit_echarts.out")
+    def test_ignore_mode_no_selection(self, mock_out: MagicMock):
+        mock_out.return_value = {}
+        st_echarts(options={"series": []}, on_select="ignore")
+
+        call_kwargs = mock_out.call_args
+        data = call_kwargs.kwargs["data"]
+        assert data["selectionActive"] is False
+        assert data["selectionMode"] == []
+        assert "on_selection_change" not in call_kwargs.kwargs
+        assert call_kwargs.kwargs["default"] == {}
+
+    @patch("streamlit_echarts.out")
+    def test_rerun_mode_registers_selection(self, mock_out: MagicMock):
+        mock_out.return_value = {"selection": EMPTY_SELECTION}
+        st_echarts(options={"series": []}, on_select="rerun")
+
+        call_kwargs = mock_out.call_args
+        data = call_kwargs.kwargs["data"]
+        assert data["selectionActive"] is True
+        assert set(data["selectionMode"]) == {"points", "box", "lasso"}
+        assert "on_selection_change" in call_kwargs.kwargs
+        assert call_kwargs.kwargs["default"] == {"selection": EMPTY_SELECTION}
+
+    @patch("streamlit_echarts.out")
+    def test_callable_forwarded_as_on_selection_change(self, mock_out: MagicMock):
+        mock_out.return_value = {}
+        callback = MagicMock()
+        st_echarts(options={"series": []}, on_select=callback)
+
+        call_kwargs = mock_out.call_args
+        assert call_kwargs.kwargs["on_selection_change"] is callback
+
+    @patch("streamlit_echarts.out")
+    def test_invalid_selection_mode_raises(self, mock_out: MagicMock):
+        with pytest.raises(ValueError, match="Invalid selection_mode"):
+            st_echarts(
+                options={"series": []},
+                on_select="rerun",
+                selection_mode=["points", "invalid"],
+            )
+
+    @patch("streamlit_echarts.out")
+    def test_selection_mode_string_normalized_to_list(self, mock_out: MagicMock):
+        mock_out.return_value = {}
+        st_echarts(
+            options={"series": []},
+            on_select="rerun",
+            selection_mode="points",
+        )
+
+        call_kwargs = mock_out.call_args
+        data = call_kwargs.kwargs["data"]
+        assert data["selectionMode"] == ["points"]
+
+    @patch("streamlit_echarts.out")
+    def test_invalid_on_select_raises(self, mock_out: MagicMock):
+        with pytest.raises(ValueError, match="on_select must be"):
+            st_echarts(options={"series": []}, on_select="invalid")
