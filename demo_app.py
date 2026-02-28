@@ -120,7 +120,16 @@ def page_theme():
     with tab_dict:
         st.markdown(
             "Pass a Python dict to define a fully custom ECharts theme. "
-            "See the [ECharts theme builder](https://echarts.apache.org/en/theme-builder.html) for all available keys."
+            "You can design one visually with the "
+            "[ECharts theme builder](https://echarts.apache.org/en/theme-builder.html) "
+            "— download the **JSON** version (not JS), then load it:"
+        )
+        st.code(
+            'import json\n\n'
+            'with open("my_theme.json") as f:\n'
+            '    my_theme = json.load(f)\n\n'
+            'st_echarts(options=options, theme=my_theme)',
+            language="python",
         )
         CUSTOM_THEME = {
             "color": ["#e06c75", "#98c379", "#61afef"],
