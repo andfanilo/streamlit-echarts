@@ -29,10 +29,10 @@ The following structure is stored in `st.session_state[key].selection`:
 1. **Registry**: A `SMART_PARSERS` object mapping ECharts events to the "Selection" schema.
     - `click` / `selectchanged` -> `points`, `point_indices`.
     - `brush` / `brushEnd` -> `box`, `lasso`, `point_indices`.
-2. **State Persistence**: Use **`setStateValue("selection", data)`** to emit events. 
+2. **State Persistence**: Use **`setStateValue("selection", data)`** to emit events.
     - This ensures the data is registered in `st.session_state[key].selection`.
     - Data persists across app reruns triggered by other widgets.
-3. **Throttling**: 
+3. **Throttling**:
     - `click`: Immediate update.
     - `brushEnd`: 200ms debounce to wait for user to finish dragging.
 
