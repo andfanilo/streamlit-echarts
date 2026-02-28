@@ -48,14 +48,31 @@ def page_height_width():
 
     col1, col2 = st.columns(2)
     with col1:
-        st.caption('height="150px"')
-        st_echarts(options=OPTIONS, height="150px", key="height_small")
+        st.caption('height="250px"')
+        st_echarts(options=OPTIONS, height="250px", key="height_small")
     with col2:
         st.caption('height="500px"')
         st_echarts(options=OPTIONS, height="500px", key="height_large")
 
-    st.caption('width="50%"')
-    st_echarts(options=OPTIONS, width="50%", key="width_half")
+    st.caption('width="40%"')
+    st_echarts(options=OPTIONS, width="40%", key="width_half")
+
+    st.subheader("Chart inside containers with different `width` settings")
+    st.markdown(
+        "The chart's `width` interacts with its parent container's `width` setting. "
+        "The bordered box shows the container boundary — notice how `\"content\"` "
+        "shrinks to the chart, while `\"stretch\"` always fills the available space."
+    )
+    col_a, col_b = st.columns(2)
+    with col_a:
+        st.caption('`st.container(width="content")` — shrinks to fit the chart')
+        with st.container(border=True, width="content"):
+            st_echarts(options=OPTIONS, width="200px", key="container_content")
+    with col_b:
+        st.caption('`st.container(width="stretch")` — fills the column')
+        with st.container(border=True, width="stretch"):
+            st_echarts(options=OPTIONS, key="container_stretch")
+
     _show_source(page_height_width)
 
 
@@ -96,43 +113,12 @@ def page_theme():
     _show_source(page_theme)
 
 
-def page_events():
-    st.header("5. `events`")
+def page_interactions():
+    st.header("5. Interactions")
     st.markdown(
-        "`events` maps ECharts event names to JavaScript handler strings. "
-        "The handler's **return value** becomes the component's return value in Python."
-    )
-
-    st.subheader("click event")
-    click_result = st_echarts(
-        options=OPTIONS,
-        events={"click": "function(p){return {name: p.name, value: p.value}}"},
-        key="events_click",
-    )
-    if click_result:
-        st.write("Last click:", click_result)
-    else:
-        st.info("Click a bar to fire a click event.")
-
-    st.subheader("mouseover event")
-    mouseover_result = st_echarts(
-        options=OPTIONS,
-        events={"mouseover": "function(p){return {name: p.name, value: p.value}}"},
-        key="events_mouseover",
-    )
-    if mouseover_result:
-        st.write("Last mouseover:", mouseover_result)
-    else:
-        st.info("Hover over a bar to fire a mouseover event.")
-
-    _show_source(page_events)
-
-
-def page_selection():
-    st.header("5b. `on_select` and `selection_mode`")
-    st.markdown(
-        "`on_select` enables structured selection interactions without writing JavaScript. "
-        "`selection_mode` controls which interactions are active: `\"points\"` (click), `\"box\"` (rect brush), `\"lasso\"` (polygon brush)."
+        "`on_select` is the recommended way to handle chart interactions — "
+        "it returns structured selection data without writing JavaScript, similar to Plotly's selection API. "
+        "For advanced use cases (e.g. `mouseover`, custom return values), use the lower-level `events` dict."
     )
 
     SALES_DATA = [
@@ -145,23 +131,30 @@ def page_selection():
         {"day": "Sun", "sales": 130},
     ]
 
-    st.subheader("Click selection (points) — filter source data")
+    # --- on_select: click ---
+    st.subheader("`on_select` — click selection")
+    st.markdown(
+        'Set `on_select="rerun"` and `selection_mode="points"` to get structured click data. '
+        "Use `point_indices` to filter back to your source data."
+    )
     select_result = st_echarts(
         options=OPTIONS,
         key="select_points",
         on_select="rerun",
         selection_mode="points",
     )
-
-    # Use point_indices to filter back to source data
     indices = select_result["selection"]["point_indices"]
-    output = st.empty()
     if indices:
-        output.table([SALES_DATA[i] for i in indices if i < len(SALES_DATA)])
+        st.table([SALES_DATA[i] for i in indices if i < len(SALES_DATA)])
     else:
-        output.caption("Click a bar to filter the source data.")
+        st.caption("Click a bar to filter the source data.")
 
-    st.subheader("Brush selection (box + lasso) + session state")
+    # --- on_select: brush ---
+    st.subheader("`on_select` — brush selection (box + lasso)")
+    st.markdown(
+        'Pass `selection_mode=("box", "lasso")` to enable brush tools in the toolbar. '
+        "The selection includes points, indices, and coordinate ranges."
+    )
     scatter_options = {
         "xAxis": {"type": "value"},
         "yAxis": {"type": "value"},
@@ -181,24 +174,44 @@ def page_selection():
         on_select="rerun",
         selection_mode=("box", "lasso"),
     )
+    sel = brush_result["selection"]
+    if sel["point_indices"]:
+        st.json(sel)
+    else:
+        st.caption("Use the brush tool in the toolbar to select points.")
 
-    col_return2, col_state2 = st.columns(2)
-    with col_return2:
-        st.caption("Return value (`result.selection`)")
-        sel = brush_result["selection"]
-        if sel["point_indices"]:
-            st.json(sel)
-        else:
-            st.caption("Use the brush tool in the toolbar to select points.")
-    with col_state2:
-        st.caption("`st.session_state['select_brush'].selection`")
-        state_val2 = st.session_state.get("select_brush")
-        if state_val2 and state_val2.get("selection", {}).get("point_indices"):
-            st.json(state_val2["selection"])
-        else:
-            st.caption("Selection will appear here after brushing.")
+    # --- events: lower-level alternative ---
+    st.divider()
+    st.subheader("`events` — lower-level alternative")
+    st.markdown(
+        "`events` maps ECharts event names to JavaScript handler strings. "
+        "The handler's **return value** becomes the component's return value in Python. "
+        "Use this for events that `on_select` doesn't cover, like `mouseover`."
+    )
 
-    _show_source(page_selection)
+    st.caption("click event")
+    click_result = st_echarts(
+        options=OPTIONS,
+        events={"click": "function(p){return {name: p.name, value: p.value}}"},
+        key="events_click",
+    )
+    if click_result:
+        st.write("Last click:", click_result)
+    else:
+        st.info("Click a bar to fire a click event.")
+
+    st.caption("mouseover event")
+    mouseover_result = st_echarts(
+        options=OPTIONS,
+        events={"mouseover": "function(p){return {name: p.name, value: p.value}}"},
+        key="events_mouseover",
+    )
+    if mouseover_result:
+        st.write("Last mouseover:", mouseover_result)
+    else:
+        st.info("Hover over a bar to fire a mouseover event.")
+
+    _show_source(page_interactions)
 
 
 def page_key():
@@ -209,6 +222,9 @@ def page_key():
         "A stable `key` tells Streamlit to reuse the same component instance across reruns."
     )
 
+    DATA_A = [120, 200, 150, 80, 70, 110, 130]
+    DATA_B = [90, 140, 180, 60, 200, 80, 160]
+
     if "rerun_count" not in st.session_state:
         st.session_state.rerun_count = 0
 
@@ -217,13 +233,20 @@ def page_key():
 
     st.write(f"Rerun count: {st.session_state.rerun_count}")
 
+    data = DATA_A if st.session_state.rerun_count % 2 == 0 else DATA_B
+    options = {
+        "xAxis": {"type": "category", "data": ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]},
+        "yAxis": {"type": "value"},
+        "series": [{"data": data, "type": "bar"}],
+    }
+
     col_no_key, col_with_key = st.columns(2)
     with col_no_key:
-        st.caption("No key — may remount and replay animation on rerun")
-        st_echarts(options=OPTIONS)
+        st.caption("No key — remounts and replays entry animation")
+        st_echarts(options=options)
     with col_with_key:
-        st.caption('key="stable" — persists across reruns')
-        st_echarts(options=OPTIONS, key="stable")
+        st.caption('key="stable" — smoothly animates between data sets')
+        st_echarts(options=options, key="stable")
 
     _show_source(page_key)
 
@@ -231,19 +254,28 @@ def page_key():
 def page_on_change():
     st.header("7. `on_change`")
     st.markdown(
-        "`on_change` is a server-side Python callback invoked whenever the component "
-        "fires an event (i.e. whenever the return value changes). "
-        "Use it as an alternative to checking the return value manually."
+        "`on_change` is a Python callback that runs server-side each time a chart event fires. "
+        "Here, clicking any bar triggers the `click` event, which calls `on_change` — "
+        "the callback randomizes the data and the chart animates to the new values."
     )
 
+    if "on_change_data" not in st.session_state:
+        st.session_state.on_change_data = [120, 200, 150, 80, 70, 110, 130]
     if "change_count" not in st.session_state:
         st.session_state.change_count = 0
 
     def on_chart_change():
+        import random
         st.session_state.change_count += 1
+        st.session_state.on_change_data = [random.randint(30, 250) for _ in range(7)]
 
+    options = {
+        "xAxis": {"type": "category", "data": ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]},
+        "yAxis": {"type": "value"},
+        "series": [{"data": st.session_state.on_change_data, "type": "bar"}],
+    }
     st_echarts(
-        options=OPTIONS,
+        options=options,
         events={"click": "function(p){return p.name}"},
         on_change=on_chart_change,
         key="on_change_demo",
@@ -296,7 +328,20 @@ def page_map():
                 }
             ],
         }
-        st_echarts(options=map_options, map=map_obj, height="450px", key="map_demo")
+        result = st_echarts(
+            options=map_options,
+            map=map_obj,
+            height="450px",
+            on_select="rerun",
+            selection_mode="points",
+            key="map_demo",
+        )
+        points = result["selection"]["points"]
+        if points:
+            p = points[0]
+            st.write(f"**{p['name']}** — value: {p['value']}")
+        else:
+            st.info("Click a country to see its name and value.")
     except Exception as exc:
         st.warning(f"Could not load GeoJSON (network unavailable?): {exc}")
 
@@ -344,8 +389,11 @@ def page_jscode():
 
 
 def page_layouts():
-    st.header("10. Layout containers")
-    st.markdown("Charts inside `st.tabs` and `st.expander` resize correctly when revealed.")
+    st.header("10. Collapsible layouts")
+    st.markdown(
+        "Charts inside containers that hide content initially "
+        "resize correctly when revealed."
+    )
 
     st.subheader("Tabs")
     tab_empty, tab_chart = st.tabs(["No chart here", "Chart here"])
@@ -359,6 +407,22 @@ def page_layouts():
     with st.expander("Expand to see chart"):
         st_echarts(options=OPTIONS, key="expander_demo")
     st.caption("Chart correctly sizes itself when the expander is opened.")
+
+    st.subheader("Popover")
+    with st.popover("Show chart"):
+        st_echarts(options=OPTIONS, width="400px", key="popover_demo")
+    st.caption("Chart renders inside a popover when the button is clicked.")
+
+    st.subheader("Dialog")
+
+    @st.dialog("Chart dialog")
+    def show_chart_dialog():
+        st_echarts(options=OPTIONS, key="dialog_demo")
+
+    if st.button("Open dialog"):
+        show_chart_dialog()
+    st.caption("Chart renders inside a modal dialog.")
+
     _show_source(page_layouts)
 
 
@@ -379,12 +443,24 @@ def page_pyecharts():
         )
         return
 
+    toolbox = opts.ToolboxOpts(
+        is_show=True,
+        feature={
+            "saveAsImage": {},
+            "restore": {},
+            "dataView": {"readOnly": False},
+        },
+    )
+
     st.subheader("Bar chart")
     bar = (
         Bar()
         .add_xaxis(["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"])
         .add_yaxis("Sales", [120, 200, 150, 80, 70, 110, 130])
-        .set_global_opts(title_opts=opts.TitleOpts(title="Weekly Sales"))
+        .set_global_opts(
+            title_opts=opts.TitleOpts(title="Weekly Sales"),
+            toolbox_opts=toolbox,
+        )
     )
     st_pyecharts(bar, key="pyecharts_bar")
 
@@ -393,7 +469,10 @@ def page_pyecharts():
         Line()
         .add_xaxis(["Jan", "Feb", "Mar", "Apr", "May", "Jun"])
         .add_yaxis("Revenue", [820, 932, 901, 934, 1290, 1330], is_smooth=True)
-        .set_global_opts(title_opts=opts.TitleOpts(title="Monthly Revenue"))
+        .set_global_opts(
+            title_opts=opts.TitleOpts(title="Monthly Revenue"),
+            toolbox_opts=toolbox,
+        )
     )
     st_pyecharts(line, key="pyecharts_line")
 
@@ -405,7 +484,10 @@ def page_pyecharts():
             [("Shirts", 40), ("Cardigans", 30), ("Chiffon", 20), ("Pants", 10)],
             radius=["40%", "70%"],
         )
-        .set_global_opts(title_opts=opts.TitleOpts(title="Product Mix"))
+        .set_global_opts(
+            title_opts=opts.TitleOpts(title="Product Mix"),
+            toolbox_opts=toolbox,
+        )
         .set_series_opts(label_opts=opts.LabelOpts(formatter="{b}: {d}%"))
     )
     st_pyecharts(pie, key="pyecharts_pie")
@@ -433,13 +515,12 @@ pg = st.navigation([
     st.Page(page_height_width, title="2. height & width",  icon=":material/aspect_ratio:"),
     st.Page(page_renderer,   title="3. renderer",           icon=":material/tune:"),
     st.Page(page_theme,      title="4. theme",              icon=":material/palette:"),
-    st.Page(page_events,     title="5. events",             icon=":material/mouse:"),
-    st.Page(page_selection,  title="5b. on_select",         icon=":material/select_all:"),
+    st.Page(page_interactions, title="5. interactions",       icon=":material/mouse:"),
     st.Page(page_key,        title="6. key",                icon=":material/key:"),
     st.Page(page_on_change,  title="7. on_change",          icon=":material/notifications:"),
     st.Page(page_map,        title="8. map / Map",          icon=":material/map:"),
     st.Page(page_jscode,     title="9. JsCode",             icon=":material/code:"),
-    st.Page(page_layouts,    title="10. layouts",            icon=":material/dashboard:"),
+    st.Page(page_layouts,    title="10. collapsible layouts", icon=":material/dashboard:"),
     st.Page(page_pyecharts,  title="11. pyecharts",         icon=":material/auto_awesome:"),
 ])
 pg.run()
