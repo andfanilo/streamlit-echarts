@@ -45,7 +45,13 @@ class JsCode:
         return f"JsCode({self.js_code})"
 
 
-EMPTY_SELECTION = {"points": [], "point_indices": [], "series_point_indices": {}, "box": [], "lasso": []}
+EMPTY_SELECTION = {
+    "points": [],
+    "point_indices": [],
+    "series_point_indices": {},
+    "box": [],
+    "lasso": [],
+}
 
 _VALID_SELECTION_MODES = {"points", "box", "lasso"}
 

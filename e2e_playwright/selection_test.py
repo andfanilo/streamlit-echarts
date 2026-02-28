@@ -33,12 +33,8 @@ def test_click_selection_returns_clicked_element_data(app: Page):
     expect(app.locator("text=First point series_name: Sales")).to_be_visible(
         timeout=5000
     )
-    expect(app.locator("text=First point series_index: 0")).to_be_visible(
-        timeout=5000
-    )
-    expect(app.locator("text=First point point_index: 1")).to_be_visible(
-        timeout=5000
-    )
+    expect(app.locator("text=First point series_index: 0")).to_be_visible(timeout=5000)
+    expect(app.locator("text=First point point_index: 1")).to_be_visible(timeout=5000)
 
 
 def test_ignore_mode_has_no_selection(app: Page):

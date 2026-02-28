@@ -103,10 +103,7 @@ describe("transformClickToSelection", () => {
 // --- transformBrushToSelection ---
 
 describe("transformBrushToSelection", () => {
-  const mockChart = (
-    series: any[] = [],
-    dataset: any[] = [],
-  ) => ({
+  const mockChart = (series: any[] = [], dataset: any[] = []) => ({
     getOption: vi.fn(() => ({ series, dataset })),
     convertFromPixel: vi.fn((_finder: any, point: number[]) => [
       point[0] * 2,
@@ -115,9 +112,7 @@ describe("transformBrushToSelection", () => {
   });
 
   test("extracts points from rect brush multi-point selection", () => {
-    const chart = mockChart([
-      { name: "S0", data: [10, 20, 30] },
-    ]);
+    const chart = mockChart([{ name: "S0", data: [10, 20, 30] }]);
     const batch = [
       {
         selected: [{ seriesIndex: 0, dataIndex: [0, 2] }],
@@ -126,7 +121,10 @@ describe("transformBrushToSelection", () => {
     const areas = [
       {
         brushType: "rect",
-        range: [[100, 200], [50, 150]],
+        range: [
+          [100, 200],
+          [50, 150],
+        ],
       },
     ];
 
@@ -142,13 +140,15 @@ describe("transformBrushToSelection", () => {
 
   test("handles polygon brush", () => {
     const chart = mockChart([{ name: "S0", data: [5] }]);
-    const batch = [
-      { selected: [{ seriesIndex: 0, dataIndex: [0] }] },
-    ];
+    const batch = [{ selected: [{ seriesIndex: 0, dataIndex: [0] }] }];
     const areas = [
       {
         brushType: "polygon",
-        range: [[10, 20], [30, 40], [50, 60]],
+        range: [
+          [10, 20],
+          [30, 40],
+          [50, 60],
+        ],
       },
     ];
 
@@ -195,11 +195,16 @@ describe("transformBrushToSelection", () => {
   test("handles dataset mode via resolveDataItem", () => {
     const chart = mockChart(
       [{ name: "DS", datasetIndex: 0 }],
-      [{ source: [[1, 2], [3, 4]] }],
+      [
+        {
+          source: [
+            [1, 2],
+            [3, 4],
+          ],
+        },
+      ],
     );
-    const batch = [
-      { selected: [{ seriesIndex: 0, dataIndex: [1] }] },
-    ];
+    const batch = [{ selected: [{ seriesIndex: 0, dataIndex: [1] }] }];
 
     const result = transformBrushToSelection(batch, [], chart as any);
 
@@ -210,9 +215,7 @@ describe("transformBrushToSelection", () => {
 
   test("handles scalar data items", () => {
     const chart = mockChart([{ name: "Line", data: [42] }]);
-    const batch = [
-      { selected: [{ seriesIndex: 0, dataIndex: [0] }] },
-    ];
+    const batch = [{ selected: [{ seriesIndex: 0, dataIndex: [0] }] }];
 
     const result = transformBrushToSelection(batch, [], chart as any);
 
@@ -223,9 +226,7 @@ describe("transformBrushToSelection", () => {
 
   test("skips null data items", () => {
     const chart = mockChart([{ name: "S", data: [null, 10] }]);
-    const batch = [
-      { selected: [{ seriesIndex: 0, dataIndex: [0, 1] }] },
-    ];
+    const batch = [{ selected: [{ seriesIndex: 0, dataIndex: [0, 1] }] }];
 
     const result = transformBrushToSelection(batch, [], chart as any);
 
@@ -279,7 +280,13 @@ describe("coordinate conversion", () => {
     };
     const batch: any[] = [];
     const areas = [
-      { brushType: "rect", range: [[10, 20], [30, 40]] },
+      {
+        brushType: "rect",
+        range: [
+          [10, 20],
+          [30, 40],
+        ],
+      },
     ];
 
     const result = transformBrushToSelection(batch, areas, chart as any);
@@ -295,7 +302,13 @@ describe("coordinate conversion", () => {
     };
 
     const areas = [
-      { brushType: "polygon", range: [[1, 2], [3, 4]] },
+      {
+        brushType: "polygon",
+        range: [
+          [1, 2],
+          [3, 4],
+        ],
+      },
     ];
 
     const result = transformBrushToSelection([], areas, chart as any);
@@ -315,7 +328,13 @@ describe("coordinate conversion", () => {
     };
 
     const areas = [
-      { brushType: "rect", range: [[100, 200], [50, 150]] },
+      {
+        brushType: "rect",
+        range: [
+          [100, 200],
+          [50, 150],
+        ],
+      },
     ];
 
     const result = transformBrushToSelection([], areas, chart as any);
@@ -336,7 +355,14 @@ describe("resolveDataItem", () => {
   test("falls back to dataset source", () => {
     const option = {
       series: [{ datasetIndex: 0 }],
-      dataset: [{ source: [[1, 2], [3, 4]] }],
+      dataset: [
+        {
+          source: [
+            [1, 2],
+            [3, 4],
+          ],
+        },
+      ],
     };
     expect(resolveDataItem(option, 0, 0)).toEqual([1, 2]);
   });

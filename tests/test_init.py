@@ -151,7 +151,14 @@ class TestStPyecharts:
 
         with patch("streamlit_echarts.st_pyecharts.__module__", "streamlit_echarts"):
             # Mock pyecharts import inside st_pyecharts
-            with patch.dict("sys.modules", {"pyecharts": MagicMock(), "pyecharts.charts": MagicMock(), "pyecharts.charts.base": MagicMock()}):
+            with patch.dict(
+                "sys.modules",
+                {
+                    "pyecharts": MagicMock(),
+                    "pyecharts.charts": MagicMock(),
+                    "pyecharts.charts.base": MagicMock(),
+                },
+            ):
                 st_pyecharts(chart)
 
         chart.dump_options.assert_called_once()
@@ -164,7 +171,14 @@ class TestStPyecharts:
         mock_out.return_value = {}
         chart, _ = self._make_mock_chart()
 
-        with patch.dict("sys.modules", {"pyecharts": MagicMock(), "pyecharts.charts": MagicMock(), "pyecharts.charts.base": MagicMock()}):
+        with patch.dict(
+            "sys.modules",
+            {
+                "pyecharts": MagicMock(),
+                "pyecharts.charts": MagicMock(),
+                "pyecharts.charts.base": MagicMock(),
+            },
+        ):
             st_pyecharts(chart, theme="dark", height="500px", width="80%")
 
         data = mock_out.call_args.kwargs["data"]
@@ -177,7 +191,14 @@ class TestStPyecharts:
         mock_out.return_value = {"selection": EMPTY_SELECTION}
         chart, _ = self._make_mock_chart()
 
-        with patch.dict("sys.modules", {"pyecharts": MagicMock(), "pyecharts.charts": MagicMock(), "pyecharts.charts.base": MagicMock()}):
+        with patch.dict(
+            "sys.modules",
+            {
+                "pyecharts": MagicMock(),
+                "pyecharts.charts": MagicMock(),
+                "pyecharts.charts.base": MagicMock(),
+            },
+        ):
             st_pyecharts(chart, on_select="rerun", selection_mode="points")
 
         call_kwargs = mock_out.call_args
@@ -191,7 +212,14 @@ class TestStPyecharts:
         chart, _ = self._make_mock_chart()
         events = {"click": "function(params) { alert(params.name); }"}
 
-        with patch.dict("sys.modules", {"pyecharts": MagicMock(), "pyecharts.charts": MagicMock(), "pyecharts.charts.base": MagicMock()}):
+        with patch.dict(
+            "sys.modules",
+            {
+                "pyecharts": MagicMock(),
+                "pyecharts.charts": MagicMock(),
+                "pyecharts.charts.base": MagicMock(),
+            },
+        ):
             st_pyecharts(chart, events=events)
 
         data = mock_out.call_args.kwargs["data"]
@@ -201,8 +229,17 @@ class TestStPyecharts:
         chart = MagicMock()
         chart.dump_options.return_value = "{}"
 
-        with patch.dict("sys.modules", {"pyecharts": None, "pyecharts.charts": None, "pyecharts.charts.base": None}):
-            with pytest.raises(ImportError, match="pip install streamlit-echarts\\[pyecharts\\]"):
+        with patch.dict(
+            "sys.modules",
+            {
+                "pyecharts": None,
+                "pyecharts.charts": None,
+                "pyecharts.charts.base": None,
+            },
+        ):
+            with pytest.raises(
+                ImportError, match="pip install streamlit-echarts\\[pyecharts\\]"
+            ):
                 st_pyecharts(chart)
 
     @patch("streamlit_echarts.out")
@@ -211,7 +248,14 @@ class TestStPyecharts:
         mock_out.return_value = expected
         chart, _ = self._make_mock_chart()
 
-        with patch.dict("sys.modules", {"pyecharts": MagicMock(), "pyecharts.charts": MagicMock(), "pyecharts.charts.base": MagicMock()}):
+        with patch.dict(
+            "sys.modules",
+            {
+                "pyecharts": MagicMock(),
+                "pyecharts.charts": MagicMock(),
+                "pyecharts.charts.base": MagicMock(),
+            },
+        ):
             result = st_pyecharts(chart)
 
         assert result == expected

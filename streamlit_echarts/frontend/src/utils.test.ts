@@ -45,18 +45,16 @@ describe("deepMap", () => {
 
   test("handles mixed nested arrays and objects", () => {
     const input = {
-      series: [
-        { data: [1, 2] },
-        { data: [3, 4] },
-      ],
+      series: [{ data: [1, 2] }, { data: [3, 4] }],
       title: { text: "hello" },
     };
-    const result = deepMap(input, (v: any) => (typeof v === "number" ? v * 10 : v + "!"), {});
+    const result = deepMap(
+      input,
+      (v: any) => (typeof v === "number" ? v * 10 : v + "!"),
+      {},
+    );
     expect(result).toEqual({
-      series: [
-        { data: [10, 20] },
-        { data: [30, 40] },
-      ],
+      series: [{ data: [10, 20] }, { data: [30, 40] }],
       title: { text: "hello!" },
     });
   });
