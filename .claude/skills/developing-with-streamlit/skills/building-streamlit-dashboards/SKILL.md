@@ -112,7 +112,7 @@ Put filters in the sidebar to maximize dashboard space:
 with st.sidebar:
     date_range = st.date_input("Date range", value=(start, end))
     region = st.multiselect("Region", regions, default=regions)
-    
+
 # Main area is all dashboard content
 ```
 
