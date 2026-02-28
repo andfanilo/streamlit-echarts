@@ -361,7 +361,9 @@ const EchartsRenderer: FrontendRenderer<EchartsStateShape, EchartsDataShape> = (
   if (themeChanged && state.chart) {
     state.chart.dispose();
     state.chart = null;
-    // Reset memoized generators so stale handler references are cleared
+    // Reset memoized generators so stale references are cleared and
+    // options are re-applied to the new chart instance (preserving animations).
+    state.getOptions = getOptionsGenerator();
     state.setEvents = setEventsGenerator();
     state.setSelection = setSelectionGenerator();
   }
@@ -376,7 +378,7 @@ const EchartsRenderer: FrontendRenderer<EchartsStateShape, EchartsDataShape> = (
     state.getOptions(options);
 
   if (optionsChanged) {
-    state.chart.setOption(cleanOptions!, { notMerge: true, lazyUpdate: true });
+    state.chart.setOption(cleanOptions!, { notMerge: true });
   }
 
   // 6. Wire events (memoized unbind/rebind)
@@ -396,8 +398,16 @@ const EchartsRenderer: FrontendRenderer<EchartsStateShape, EchartsDataShape> = (
   }
 
   // 7. Set up ResizeObserver (once per instance)
+  //    Skip the initial callback fired by observe() — the chart was just
+  //    created at the correct size and an immediate resize() would kill
+  //    the entry animation.
   if (!state.resizeObserver) {
+    let firstResize = true;
     state.resizeObserver = new ResizeObserver(() => {
+      if (firstResize) {
+        firstResize = false;
+        return;
+      }
       if (state.chart && !state.chart.isDisposed() && container.offsetParent !== null) {
         state.chart.resize();
       }
@@ -406,8 +416,14 @@ const EchartsRenderer: FrontendRenderer<EchartsStateShape, EchartsDataShape> = (
   }
 
   // 8. Set up IntersectionObserver to resize on tab/expander visibility change
+  //    Same initial-callback skip as above.
   if (!state.intersectionObserver) {
+    let firstIntersect = true;
     state.intersectionObserver = new IntersectionObserver((entries) => {
+      if (firstIntersect) {
+        firstIntersect = false;
+        return;
+      }
       for (const entry of entries) {
         if (entry.isIntersecting && state.chart && !state.chart.isDisposed()) {
           state.chart.resize();
