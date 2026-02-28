@@ -63,7 +63,7 @@ def _serialize_options(obj):
 
 def st_echarts(
     options: dict,
-    theme: str | dict = "",
+    theme: str | dict = "streamlit",
     events: dict[str, str] | None = None,
     height: str = "300px",
     width: str = "100%",
@@ -81,7 +81,8 @@ def st_echarts(
     options: dict
         Dictionary of echarts options. JS code should have been wrapped beforehand.
     theme: str | dict
-        Prebuilt theme, or object defining theme
+        Prebuilt theme, or object defining theme. Defaults to ``"streamlit"``
+        which automatically adapts to Streamlit's light/dark mode.
     events: dict
         Dictionary of mouse events to string JS functions.
         Don't wrap values with JsCode placeholder.
@@ -179,7 +180,7 @@ def st_echarts(
 
 def st_pyecharts(
     chart,
-    theme: str | dict = "",
+    theme: str | dict = "streamlit",
     events: dict[str, str] | None = None,
     height: str = "300px",
     width: str = "100%",
