@@ -117,17 +117,40 @@ export const setThemeGenerator = () => {
       const palette = categoricalRaw
         ? categoricalRaw.split(",").map((c) => c.trim())
         : FALLBACK_PALETTE;
+      const tc = textColor || "#31333F";
+      // Subtle color for axis lines, split lines, borders
+      const subtleColor = textColor
+        ? textColor + "33" // 20% opacity
+        : "#31333F33";
       const stTheme = {
         color: palette,
         backgroundColor: backgroundColor || "transparent",
         textStyle: {
-          color: textColor || "#31333F",
+          color: tc,
           fontFamily: font || undefined,
         },
-        title: { textStyle: { color: textColor || "#31333F" } },
-        legend: { textStyle: { color: textColor || "#31333F" } },
-        categoryAxis: { axisLabel: { color: textColor || "#31333F" } },
-        valueAxis: { axisLabel: { color: textColor || "#31333F" } },
+        title: { textStyle: { color: tc } },
+        legend: { textStyle: { color: tc } },
+        tooltip: {
+          backgroundColor: backgroundColor || "#fff",
+          borderColor: subtleColor,
+          textStyle: { color: tc },
+        },
+        categoryAxis: {
+          axisLabel: { color: tc },
+          axisLine: { lineStyle: { color: subtleColor } },
+          axisTick: { lineStyle: { color: subtleColor } },
+          splitLine: { lineStyle: { color: subtleColor } },
+        },
+        valueAxis: {
+          axisLabel: { color: tc },
+          axisLine: { lineStyle: { color: subtleColor } },
+          axisTick: { lineStyle: { color: subtleColor } },
+          splitLine: { lineStyle: { color: subtleColor } },
+        },
+        dataZoom: {
+          textStyle: { color: tc },
+        },
       };
       echarts.registerTheme("streamlit", stTheme);
       currentThemeName = "streamlit";

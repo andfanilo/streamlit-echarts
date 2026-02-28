@@ -89,20 +89,39 @@ def page_renderer():
 
 def page_theme():
     st.header("4. `theme`")
+    st.markdown(
+        "The `theme` parameter controls how the chart is styled. "
+        "It accepts a **string** or a **dict**:"
+    )
+    st.markdown(
+        """
+| Value | Behavior |
+|---|---|
+| `"streamlit"` (default) | Reads Streamlit's CSS variables (`--st-text-color`, `--st-background-color`, etc.), so the chart **automatically adapts to light/dark mode** and any custom Streamlit theme set in `.streamlit/config.toml`. |
+| `"dark"` / `"light"` | Uses ECharts' built-in dark or light theme. No Streamlit CSS variables are read. |
+| `""` (empty string) | No theme — plain ECharts default (always light). |
+| `{...}` (dict) | Registered as a custom ECharts theme object via `echarts.registerTheme()`. Full control over colors, text styles, etc. |
+"""
+    )
 
-    BUILTIN_THEMES = ["", "dark", "streamlit"]
+    BUILTIN_THEMES = ["streamlit", "dark", "light", ""]
 
-    tab_string, tab_dict = st.tabs(["Built-in string theme", "Custom dict theme"])
+    tab_string, tab_dict = st.tabs(["String themes", "Custom dict theme"])
 
     with tab_string:
         theme_name = st.selectbox(
-            "Theme name (empty string = default)",
+            "Theme",
             BUILTIN_THEMES,
+            format_func=lambda t: t if t else '""  (empty string — no theme)',
             key="theme_selectbox",
         )
         st_echarts(options=OPTIONS, theme=theme_name, key=f"theme_{theme_name}")
 
     with tab_dict:
+        st.markdown(
+            "Pass a Python dict to define a fully custom ECharts theme. "
+            "See the [ECharts theme builder](https://echarts.apache.org/en/theme-builder.html) for all available keys."
+        )
         CUSTOM_THEME = {
             "color": ["#e06c75", "#98c379", "#61afef"],
             "backgroundColor": "#282c34",
