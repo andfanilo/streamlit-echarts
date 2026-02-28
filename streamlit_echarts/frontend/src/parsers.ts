@@ -1,4 +1,4 @@
-const JS_PLACEHOLDER = "--x_x--0_0--";
+export const JS_PLACEHOLDER = "--x_x--0_0--";
 
 /**
  * If string can be evaluated as a Function, return activated function. Else return string.

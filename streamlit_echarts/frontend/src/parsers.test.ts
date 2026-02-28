@@ -1,7 +1,5 @@
 import { describe, expect, test } from "vitest";
-import { evalStringToFunction } from "./parsers";
-
-const JS_PLACEHOLDER = "--x_x--0_0--";
+import { evalStringToFunction, JS_PLACEHOLDER } from "./parsers";
 
 describe("evalStringToFunction", () => {
   test("returns a plain string unchanged", () => {
@@ -29,12 +27,14 @@ describe("evalStringToFunction", () => {
     const partial = `${JS_PLACEHOLDER}function(x) { return x; }`;
     const result = evalStringToFunction(partial);
     expect(typeof result).toBe("string");
+    expect(result).toBe(partial);
   });
 
   test("returns string unchanged when only end placeholder is present", () => {
     const partial = `function(x) { return x; }${JS_PLACEHOLDER}`;
     const result = evalStringToFunction(partial);
     expect(typeof result).toBe("string");
+    expect(result).toBe(partial);
   });
 
   test("evaluates an arrow function with parens", () => {
@@ -63,5 +63,14 @@ describe("evalStringToFunction", () => {
     const result = evalStringToFunction(wrapped);
     expect(typeof result).toBe("string");
     expect(result).toBe(wrapped);
+  });
+
+  test("evaluates a function that throws at runtime without breaking eval", () => {
+    const wrapped = `${JS_PLACEHOLDER}function() { throw new Error("boom"); }${JS_PLACEHOLDER}`;
+    const fn = evalStringToFunction(wrapped);
+    // eval itself succeeds — the function is valid syntax
+    expect(typeof fn).toBe("function");
+    // but calling it throws at runtime
+    expect(() => (fn as Function)()).toThrow("boom");
   });
 });
