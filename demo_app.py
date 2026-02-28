@@ -8,7 +8,10 @@ from streamlit_echarts import JsCode, Map, st_echarts, st_pyecharts
 
 # Base bar chart options reused across pages
 OPTIONS = {
-    "xAxis": {"type": "category", "data": ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]},
+    "xAxis": {
+        "type": "category",
+        "data": ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"],
+    },
     "yAxis": {"type": "value"},
     "series": [{"data": [120, 200, 150, 80, 70, 110, 130], "type": "bar"}],
 }
@@ -24,6 +27,7 @@ def _show_source(func):
 # Pages
 # ---------------------------------------------------------------------------
 
+
 def page_options():
     st.header("1. `options`")
     st.markdown(
@@ -31,7 +35,10 @@ def page_options():
         "It accepts a plain Python `dict` that maps 1-to-1 to the ECharts option object."
     )
     options = {
-        "xAxis": {"type": "category", "data": ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]},
+        "xAxis": {
+            "type": "category",
+            "data": ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"],
+        },
         "yAxis": {"type": "value"},
         "series": [{"data": [120, 200, 150, 80, 70, 110, 130], "type": "bar"}],
     }
@@ -60,8 +67,8 @@ def page_height_width():
     st.subheader("Chart inside containers with different `width` settings")
     st.markdown(
         "The chart's `width` interacts with its parent container's `width` setting. "
-        "The bordered box shows the container boundary — notice how `\"content\"` "
-        "shrinks to the chart, while `\"stretch\"` always fills the available space."
+        'The bordered box shows the container boundary — notice how `"content"` '
+        'shrinks to the chart, while `"stretch"` always fills the available space.'
     )
     col_a, col_b = st.columns(2)
     with col_a:
@@ -82,7 +89,9 @@ def page_renderer():
         '`"canvas"` (default) is faster for many data points. '
         '`"svg"` produces a scalable graphic that prints crisply and is accessible to screen readers.'
     )
-    renderer = st.radio("renderer", ["canvas", "svg"], horizontal=True, key="renderer_radio")
+    renderer = st.radio(
+        "renderer", ["canvas", "svg"], horizontal=True, key="renderer_radio"
+    )
     st_echarts(options=OPTIONS, renderer=renderer, key="renderer_demo")
     _show_source(page_renderer)
 
@@ -125,10 +134,10 @@ def page_theme():
             "— download the **JSON** version (not JS), then load it:"
         )
         st.code(
-            'import json\n\n'
+            "import json\n\n"
             'with open("my_theme.json") as f:\n'
-            '    my_theme = json.load(f)\n\n'
-            'st_echarts(options=options, theme=my_theme)',
+            "    my_theme = json.load(f)\n\n"
+            "st_echarts(options=options, theme=my_theme)",
             language="python",
         )
         CUSTOM_THEME = {
@@ -190,8 +199,14 @@ def page_interactions():
             {
                 "type": "scatter",
                 "data": [
-                    [3.0, 4.5], [7.0, 2.0], [1.5, 6.0], [5.5, 5.5],
-                    [9.0, 1.0], [4.0, 8.0], [6.5, 3.5], [2.0, 7.0],
+                    [3.0, 4.5],
+                    [7.0, 2.0],
+                    [1.5, 6.0],
+                    [5.5, 5.5],
+                    [9.0, 1.0],
+                    [4.0, 8.0],
+                    [6.5, 3.5],
+                    [2.0, 7.0],
                 ],
             }
         ],
@@ -263,7 +278,10 @@ def page_key():
 
     data = DATA_A if st.session_state.rerun_count % 2 == 0 else DATA_B
     options = {
-        "xAxis": {"type": "category", "data": ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]},
+        "xAxis": {
+            "type": "category",
+            "data": ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"],
+        },
         "yAxis": {"type": "value"},
         "series": [{"data": data, "type": "bar"}],
     }
@@ -294,11 +312,15 @@ def page_on_change():
 
     def on_chart_change():
         import random
+
         st.session_state.change_count += 1
         st.session_state.on_change_data = [random.randint(30, 250) for _ in range(7)]
 
     options = {
-        "xAxis": {"type": "category", "data": ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]},
+        "xAxis": {
+            "type": "category",
+            "data": ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"],
+        },
         "yAxis": {"type": "value"},
         "series": [{"data": st.session_state.on_change_data, "type": "bar"}],
     }
@@ -319,9 +341,7 @@ def page_map():
         "then reference `map_name` in a `geo` or `map` series."
     )
 
-    WORLD_GEOJSON_URL = (
-        "https://raw.githubusercontent.com/johan/world.geo.json/master/countries.geo.json"
-    )
+    WORLD_GEOJSON_URL = "https://raw.githubusercontent.com/johan/world.geo.json/master/countries.geo.json"
 
     @st.cache_data(show_spinner="Fetching world GeoJSON…")
     def load_world_geojson():
@@ -389,7 +409,9 @@ def page_jscode():
         **OPTIONS,
         "tooltip": {
             "trigger": "axis",
-            "formatter": JsCode("function(p){return p[0].name + ': ' + p[0].value + ' units'}"),
+            "formatter": JsCode(
+                "function(p){return p[0].name + ': ' + p[0].value + ' units'}"
+            ),
         },
     }
     st_echarts(options=tooltip_options, key="jscode_tooltip")
@@ -538,17 +560,23 @@ def page_pyecharts():
 # Navigation
 # ---------------------------------------------------------------------------
 
-pg = st.navigation([
-    st.Page(page_options,    title="1. options",            icon=":material/bar_chart:"),
-    st.Page(page_height_width, title="2. height & width",  icon=":material/aspect_ratio:"),
-    st.Page(page_renderer,   title="3. renderer",           icon=":material/tune:"),
-    st.Page(page_theme,      title="4. theme",              icon=":material/palette:"),
-    st.Page(page_interactions, title="5. interactions",       icon=":material/mouse:"),
-    st.Page(page_key,        title="6. key",                icon=":material/key:"),
-    st.Page(page_on_change,  title="7. on_change",          icon=":material/notifications:"),
-    st.Page(page_map,        title="8. map / Map",          icon=":material/map:"),
-    st.Page(page_jscode,     title="9. JsCode",             icon=":material/code:"),
-    st.Page(page_layouts,    title="10. collapsible layouts", icon=":material/dashboard:"),
-    st.Page(page_pyecharts,  title="11. pyecharts",         icon=":material/auto_awesome:"),
-])
+pg = st.navigation(
+    [
+        st.Page(page_options, title="1. options", icon=":material/bar_chart:"),
+        st.Page(
+            page_height_width, title="2. height & width", icon=":material/aspect_ratio:"
+        ),
+        st.Page(page_renderer, title="3. renderer", icon=":material/tune:"),
+        st.Page(page_theme, title="4. theme", icon=":material/palette:"),
+        st.Page(page_interactions, title="5. interactions", icon=":material/mouse:"),
+        st.Page(page_key, title="6. key", icon=":material/key:"),
+        st.Page(page_on_change, title="7. on_change", icon=":material/notifications:"),
+        st.Page(page_map, title="8. map / Map", icon=":material/map:"),
+        st.Page(page_jscode, title="9. JsCode", icon=":material/code:"),
+        st.Page(
+            page_layouts, title="10. collapsible layouts", icon=":material/dashboard:"
+        ),
+        st.Page(page_pyecharts, title="11. pyecharts", icon=":material/auto_awesome:"),
+    ]
+)
 pg.run()

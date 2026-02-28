@@ -40,10 +40,7 @@ export const EMPTY_SELECTION: SelectionData = {
 // --- Click → Selection ---
 
 export function transformClickToSelection(params: any): SelectionData {
-  if (
-    params.dataIndex == null ||
-    params.componentType !== "series"
-  ) {
+  if (params.dataIndex == null || params.componentType !== "series") {
     return EMPTY_SELECTION;
   }
 
@@ -131,9 +128,7 @@ export function transformBrushToSelection(
 
 // --- Brush option builder ---
 
-export function buildBrushOption(
-  selectionMode: string[],
-): Record<string, any> {
+export function buildBrushOption(selectionMode: string[]): Record<string, any> {
   const hasBrush =
     selectionMode.includes("box") || selectionMode.includes("lasso");
 
@@ -178,13 +173,15 @@ export function resolveDataItem(
   seriesIdx: number,
   dataIdx: number,
 ): any {
-  const seriesArr = Array.isArray(chartOption.series)
-    ? chartOption.series
-    : [];
+  const seriesArr = Array.isArray(chartOption.series) ? chartOption.series : [];
   const series = seriesArr[seriesIdx] as any;
 
   // Try series.data first
-  if (series?.data && Array.isArray(series.data) && series.data[dataIdx] != null) {
+  if (
+    series?.data &&
+    Array.isArray(series.data) &&
+    series.data[dataIdx] != null
+  ) {
     return series.data[dataIdx];
   }
 
@@ -196,7 +193,11 @@ export function resolveDataItem(
       ? [chartOption.dataset]
       : [];
   const dataset = datasets[datasetIndex] as any;
-  if (dataset?.source && Array.isArray(dataset.source) && dataset.source[dataIdx] != null) {
+  if (
+    dataset?.source &&
+    Array.isArray(dataset.source) &&
+    dataset.source[dataIdx] != null
+  ) {
     return dataset.source[dataIdx];
   }
 

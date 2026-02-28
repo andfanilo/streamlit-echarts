@@ -218,12 +218,7 @@ describe("setSelectionGenerator", () => {
   });
 
   test("should return true and bind handlers on first call with selectionActive=true", () => {
-    const result = setSelection(
-      mockChart,
-      true,
-      ["points"],
-      mockSetStateValue,
-    );
+    const result = setSelection(mockChart, true, ["points"], mockSetStateValue);
     expect(result).toBe(true);
     expect(mockChart.on).toHaveBeenCalledWith("click", expect.any(Function));
   });
@@ -232,12 +227,7 @@ describe("setSelectionGenerator", () => {
     setSelection(mockChart, true, ["points"], mockSetStateValue);
     const callCountAfterFirst = mockChart.on.mock.calls.length;
 
-    const result = setSelection(
-      mockChart,
-      true,
-      ["points"],
-      mockSetStateValue,
-    );
+    const result = setSelection(mockChart, true, ["points"], mockSetStateValue);
     expect(result).toBe(false);
     expect(mockChart.on).toHaveBeenCalledTimes(callCountAfterFirst);
   });

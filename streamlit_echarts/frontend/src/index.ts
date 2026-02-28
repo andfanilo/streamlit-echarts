@@ -262,11 +262,7 @@ export const setSelectionGenerator = () => {
       const brushSelectedHandler = (params: any) => {
         const batch = params.batch ?? [];
         if (cachedAreas.length === 0) return;
-        const selection = transformBrushToSelection(
-          batch,
-          cachedAreas,
-          chart,
-        );
+        const selection = transformBrushToSelection(batch, cachedAreas, chart);
         setStateValue("selection", selection);
       };
 
@@ -408,7 +404,11 @@ const EchartsRenderer: FrontendRenderer<EchartsStateShape, EchartsDataShape> = (
         firstResize = false;
         return;
       }
-      if (state.chart && !state.chart.isDisposed() && container.offsetParent !== null) {
+      if (
+        state.chart &&
+        !state.chart.isDisposed() &&
+        container.offsetParent !== null
+      ) {
         state.chart.resize();
       }
     });
