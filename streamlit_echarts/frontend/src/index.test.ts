@@ -60,7 +60,9 @@ describe("getOptionsGenerator", () => {
     const result = getOptions(options);
 
     expect(result.hasChanged).toBe(true);
-    expect(typeof (result.data as any).tooltip.formatter).toBe("function");
+    const formatter = (result.data as any).tooltip.formatter;
+    expect(typeof formatter).toBe("function");
+    expect(formatter({ name: "bar" })).toBe("bar");
   });
 });
 
@@ -180,10 +182,10 @@ describe("setEventsGenerator", () => {
     );
   });
 
-  test("should call setTriggerValue when event handler fires", () => {
+  test("should call setTriggerValue with the parsed function's return value", () => {
     const onEvents = {
       click:
-        "--x_x--0_0--function (params) { return params.name; }--x_x--0_0--",
+        "--x_x--0_0--function (params) { return params.name.toUpperCase() + '!'; }--x_x--0_0--",
     };
     setEvents(mockChart, onEvents, mockSetTriggerValue);
 
@@ -191,9 +193,10 @@ describe("setEventsGenerator", () => {
     const handler = mockChart.on.mock.calls[0][1];
     handler({ name: "test-value" });
 
+    // The transformed result proves the JsCode function was actually parsed and executed
     expect(mockSetTriggerValue).toHaveBeenCalledWith(
       "chart_event",
-      "test-value",
+      "TEST-VALUE!",
     );
   });
 });
@@ -214,7 +217,7 @@ describe("setSelectionGenerator", () => {
     mockSetStateValue = vi.fn();
   });
 
-  test("should return true on first call with selectionActive=true", () => {
+  test("should return true and bind handlers on first call with selectionActive=true", () => {
     const result = setSelection(
       mockChart,
       true,
@@ -222,10 +225,13 @@ describe("setSelectionGenerator", () => {
       mockSetStateValue,
     );
     expect(result).toBe(true);
+    expect(mockChart.on).toHaveBeenCalledWith("click", expect.any(Function));
   });
 
-  test("should return false on same config", () => {
+  test("should return false and not re-bind on same config", () => {
     setSelection(mockChart, true, ["points"], mockSetStateValue);
+    const callCountAfterFirst = mockChart.on.mock.calls.length;
+
     const result = setSelection(
       mockChart,
       true,
@@ -233,6 +239,7 @@ describe("setSelectionGenerator", () => {
       mockSetStateValue,
     );
     expect(result).toBe(false);
+    expect(mockChart.on).toHaveBeenCalledTimes(callCountAfterFirst);
   });
 
   test("should return true when selectionMode changes", () => {

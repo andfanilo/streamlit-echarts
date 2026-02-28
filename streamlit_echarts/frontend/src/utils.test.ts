@@ -36,4 +36,28 @@ describe("deepMap", () => {
     deepMap(input, (v: string) => v + "!", {});
     expect(input).toEqual({ a: "original" });
   });
+
+  test("handles null and undefined leaf values", () => {
+    const input = { a: null, b: undefined, c: "ok" };
+    const result = deepMap(input, (v: any) => (v == null ? "default" : v), {});
+    expect(result).toEqual({ a: "default", b: "default", c: "ok" });
+  });
+
+  test("handles mixed nested arrays and objects", () => {
+    const input = {
+      series: [
+        { data: [1, 2] },
+        { data: [3, 4] },
+      ],
+      title: { text: "hello" },
+    };
+    const result = deepMap(input, (v: any) => (typeof v === "number" ? v * 10 : v + "!"), {});
+    expect(result).toEqual({
+      series: [
+        { data: [10, 20] },
+        { data: [30, 40] },
+      ],
+      title: { text: "hello!" },
+    });
+  });
 });

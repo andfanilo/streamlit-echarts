@@ -39,7 +39,16 @@ describe("transformClickToSelection", () => {
 
   test("returns EMPTY_SELECTION on background click (dataIndex null)", () => {
     const params = { componentType: "series", dataIndex: null };
-    expect(transformClickToSelection(params)).toBe(EMPTY_SELECTION);
+    const result = transformClickToSelection(params);
+    expect(result).toBe(EMPTY_SELECTION);
+    // Verify EMPTY_SELECTION shape
+    expect(result).toEqual({
+      points: [],
+      point_indices: [],
+      series_point_indices: {},
+      box: [],
+      lasso: [],
+    });
   });
 
   test("returns EMPTY_SELECTION for non-series component", () => {
