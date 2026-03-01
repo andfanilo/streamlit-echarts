@@ -150,9 +150,9 @@ uv run streamlit run demo_app.py
 
 ## Project status
 
-This project is in vibecoder best-effort. I consider it [unmaintained](https://www.youtube.com/watch?v=1RFJF_ETpLk) but I may here and then vibecode additional features.
+This project is in [best-effort status](https://www.youtube.com/watch?v=1RFJF_ETpLk) — I occasionally add features I personally need through agentic coding, but I'm not actively reviewing larger issues or pull requests from the community. If you're looking to add a bigger feature, you're welcome to fork it!
 
-Please add a thumbs up [HERE](https://github.com/streamlit/streamlit/issues/1564) if you wish to see a native implementation.
+Please add a thumbs up [HERE](https://github.com/streamlit/streamlit/issues/1564) if you wish to see a native implementation maintained by the Streamlit team.
 
 ## Contributing
 
