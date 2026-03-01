@@ -2,7 +2,7 @@
 
 A Streamlit component to display ECharts.
 
-[![Streamlit App](https://static.streamlit.io/badges/streamlit_badge_black_white.svg)](https://share.streamlit.io/andfanilo/streamlit-echarts-demo/master/app.py)
+[![Streamlit App](https://static.streamlit.io/badges/streamlit_badge_black_white.svg)](https://echarts.streamlit.app/)
 
 ![](./img/demo.gif)
 
@@ -250,7 +250,21 @@ To package this component for distribution:
    uv run streamlit run app.py
    ```
 
-4. Publish to PyPI:
+4. Publish to Test PyPI (dry-run):
+
+   ```sh
+   uv publish --index testpypi
+   ```
+
+   You will need a [Test PyPI API token](https://test.pypi.org/manage/account/#api-tokens). Pass it via `--token` or set `UV_PUBLISH_TOKEN`.
+
+   Verify the package at `https://test.pypi.org/project/streamlit-echarts/` and test install it:
+
+   ```sh
+   uv pip install --index-url https://test.pypi.org/simple/ --extra-index-url https://pypi.org/simple/ streamlit-echarts
+   ```
+
+5. Publish to PyPI:
 
    ```sh
    uv publish
