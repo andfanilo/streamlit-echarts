@@ -48,7 +48,7 @@ All commands assume working directory is `streamlit-echarts/`.
 
 ```sh
 # --- Setup ---
-uv venv && uv pip install -e .[devel] --force-reinstall
+uv sync                    # installs project + dev group
 cd streamlit_echarts/frontend && npm i --legacy-peer-deps
 
 # --- Frontend build ---
@@ -65,11 +65,15 @@ npx prettier --check "src/**/*.{ts,tsx}"  # format check
 
 # --- Python validation ---
 uv run pytest tests/ -v    # unit tests (15 tests)
-ruff check --fix .         # lint
-ruff format .              # format
+uv run ruff check --fix .  # lint
+uv run ruff format .       # format
+
+# --- Pre-commit ---
+uv run pre-commit run --all-files  # run all hooks
+uv run pre-commit install          # install git hook (one-time)
 
 # --- E2E tests ---
-uv pip install -r e2e_playwright/test-requirements.txt
+uv sync --group e2e
 uv run python -m playwright install --with-deps
 uv run pytest e2e_playwright -n auto
 

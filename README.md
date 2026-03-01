@@ -163,7 +163,8 @@ Please add a thumbs up [HERE](https://github.com/streamlit/streamlit/issues/1564
 When developing locally, install in editable mode so Streamlit picks up **Python** code changes without rebuilding a wheel:
 
 ```sh
-uv pip install -e . --force-reinstall
+uv sync
+uv run pre-commit install  # install git hook (one-time)
 ```
 
 For **frontend** (TypeScript/React) changes, you still need to rebuild. Use Vite's watch mode for automatic rebuilds on save:
@@ -172,6 +173,14 @@ For **frontend** (TypeScript/React) changes, you still need to rebuild. Use Vite
 cd streamlit_echarts/frontend
 npm i --legacy-peer-deps
 npm run dev
+```
+
+## Linting & Formatting
+
+```sh
+uv run ruff check --fix .         # lint
+uv run ruff format .              # format
+uv run pre-commit run --all-files # run all pre-commit hooks
 ```
 
 ## Testing
@@ -197,7 +206,7 @@ Snapshot tests that start a real Streamlit app and compare screenshots. Requires
 
 ```sh
 # Install test dependencies
-uv pip install -r e2e_playwright/test-requirements.txt
+uv sync --group e2e
 uv run python -m playwright install --with-deps
 
 # Run the tests
