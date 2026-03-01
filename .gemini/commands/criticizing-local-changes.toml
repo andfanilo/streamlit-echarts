@@ -1,0 +1,3 @@
+prompt = """
+Run the criticizing-local-changes agent to critically review uncommitted changes (git diff HEAD) for bugs, style issues, and improvements.
+"""
