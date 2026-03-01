@@ -12,7 +12,7 @@ vi.mock("echarts-wordcloud", () => ({}));
 
 import * as echarts from "echarts";
 import type { EchartsStateShape } from "./index";
-import {
+import EchartsRenderer, {
   getOptionsGenerator,
   setThemeGenerator,
   setEventsGenerator,
@@ -290,5 +290,107 @@ describe("setSelectionGenerator", () => {
         ]),
       }),
     );
+  });
+});
+
+describe("renderer change handling", () => {
+  let parentElement: HTMLDivElement;
+  let mockSetTriggerValue: any;
+  let mockSetStateValue: any;
+  let mockChart: any;
+
+  const makeData = (renderer: "canvas" | "svg") => ({
+    options: { xAxis: { type: "category" as const } },
+    theme: "dark" as const,
+    onEvents: {},
+    height: "400px",
+    width: "100%",
+    renderer,
+    map: null,
+    selectionActive: false,
+    selectionMode: [] as string[],
+  });
+
+  beforeEach(() => {
+    // Stub browser APIs not available in jsdom
+    globalThis.ResizeObserver = vi.fn(function () {
+      return { observe: vi.fn(), unobserve: vi.fn(), disconnect: vi.fn() };
+    }) as any;
+    globalThis.IntersectionObserver = vi.fn(function () {
+      return { observe: vi.fn(), unobserve: vi.fn(), disconnect: vi.fn() };
+    }) as any;
+
+    mockChart = {
+      on: vi.fn(),
+      off: vi.fn(),
+      setOption: vi.fn(),
+      resize: vi.fn(),
+      dispose: vi.fn(),
+      isDisposed: vi.fn(() => false),
+    };
+    vi.mocked(echarts.init).mockReturnValue(mockChart as any);
+
+    parentElement = document.createElement("div");
+    const container = document.createElement("div");
+    container.className = "echarts-container";
+    parentElement.appendChild(container);
+    document.body.appendChild(parentElement);
+
+    mockSetTriggerValue = vi.fn();
+    mockSetStateValue = vi.fn();
+  });
+
+  test("should dispose and re-init chart when renderer changes", () => {
+    const args = {
+      data: makeData("canvas"),
+      parentElement,
+      setTriggerValue: mockSetTriggerValue,
+      setStateValue: mockSetStateValue,
+    };
+
+    // First render with canvas
+    const cleanup1 = EchartsRenderer(args as any);
+    expect(echarts.init).toHaveBeenCalledWith(
+      expect.any(HTMLDivElement),
+      expect.any(String),
+      { renderer: "canvas" },
+    );
+    vi.mocked(echarts.init).mockClear();
+
+    // Second render with svg — should dispose old and re-init
+    const args2 = { ...args, data: makeData("svg") };
+    const cleanup2 = EchartsRenderer(args2 as any);
+
+    expect(mockChart.dispose).toHaveBeenCalled();
+    expect(echarts.init).toHaveBeenCalledWith(
+      expect.any(HTMLDivElement),
+      expect.any(String),
+      { renderer: "svg" },
+    );
+
+    // Clean up
+    cleanup2!();
+  });
+
+  test("should NOT dispose chart when renderer stays the same", () => {
+    const args = {
+      data: makeData("canvas"),
+      parentElement,
+      setTriggerValue: mockSetTriggerValue,
+      setStateValue: mockSetStateValue,
+    };
+
+    // First render
+    EchartsRenderer(args as any);
+    vi.mocked(echarts.init).mockClear();
+    mockChart.dispose.mockClear();
+
+    // Second render with same renderer
+    const cleanup = EchartsRenderer(args as any);
+
+    expect(mockChart.dispose).not.toHaveBeenCalled();
+    expect(echarts.init).not.toHaveBeenCalled();
+
+    cleanup!();
   });
 });
