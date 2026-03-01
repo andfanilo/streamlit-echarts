@@ -285,6 +285,7 @@ export const setSelectionGenerator = () => {
  */
 type ComponentState = {
   chart: echarts.ECharts | null;
+  currentRenderer: "canvas" | "svg" | null;
   resizeObserver: ResizeObserver | null;
   intersectionObserver: IntersectionObserver | null;
   getOptions: ReturnType<typeof getOptionsGenerator>;
@@ -303,6 +304,7 @@ const getOrCreateInstanceState = (
   if (!state) {
     state = {
       chart: null,
+      currentRenderer: null,
       resizeObserver: null,
       intersectionObserver: null,
       getOptions: getOptionsGenerator(),
@@ -362,6 +364,19 @@ const EchartsRenderer: FrontendRenderer<EchartsStateShape, EchartsDataShape> = (
     state.getOptions = getOptionsGenerator();
     state.setEvents = setEventsGenerator();
     state.setSelection = setSelectionGenerator();
+  }
+
+  // 3b. If renderer changed, dispose existing chart (ECharts requires re-init).
+  const rendererChanged = renderer !== state.currentRenderer;
+  if (rendererChanged) {
+    state.currentRenderer = renderer;
+    if (state.chart) {
+      state.chart.dispose();
+      state.chart = null;
+      state.getOptions = getOptionsGenerator();
+      state.setEvents = setEventsGenerator();
+      state.setSelection = setSelectionGenerator();
+    }
   }
 
   // 4. Create chart if needed
