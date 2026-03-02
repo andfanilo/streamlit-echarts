@@ -65,6 +65,26 @@ describe("evalStringToFunction", () => {
     expect(result).toBe(wrapped);
   });
 
+  test("evaluates an expression using the injected echarts object", () => {
+    class LinearGradient {
+      args: any[];
+      constructor(...args: any[]) {
+        this.args = args;
+      }
+    }
+    const fakeEcharts = { graphic: { LinearGradient } };
+    const wrapped = `${JS_PLACEHOLDER}new echarts.graphic.LinearGradient(0, 0, 0, 1, [])${JS_PLACEHOLDER}`;
+    const result = evalStringToFunction(wrapped, fakeEcharts);
+    expect(result).toBeInstanceOf(LinearGradient);
+  });
+
+  test("returns original string when echarts-referencing JsCode has no echartsLib injected", () => {
+    const wrapped = `${JS_PLACEHOLDER}new echarts.graphic.LinearGradient(0, 0, 0, 1, [])${JS_PLACEHOLDER}`;
+    const result = evalStringToFunction(wrapped);
+    expect(typeof result).toBe("string");
+    expect(result).toBe(wrapped);
+  });
+
   test("evaluates a function that throws at runtime without breaking eval", () => {
     const wrapped = `${JS_PLACEHOLDER}function() { throw new Error("boom"); }${JS_PLACEHOLDER}`;
     const fn = evalStringToFunction(wrapped);

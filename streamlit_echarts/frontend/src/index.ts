@@ -66,7 +66,11 @@ export const getOptionsGenerator = () => {
     const key = JSON.stringify(options);
     if (key !== savedKey) {
       savedKey = key;
-      savedOptions = deepMap(options, evalStringToFunction, {});
+      savedOptions = deepMap(
+        options,
+        (s: string) => evalStringToFunction(s, echarts),
+        {},
+      );
       return { data: savedOptions, hasChanged: true };
     }
     return { data: savedOptions, hasChanged: false };
@@ -191,7 +195,13 @@ export const setEventsGenerator = () => {
     // Build and bind new handlers
     const handlers: Record<string, Function> = {};
     for (const eventName of Object.keys(onEvents)) {
-      const fn = evalStringToFunction(onEvents[eventName]) as Function;
+      const fn = evalStringToFunction(onEvents[eventName], echarts);
+      if (typeof fn !== "function") {
+        console.error(
+          `JsCode for event "${eventName}" did not evaluate to a function`,
+        );
+        continue;
+      }
       const handler = (params: any) => {
         setTriggerValue("chart_event", fn(params));
       };
