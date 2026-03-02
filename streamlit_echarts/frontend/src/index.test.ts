@@ -299,13 +299,17 @@ describe("renderer change handling", () => {
   let mockSetStateValue: any;
   let mockChart: any;
 
-  const makeData = (renderer: "canvas" | "svg") => ({
+  const makeData = (
+    renderer: "canvas" | "svg",
+    replaceMerge?: string | string[],
+  ) => ({
     options: { xAxis: { type: "category" as const } },
     theme: "dark" as const,
     onEvents: {},
     height: "400px",
     width: "100%",
     renderer,
+    replaceMerge,
     map: null,
     selectionActive: false,
     selectionMode: [] as string[],
@@ -392,5 +396,94 @@ describe("renderer change handling", () => {
     expect(echarts.init).not.toHaveBeenCalled();
 
     cleanup!();
+  });
+});
+
+describe("replaceMerge handling", () => {
+  let parentElement: HTMLDivElement;
+  let mockSetTriggerValue: any;
+  let mockSetStateValue: any;
+  let mockChart: any;
+
+  beforeEach(() => {
+    globalThis.ResizeObserver = vi.fn(function () {
+      return { observe: vi.fn(), unobserve: vi.fn(), disconnect: vi.fn() };
+    }) as any;
+    globalThis.IntersectionObserver = vi.fn(function () {
+      return { observe: vi.fn(), unobserve: vi.fn(), disconnect: vi.fn() };
+    }) as any;
+
+    mockChart = {
+      on: vi.fn(),
+      off: vi.fn(),
+      setOption: vi.fn(),
+      resize: vi.fn(),
+      dispose: vi.fn(),
+      isDisposed: vi.fn(() => false),
+    };
+    vi.mocked(echarts.init).mockReturnValue(mockChart as any);
+
+    parentElement = document.createElement("div");
+    const container = document.createElement("div");
+    container.className = "echarts-container";
+    parentElement.appendChild(container);
+    document.body.appendChild(parentElement);
+
+    mockSetTriggerValue = vi.fn();
+    mockSetStateValue = vi.fn();
+  });
+
+  // Re-use makeData from the "renderer change handling" scope isn't possible
+  // since it's block-scoped, so define a local helper.
+  const mkData = (replaceMerge?: string | string[]) => ({
+    options: { xAxis: { type: "category" as const } },
+    theme: "dark" as const,
+    onEvents: {},
+    height: "400px",
+    width: "100%",
+    renderer: "canvas" as const,
+    replaceMerge,
+    map: null,
+    selectionActive: false,
+    selectionMode: [] as string[],
+  });
+
+  test("should call setOption with notMerge:true when replaceMerge is undefined", () => {
+    const args = {
+      data: mkData(),
+      parentElement,
+      setTriggerValue: mockSetTriggerValue,
+      setStateValue: mockSetStateValue,
+    };
+    EchartsRenderer(args as any);
+    expect(mockChart.setOption).toHaveBeenCalledWith(expect.any(Object), {
+      notMerge: true,
+    });
+  });
+
+  test("should call setOption with replaceMerge when provided as string", () => {
+    const args = {
+      data: mkData("series"),
+      parentElement,
+      setTriggerValue: mockSetTriggerValue,
+      setStateValue: mockSetStateValue,
+    };
+    EchartsRenderer(args as any);
+    expect(mockChart.setOption).toHaveBeenCalledWith(expect.any(Object), {
+      replaceMerge: "series",
+    });
+  });
+
+  test("should call setOption with replaceMerge when provided as array", () => {
+    const args = {
+      data: mkData(["series", "xAxis"]),
+      parentElement,
+      setTriggerValue: mockSetTriggerValue,
+      setStateValue: mockSetStateValue,
+    };
+    EchartsRenderer(args as any);
+    expect(mockChart.setOption).toHaveBeenCalledWith(expect.any(Object), {
+      replaceMerge: ["series", "xAxis"],
+    });
   });
 });

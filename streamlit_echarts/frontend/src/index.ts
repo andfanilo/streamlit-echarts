@@ -36,6 +36,7 @@ export type EchartsDataShape = {
   height: string;
   width: string;
   renderer: "canvas" | "svg";
+  replaceMerge?: string | string[];
   map: Map | null;
   selectionActive?: boolean;
   selectionMode?: string[];
@@ -339,6 +340,7 @@ const EchartsRenderer: FrontendRenderer<EchartsStateShape, EchartsDataShape> = (
     height,
     width,
     renderer,
+    replaceMerge,
     map,
     selectionActive = false,
     selectionMode = [],
@@ -399,7 +401,8 @@ const EchartsRenderer: FrontendRenderer<EchartsStateShape, EchartsDataShape> = (
     state.getOptions(options);
 
   if (optionsChanged) {
-    state.chart.setOption(cleanOptions!, { notMerge: true });
+    const setOptionOpts = replaceMerge ? { replaceMerge } : { notMerge: true };
+    state.chart.setOption(cleanOptions!, setOptionOpts);
   }
 
   // 6. Wire events (memoized unbind/rebind)
