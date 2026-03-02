@@ -9,7 +9,7 @@ import "echarts-liquidfill";
 import "echarts-wordcloud";
 
 import deepMap from "./utils";
-import { evalStringToFunction } from "./parsers";
+import { evalJsCode } from "./parsers";
 import {
   SelectionData,
   EMPTY_SELECTION,
@@ -55,8 +55,8 @@ const FALLBACK_PALETTE = [
 ];
 
 /**
- * Memoized options parser. Runs deepMap + evalStringToFunction only when
- * the serialized options change.
+ * Memoized options parser. Runs deepMap + evalJsCode only when the
+ * serialized options change.
  */
 export const getOptionsGenerator = () => {
   let savedKey: string | null = null;
@@ -68,7 +68,7 @@ export const getOptionsGenerator = () => {
       savedKey = key;
       savedOptions = deepMap(
         options,
-        (s: string) => evalStringToFunction(s, echarts),
+        (s: string) => evalJsCode(s, { echarts }),
         {},
       );
       return { data: savedOptions, hasChanged: true };
@@ -195,7 +195,7 @@ export const setEventsGenerator = () => {
     // Build and bind new handlers
     const handlers: Record<string, Function> = {};
     for (const eventName of Object.keys(onEvents)) {
-      const fn = evalStringToFunction(onEvents[eventName], echarts);
+      const fn = evalJsCode(onEvents[eventName], { echarts });
       if (typeof fn !== "function") {
         console.error(
           `JsCode for event "${eventName}" did not evaluate to a function`,

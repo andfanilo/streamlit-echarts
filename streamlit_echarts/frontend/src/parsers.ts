@@ -1,15 +1,20 @@
 export const JS_PLACEHOLDER = "--x_x--0_0--";
 
 /**
- * If string can be evaluated as a Function, return activated function. Else return string.
- * Supports both classic `function` syntax and arrow functions.
- * @param s string to evaluate to function
- * @returns Function if can be evaluated as one, else input string
+ * Evaluate a JsCode-wrapped string to its resulting value.
+ * Strings containing `--x_x--0_0--` markers are extracted and evaluated via
+ * `new Function()`. The optional `scope` object injects named bindings into
+ * the evaluated code (e.g. `{ echarts }` makes `echarts.*` available).
+ * Returns the evaluated result (function, object, primitive) or the original
+ * string if evaluation fails or no markers are present.
+ * @param s string potentially containing JsCode markers
+ * @param scope named bindings injected into the eval scope
+ * @returns evaluated value, or original string on failure
  */
-export function evalStringToFunction(
+export function evalJsCode(
   s: string,
-  echartsLib?: object,
-): Function | string {
+  scope: Record<string, unknown> = {},
+): unknown {
   if (typeof s !== "string" || !s.includes(JS_PLACEHOLDER)) {
     return s;
   }
@@ -17,9 +22,11 @@ export function evalStringToFunction(
   const parts = s.split(JS_PLACEHOLDER);
   if (parts.length >= 3) {
     const funcStr = parts[1].trim();
+    const keys = Object.keys(scope);
+    const values = keys.map((k) => scope[k]);
     try {
-      return new Function("echarts", `"use strict"; return (${funcStr})`)(
-        echartsLib,
+      return new Function(...keys, `"use strict"; return (${funcStr})`)(
+        ...values,
       );
     } catch (e) {
       console.error("JsCode evaluation failed:", e);
