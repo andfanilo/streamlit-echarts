@@ -74,6 +74,7 @@ def st_echarts(
     height: str = "300px",
     width: str = "100%",
     renderer: str = "canvas",
+    replace_merge: str | list[str] | None = None,
     map: Map | None = None,
     key: str | None = None,
     on_change: Callable[[], None] | None = None,
@@ -98,6 +99,11 @@ def st_echarts(
         Width of ECharts chart
     renderer: {'canvas', 'svg'}
         Renderer for displaying chart
+    replace_merge: str or list of str or None
+        Component types to replace instead of merge when updating options.
+        Set to ``"series"`` or ``["series"]`` to enable ``universalTransition``
+        animations between different data shapes. Defaults to ``None`` which
+        fully replaces all options (``notMerge: true``).
     map: Map
         Details of GeoJSON map to register into echarts
     key: str
@@ -160,6 +166,7 @@ def st_echarts(
         "height": height,
         "width": width,
         "renderer": renderer,
+        "replaceMerge": replace_merge,
         "map": map.to_json() if map is not None else None,
         "selectionActive": selection_active,
         "selectionMode": list(selection_mode) if selection_active else [],

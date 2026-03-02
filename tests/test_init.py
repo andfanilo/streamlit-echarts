@@ -127,6 +127,34 @@ class TestStEchartsSelection:
             st_echarts(options={"series": []}, on_select="invalid")
 
 
+class TestReplaceMerge:
+    """Tests for replace_merge parameter."""
+
+    @patch("streamlit_echarts.out")
+    def test_default_none_not_in_data(self, mock_out: MagicMock):
+        """When replace_merge is not passed, data['replaceMerge'] should be None."""
+        mock_out.return_value = {}
+        st_echarts(options={"series": []})
+        data = mock_out.call_args.kwargs["data"]
+        assert data["replaceMerge"] is None
+
+    @patch("streamlit_echarts.out")
+    def test_string_value_forwarded(self, mock_out: MagicMock):
+        """A string like 'series' is passed through to data."""
+        mock_out.return_value = {}
+        st_echarts(options={"series": []}, replace_merge="series")
+        data = mock_out.call_args.kwargs["data"]
+        assert data["replaceMerge"] == "series"
+
+    @patch("streamlit_echarts.out")
+    def test_list_value_forwarded(self, mock_out: MagicMock):
+        """A list like ['series', 'xAxis'] is passed through to data."""
+        mock_out.return_value = {}
+        st_echarts(options={"series": []}, replace_merge=["series", "xAxis"])
+        data = mock_out.call_args.kwargs["data"]
+        assert data["replaceMerge"] == ["series", "xAxis"]
+
+
 class TestStPyecharts:
     """Tests for st_pyecharts wrapper."""
 
