@@ -339,6 +339,8 @@ describe("renderer change handling", () => {
       on: vi.fn(),
       off: vi.fn(),
       setOption: vi.fn(),
+      getOption: vi.fn(() => ({})),
+      dispatchAction: vi.fn(),
       resize: vi.fn(),
       dispose: vi.fn(),
       isDisposed: vi.fn(() => false),
@@ -428,6 +430,8 @@ describe("replaceMerge handling", () => {
       on: vi.fn(),
       off: vi.fn(),
       setOption: vi.fn(),
+      getOption: vi.fn(() => ({})),
+      dispatchAction: vi.fn(),
       resize: vi.fn(),
       dispose: vi.fn(),
       isDisposed: vi.fn(() => false),
@@ -496,5 +500,83 @@ describe("replaceMerge handling", () => {
     expect(mockChart.setOption).toHaveBeenCalledWith(expect.any(Object), {
       replaceMerge: ["series", "xAxis"],
     });
+  });
+});
+
+describe("selection brush clear wiring", () => {
+  let parentElement: HTMLDivElement;
+  let mockChart: any;
+  let mockSetTriggerValue: any;
+  let mockSetStateValue: any;
+
+  const mkData = (selectionActive: boolean, selectionMode: string[]) => ({
+    options: { xAxis: { type: "category" as const } },
+    theme: "dark" as const,
+    onEvents: {},
+    height: "400px",
+    width: "100%",
+    renderer: "canvas" as const,
+    map: null,
+    selectionActive,
+    selectionMode,
+  });
+
+  beforeEach(() => {
+    globalThis.ResizeObserver = vi.fn(function () {
+      return { observe: vi.fn(), unobserve: vi.fn(), disconnect: vi.fn() };
+    }) as any;
+    globalThis.IntersectionObserver = vi.fn(function () {
+      return { observe: vi.fn(), unobserve: vi.fn(), disconnect: vi.fn() };
+    }) as any;
+
+    mockChart = {
+      on: vi.fn(),
+      off: vi.fn(),
+      setOption: vi.fn(),
+      getOption: vi.fn(() => ({ brush: [{}] })),
+      dispatchAction: vi.fn(),
+      resize: vi.fn(),
+      dispose: vi.fn(),
+      isDisposed: vi.fn(() => false),
+    };
+    vi.mocked(echarts.init).mockReturnValue(mockChart as any);
+
+    parentElement = document.createElement("div");
+    const container = document.createElement("div");
+    container.className = "echarts-container";
+    parentElement.appendChild(container);
+    document.body.appendChild(parentElement);
+
+    mockSetTriggerValue = vi.fn();
+    mockSetStateValue = vi.fn();
+  });
+
+  test("disabling selection clears drawn areas and removes the brush component", () => {
+    const base = {
+      parentElement,
+      setTriggerValue: mockSetTriggerValue,
+      setStateValue: mockSetStateValue,
+    };
+
+    // Enable brush selection, then reset the spies
+    EchartsRenderer({ ...base, data: mkData(true, ["box", "lasso"]) } as any);
+    mockChart.setOption.mockClear();
+    mockChart.dispatchAction.mockClear();
+
+    // Disable selection → clear path
+    const cleanup = EchartsRenderer({
+      ...base,
+      data: mkData(false, []),
+    } as any);
+
+    expect(mockChart.dispatchAction).toHaveBeenCalledWith({
+      type: "brush",
+      areas: [],
+    });
+    expect(mockChart.setOption).toHaveBeenCalledWith(expect.any(Object), {
+      replaceMerge: ["brush"],
+    });
+
+    cleanup!();
   });
 });

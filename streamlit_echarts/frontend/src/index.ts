@@ -409,17 +409,37 @@ const EchartsRenderer: FrontendRenderer<EchartsStateShape, EchartsDataShape> = (
   // 6. Wire events (memoized unbind/rebind)
   state.setEvents(state.chart, onEvents, setTriggerValue);
 
-  // 6b. Wire selection listeners and overlay brush config
+  // 6b. Wire selection listeners and overlay brush config. Apply on ANY
+  //     selection-config change, not only when active — otherwise disabling
+  //     selection (or switching to points-only) left the brush tool and drawn
+  //     areas stale in the chart.
   const selectionChanged = state.setSelection(
     state.chart,
     selectionActive,
     selectionMode,
     setStateValue,
   );
-  if (selectionChanged && selectionActive) {
-    state.chart.setOption(buildBrushOption(selectionMode), {
-      notMerge: false,
-    });
+  if (selectionChanged) {
+    const wantBrush =
+      selectionMode.includes("box") || selectionMode.includes("lasso");
+    if (wantBrush) {
+      // Merge brush + toolbox brush feature on top of the user's options so
+      // any user-defined toolbox features are preserved.
+      state.chart.setOption(buildBrushOption(selectionMode), {
+        notMerge: false,
+      });
+    } else {
+      // No brush wanted: clear any drawn areas, then remove the brush
+      // component via replaceMerge (a plain merge leaves it stale) while the
+      // toolbox merge unsets its brush feature. User toolbox features survive.
+      const current = state.chart.getOption() as { brush?: unknown[] };
+      if (Array.isArray(current.brush) && current.brush.length > 0) {
+        state.chart.dispatchAction({ type: "brush", areas: [] });
+      }
+      state.chart.setOption(buildBrushOption(selectionMode), {
+        replaceMerge: ["brush"],
+      });
+    }
   }
 
   // 7. Set up ResizeObserver (once per instance)
