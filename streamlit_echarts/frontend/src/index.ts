@@ -199,7 +199,10 @@ export const setEventsGenerator = () => {
     // Build and bind new handlers
     const handlers: Record<string, Function> = {};
     for (const eventName of Object.keys(onEvents)) {
-      const fn = evalJsCode(onEvents[eventName], { echarts });
+      // `chart` is in scope so handlers can call instance methods (e.g.
+      // convertFromPixel, dispatchAction). Safe because this generator is
+      // reset on every chart dispose, so `chart` is never stale (issue #70).
+      const fn = evalJsCode(onEvents[eventName], { echarts, chart });
       if (typeof fn !== "function") {
         console.error(
           `JsCode for event "${eventName}" did not evaluate to a function`,

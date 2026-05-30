@@ -227,7 +227,9 @@ def page_interactions():
     st.divider()
     st.subheader("`events` — lower-level alternative")
     st.markdown(
-        "`events` maps ECharts event names to JavaScript handler strings. "
+        "`events` maps ECharts event names "
+        "([full list](https://echarts.apache.org/en/api.html#events)) "
+        "to JavaScript handler strings. "
         "The handler's **return value** becomes the component's return value in Python. "
         "Use this for events that `on_select` doesn't cover, like `mouseover`."
     )
@@ -253,6 +255,101 @@ def page_interactions():
         st.write("Last mouseover:", mouseover_result)
     else:
         st.info("Hover over a bar to fire a mouseover event.")
+
+    # --- events: the live chart and echarts in handler scope ---
+    st.divider()
+    st.subheader("Handler scope — the live `chart` and `echarts`")
+    st.markdown(
+        "Each handler is evaluated with the live ECharts `chart` instance and the `echarts` "
+        "namespace in scope. That turns a handler from a read-only params inspector into a full "
+        "ECharts client — it can convert coordinates, dispatch actions, and call ECharts utilities."
+    )
+
+    st.caption("`chart.convertFromPixel` — pixel → data coordinates")
+    convert_result = st_echarts(
+        options={
+            "xAxis": {"type": "value", "min": 0, "max": 10},
+            "yAxis": {"type": "value", "min": 0, "max": 10},
+            "series": [
+                {
+                    "type": "scatter",
+                    "symbolSize": 20,
+                    "data": [[3, 4], [7, 2], [1, 6], [5, 5], [9, 1]],
+                }
+            ],
+        },
+        events={
+            "click": (
+                "function (params) {"
+                "  const p = [params.event.offsetX, params.event.offsetY];"
+                "  const [x, y] = chart.convertFromPixel({ gridIndex: 0 }, p);"
+                "  return {"
+                "    point_value: params.value,"
+                "    pixel: p,"
+                "    data_coords: [Math.round(x * 100) / 100, Math.round(y * 100) / 100],"
+                "  };"
+                "}"
+            ),
+        },
+        height="400px",
+        key="events_convert",
+    )
+    if convert_result and convert_result.chart_event:
+        st.write("Click → coordinates:", convert_result.chart_event)
+    else:
+        st.info(
+            "Click a point. `chart.convertFromPixel` maps the click pixel to data coordinates."
+        )
+
+    st.caption("`chart.dispatchAction` — drive the chart from a handler")
+    st.markdown(
+        "Clicking a bar pops the tooltip on the **next** bar — "
+        "brushing-and-linking without a Python round-trip."
+    )
+    st_echarts(
+        options={**OPTIONS, "tooltip": {"trigger": "item"}},
+        events={
+            "click": (
+                "function (params) {"
+                "  const next = (params.dataIndex + 1) % 7;"
+                "  chart.dispatchAction({ type: 'showTip', seriesIndex: 0, dataIndex: next });"
+                "  return null;"
+                "}"
+            ),
+        },
+        key="events_dispatch",
+    )
+
+    st.caption("`echarts.format.addCommas` — call ECharts utilities")
+    fmt_result = st_echarts(
+        options={
+            **OPTIONS,
+            "series": [
+                {
+                    "data": [
+                        1200000,
+                        2000500,
+                        1503000,
+                        800250,
+                        700000,
+                        1100400,
+                        1300999,
+                    ],
+                    "type": "bar",
+                }
+            ],
+        },
+        events={
+            "click": "function (params) { return echarts.format.addCommas(params.value); }"
+        },
+        key="events_format",
+    )
+    if fmt_result and fmt_result.chart_event:
+        st.write("Formatted value:", fmt_result.chart_event)
+    else:
+        st.info(
+            "Click a bar. `echarts.format.addCommas` adds thousands separators to the value."
+        )
 
     _show_source(page_interactions)
 
@@ -477,6 +574,12 @@ def page_jscode():
         "(formatters, symbol sizes, color functions, …)."
     )
 
+    st.info(
+        "`JsCode` is for callbacks embedded in `options` (formatters, sizes, colors). "
+        "For event handlers (`click`, `mouseover`, …) — which also get the live `chart` "
+        "instance — use the `events` parameter shown on the **Interactions** page."
+    )
+
     st.subheader("a) Custom tooltip formatter")
     tooltip_options = {
         **OPTIONS,
@@ -508,6 +611,30 @@ def page_jscode():
         ],
     }
     st_echarts(options=scatter_options, key="jscode_scatter")
+
+    st.subheader("c) ECharts utilities inside a `JsCode` callback")
+    st.markdown(
+        "The `echarts` namespace is in scope inside `JsCode` callbacks. Here a bar label "
+        "formatter uses `echarts.format.addCommas` to add thousands separators to large values."
+    )
+    formatted_label_options = {
+        **OPTIONS,
+        "series": [
+            {
+                "type": "bar",
+                "data": [1200000, 2000500, 1503000, 800250, 700000, 1100400, 1300999],
+                "label": {
+                    "show": True,
+                    "position": "top",
+                    "formatter": JsCode(
+                        "function(p){return echarts.format.addCommas(p.value)}"
+                    ),
+                },
+            }
+        ],
+    }
+    st_echarts(options=formatted_label_options, key="jscode_format")
+
     _show_source(page_jscode)
 
 
