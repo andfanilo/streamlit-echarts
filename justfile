@@ -126,3 +126,11 @@ _verify-release-state:
     @if ((git rev-parse --abbrev-ref HEAD) -ne "main") { Write-Host -ForegroundColor Red "Must be on main branch to publish"; exit 1 }
     @if (git status --porcelain) { Write-Host -ForegroundColor Red "Working tree not clean"; exit 1 }
     @$pyver = (Select-String -Path pyproject.toml -Pattern '^version = "(.+)"$').Matches.Groups[1].Value; $tags = @(git tag --points-at HEAD); if ("v$pyver" -notin $tags) { Write-Host -ForegroundColor Red "HEAD is not tagged v$pyver. Run just tag-release first."; exit 1 }
+
+# --- Dependency maintenance ---
+
+# Squash-merge every open Dependabot PR that is mergeable and green (skips conflicting/pending/failing), delete its branch, then sync develop. Requires `gh`.
+merge-dependabot:
+    @$prs = gh pr list --author "app/dependabot" --state open --json number,title,mergeable,statusCheckRollup | ConvertFrom-Json; if (-not $prs) { Write-Host -ForegroundColor Green "No open Dependabot PRs."; exit 0 }; foreach ($pr in $prs) { $bad = @($pr.statusCheckRollup | Where-Object { $_.status -ne 'COMPLETED' -or $_.conclusion -notin @('SUCCESS','NEUTRAL','SKIPPED') }); if ($pr.mergeable -ne 'MERGEABLE') { Write-Host -ForegroundColor Yellow "skip #$($pr.number) [$($pr.mergeable)] — $($pr.title)"; continue }; if ($bad.Count -gt 0) { Write-Host -ForegroundColor Yellow "skip #$($pr.number) [checks not green] — $($pr.title)"; continue }; Write-Host -ForegroundColor Cyan "merging #$($pr.number) — $($pr.title)"; gh pr merge $pr.number --squash --delete-branch }
+    git checkout develop
+    git pull --rebase --autostash

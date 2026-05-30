@@ -95,6 +95,7 @@ Publish recipes are guarded: they refuse to run unless HEAD is on `main`, the tr
 | `build` / `build-frontend` / `build-wheel` | Build frontend bundle + Python wheel |
 | `tag-release X.Y.Z` | Ff-merge develop → main, annotated tag `vX.Y.Z`, push both |
 | `publish-test` / `publish` | Guarded build + publish to Test PyPI / PyPI |
+| `merge-dependabot` | Squash-merge every green, conflict-free Dependabot PR + delete branch, then sync develop (needs `gh`) |
 
 ### Raw commands (when bypassing `just`)
 
