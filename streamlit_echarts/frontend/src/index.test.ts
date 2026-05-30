@@ -105,6 +105,20 @@ describe("setThemeGenerator", () => {
     );
   });
 
+  test("should swap double quotes in --st-font for single quotes (SVG-safe, issue #82)", () => {
+    container.style.setProperty("--st-font", '"Source Sans", sans-serif');
+    setTheme("streamlit", container);
+
+    expect(echarts.registerTheme).toHaveBeenCalledWith(
+      "streamlit",
+      expect.objectContaining({
+        textStyle: expect.objectContaining({
+          fontFamily: "'Source Sans', sans-serif",
+        }),
+      }),
+    );
+  });
+
   test("should register custom object theme under a content-based name", () => {
     const customTheme = { color: ["#ff0000"] };
     const result = setTheme(customTheme, container);

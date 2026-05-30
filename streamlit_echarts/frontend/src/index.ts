@@ -98,7 +98,9 @@ export const setThemeGenerator = () => {
     const backgroundColor =
       theme === "streamlit" ? getCssVar("--st-background-color") : "";
     const textColor = theme === "streamlit" ? getCssVar("--st-text-color") : "";
-    const font = theme === "streamlit" ? getCssVar("--st-font") : "";
+    // Single-quote font names so they survive ECharts' SVG export (issue #82).
+    const font =
+      theme === "streamlit" ? getCssVar("--st-font").replace(/"/g, "'") : "";
     const categoricalRaw =
       theme === "streamlit" ? getCssVar("--st-chart-categorical-colors") : "";
 
