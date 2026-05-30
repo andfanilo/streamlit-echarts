@@ -173,13 +173,18 @@ export const setThemeGenerator = () => {
   };
 };
 
+// Event names prefixed with this bind to the underlying zrender instance
+// (canvas-wide, fires on blank space) instead of the chart (graphic elements
+// only). See the "Listen to Events on the Blank Area" ECharts handbook page.
+const ZR_PREFIX = "zr:";
+
 /**
- * Memoized event wiring. Calls chart.off/chart.on only when the serialized
- * onEvents change.
+ * Memoized event wiring. Calls chart.off/chart.on (or the zrender instance's
+ * off/on for `zr:`-prefixed names) only when the serialized onEvents change.
  */
 export const setEventsGenerator = () => {
   let savedKey: string | null = null;
-  let savedHandlers: Record<string, Function> = {};
+  let savedHandlers: { isZr: boolean; event: string; handler: Function }[] = [];
 
   return (
     chart: echarts.ECharts,
@@ -191,29 +196,40 @@ export const setEventsGenerator = () => {
       return false;
     }
 
-    // Unbind old handlers by reference (not by name) to preserve other listeners
-    for (const eventName of Object.keys(savedHandlers)) {
-      chart.off(eventName, savedHandlers[eventName] as any);
+    // Resolve the zrender instance lazily so the chart-only path never calls
+    // getZr() (it's only needed when a zr: handler is bound or unbound).
+    let zr: ReturnType<echarts.ECharts["getZr"]> | null = null;
+    const getZr = () => (zr ??= chart.getZr());
+
+    // Unbind old handlers by reference (not by name) to preserve other
+    // listeners, routing each to the emitter it was bound on.
+    for (const { isZr, event, handler } of savedHandlers) {
+      if (isZr) getZr().off(event, handler as any);
+      else chart.off(event, handler as any);
     }
 
     // Build and bind new handlers
-    const handlers: Record<string, Function> = {};
-    for (const eventName of Object.keys(onEvents)) {
+    const handlers: typeof savedHandlers = [];
+    for (const name of Object.keys(onEvents)) {
       // `chart` is in scope so handlers can call instance methods (e.g.
       // convertFromPixel, dispatchAction). Safe because this generator is
       // reset on every chart dispose, so `chart` is never stale (issue #70).
-      const fn = evalJsCode(onEvents[eventName], { echarts, chart });
+      const fn = evalJsCode(onEvents[name], { echarts, chart });
       if (typeof fn !== "function") {
         console.error(
-          `JsCode for event "${eventName}" did not evaluate to a function`,
+          `JsCode for event "${name}" did not evaluate to a function`,
         );
         continue;
       }
       const handler = (params: any) => {
         setTriggerValue("chart_event", fn(params));
       };
-      handlers[eventName] = handler;
-      chart.on(eventName, handler as any);
+
+      const isZr = name.startsWith(ZR_PREFIX);
+      const event = isZr ? name.slice(ZR_PREFIX.length) : name;
+      if (isZr) getZr().on(event, handler as any);
+      else chart.on(event, handler as any);
+      handlers.push({ isZr, event, handler });
     }
 
     savedKey = key;

@@ -94,7 +94,12 @@ def st_echarts(
         which automatically adapts to Streamlit's light/dark mode.
     events: dict
         Dictionary of mouse events to string JS functions.
-        Don't wrap values with JsCode placeholder.
+        Don't wrap values with JsCode placeholder. Each handler is evaluated
+        with the live ``chart`` instance and the ``echarts`` namespace in scope
+        (e.g. ``chart.convertFromPixel(...)``, ``chart.dispatchAction(...)``).
+        Prefix an event name with ``zr:`` (e.g. ``"zr:click"``) to bind it to
+        the underlying zrender instance, which fires across the whole canvas
+        including blank areas, where chart-level events never fire.
     height: str
         Height of ECharts chart
     width: str
