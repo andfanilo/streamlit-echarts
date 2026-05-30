@@ -231,6 +231,11 @@ def page_interactions():
         "changes — like `on_change`, but for selections. The callback reads the current "
         "selection from `st.session_state[key]`."
     )
+    st.caption(
+        "It fires on selection **change**, not per click (selection is persistent state, not "
+        "an event). Re-clicking the same bar is an identical selection, so it won't fire again "
+        "— click a *different* bar to move the counter."
+    )
 
     if "select_cb_count" not in st.session_state:
         st.session_state.select_cb_count = 0
@@ -248,7 +253,10 @@ def page_interactions():
         on_select=_on_points_selected,
         selection_mode="points",
     )
-    st.metric("Times the callback fired", st.session_state.select_cb_count)
+    st.metric(
+        "Times the selection changed (callback fired)",
+        st.session_state.select_cb_count,
+    )
     st.caption(
         f"Last selected indices (set by callback): {st.session_state.select_cb_indices}"
     )
