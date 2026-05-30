@@ -44,46 +44,56 @@ Unified `SelectionData` type: `{ points, point_indices, box, lasso }`.
 
 ## Build & Validation Commands
 
-All commands assume working directory is `streamlit-echarts/`.
+All commands assume working directory is `streamlit-echarts/`. Workflows are wrapped in a [`justfile`](./justfile) — run `just` (or `just --list`) to see every recipe.
+
+### Common pipelines
 
 ```sh
-# --- Setup ---
-uv sync                    # installs project + dev group
-cd streamlit_echarts/frontend && npm i --legacy-peer-deps
+# --- First-time setup + run the demo ---
+just setup        # uv sync + npm install + pre-commit hook
+just demo         # streamlit run demo_app.py
 
-# --- Frontend build ---
-cd streamlit_echarts/frontend
-npm run build              # clean + typecheck + production build
-npm run dev                # watch mode (auto-rebuild on save)
+# --- Inner loop: frontend changes ---
+just dev          # Vite watch mode (auto-rebuild on save)
+just test         # Python + frontend unit tests
+just lint         # ruff check + prettier check
 
-# --- Frontend validation ---
-cd streamlit_echarts/frontend
-npm test                   # vitest single run (49 tests)
-npm run test:watch         # vitest watch mode
-npx tsc --noEmit           # typecheck only
-npx prettier --check "src/**/*.{ts,tsx}"  # format check
+# --- Pre-push validation (CI-equivalent) ---
+just lint && just test && just build
 
-# --- Python validation ---
-uv run pytest tests/ -v    # unit tests (15 tests)
-uv run ruff check --fix .  # lint
-uv run ruff format .       # format
+# --- Full E2E flow (one-time setup, then run) ---
+just e2e-setup    # uv sync --group e2e + playwright install --with-deps
+just build        # E2E needs built frontend
+just e2e          # uv run pytest e2e_playwright -n auto
 
-# --- Pre-commit ---
-uv run pre-commit run --all-files  # run all hooks
-uv run pre-commit install          # install git hook (one-time)
+# --- Build & publish ---
+just build              # frontend assets + Python wheel into dist/
+just publish-test       # build + uv publish --index testpypi
+just publish            # build + uv publish (PyPI)
+```
 
-# --- E2E tests ---
-uv sync --group e2e
-uv run python -m playwright install --with-deps
-uv run pytest e2e_playwright -n auto
+### Recipe reference
 
-# --- Full validation (CI-equivalent) ---
-cd streamlit_echarts/frontend && npm test && npm run build && cd ../.. && uv run pytest tests/ -v
+| Recipe | What it does |
+|---|---|
+| `setup` / `setup-py` / `setup-frontend` | Install deps (full / Python only / frontend only) |
+| `dev` | Vite watch mode for frontend |
+| `demo` | `uv run streamlit run demo_app.py` |
+| `lint` / `lint-py` / `lint-frontend` | ruff check + prettier check (combined / split) |
+| `format` / `format-py` / `format-frontend` | ruff format + prettier write |
+| `pre-commit` | `uv run pre-commit run --all-files` |
+| `test` / `test-py` / `test-frontend` | Unit tests (Python + Vitest) |
+| `test-frontend-watch` | Vitest watch mode |
+| `e2e-setup` / `e2e` / `e2e-clean` | Playwright deps install / run tests / uninstall browsers |
+| `build` / `build-frontend` / `build-wheel` | Build frontend bundle + Python wheel |
+| `publish-test` / `publish` | Publish to Test PyPI / PyPI |
 
-# --- Build wheel ---
-cd streamlit_echarts/frontend && npm run build   # frontend first
-cd ../.. && uv build                              # then Python wheel
+### Raw commands (when bypassing `just`)
 
-# --- Run demo ---
-uv run streamlit run demo_app.py
+```sh
+# Typecheck only (no recipe — use directly)
+cd streamlit_echarts/frontend && npx tsc --noEmit
+
+# Re-install the pre-commit hook (one-time, part of `just setup`)
+uv run pre-commit install
 ```

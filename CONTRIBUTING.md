@@ -63,10 +63,24 @@ npm run dev
 ## Linting & Formatting
 
 ```sh
-uv run ruff check --fix .         # lint
-uv run ruff format .              # format
+just lint          # ruff check (Python) + prettier check (frontend)
+just format        # ruff format + prettier write
+just pre-commit    # run all pre-commit hooks
+```
+
+<details><summary>Raw commands</summary>
+
+```sh
+uv run ruff check --fix .         # lint Python
+uv run ruff format .              # format Python
+cd streamlit_echarts/frontend && npx prettier --check "src/**/*.ts"   # lint frontend
+cd streamlit_echarts/frontend && npx prettier --write "src/**/*.ts"   # format frontend
 uv run pre-commit run --all-files # run all pre-commit hooks
 ```
+
+</details>
+
+> Per-language recipes are also available: `just lint-py`, `just lint-frontend`, `just format-py`, `just format-frontend`.
 
 ## Testing
 
@@ -75,34 +89,54 @@ uv run pre-commit run --all-files # run all pre-commit hooks
 Fast, dependency-free tests for the JavaScript parsing logic:
 
 ```sh
-cd streamlit_echarts/frontend
-npm test
+just test-frontend             # single run
+just test-frontend-watch       # watch mode
 ```
 
-Run in watch mode during development:
+<details><summary>Raw commands</summary>
 
 ```sh
+cd streamlit_echarts/frontend
+npm test
 npm run test:watch
 ```
+
+</details>
 
 ### Unit Tests (Python)
 
 ```sh
+just test-py
+```
+
+<details><summary>Raw command</summary>
+
+```sh
 uv run pytest tests/ -v
 ```
+
+</details>
+
+> `just test` runs both Python and frontend unit tests in sequence.
 
 ### E2E Tests (Playwright)
 
 Snapshot tests that start a real Streamlit app and compare screenshots. Requires the package to be installed and the frontend to be built first.
 
 ```sh
-# Install test dependencies
+just e2e-setup   # one-time: install deps + browsers
+just e2e         # run the tests
+```
+
+<details><summary>Raw commands</summary>
+
+```sh
 uv sync --group e2e
 uv run python -m playwright install --with-deps
-
-# Run the tests
 uv run pytest e2e_playwright -n auto
 ```
+
+</details>
 
 > On first run, missing snapshots are created automatically. Commit them as the new baseline. Re-run to verify.
 
@@ -123,8 +157,16 @@ Snapshots are stored per-platform under `e2e_playwright/__snapshots__/{platform}
 To **clean up Playwright's browser binaries** (freeing up ~500MB+ in `%USERPROFILE%\AppData\Local\ms-playwright`), run:
 
 ```sh
+just e2e-clean
+```
+
+<details><summary>Raw command</summary>
+
+```sh
 uv run python -m playwright uninstall --all
 ```
+
+</details>
 
 ## Build and Publish
 
