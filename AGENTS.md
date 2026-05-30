@@ -66,11 +66,18 @@ just e2e-setup    # uv sync --group e2e + playwright install --with-deps
 just build        # E2E needs built frontend
 just e2e          # uv run pytest e2e_playwright -n auto
 
-# --- Build & publish ---
+# --- Build ---
 just build              # frontend assets + Python wheel into dist/
-just publish-test       # build + uv publish --index testpypi
-just publish            # build + uv publish (PyPI)
+
+# --- Release (cut a new version) ---
+# 1. On develop: bump `version` in pyproject.toml, commit, PR → main, merge.
+# 2. From main:
+just tag-release 0.7.0  # ff-merge develop → main, annotated tag v0.7.0, push
+just publish-test       # guarded build + uv publish --index testpypi
+just publish            # guarded build + uv publish (PyPI)
 ```
+
+Publish recipes are guarded: they refuse to run unless HEAD is on `main`, the tree is clean, and HEAD is tagged matching `pyproject.toml`'s version.
 
 ### Recipe reference
 
@@ -86,7 +93,8 @@ just publish            # build + uv publish (PyPI)
 | `test-frontend-watch` | Vitest watch mode |
 | `e2e-setup` / `e2e` / `e2e-clean` | Playwright deps install / run tests / uninstall browsers |
 | `build` / `build-frontend` / `build-wheel` | Build frontend bundle + Python wheel |
-| `publish-test` / `publish` | Publish to Test PyPI / PyPI |
+| `tag-release X.Y.Z` | Ff-merge develop → main, annotated tag `vX.Y.Z`, push both |
+| `publish-test` / `publish` | Guarded build + publish to Test PyPI / PyPI |
 
 ### Raw commands (when bypassing `just`)
 

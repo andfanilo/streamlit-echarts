@@ -170,7 +170,36 @@ uv run python -m playwright uninstall --all
 
 ## Build and Publish
 
-To package this component for distribution:
+### Release flow
+
+Releases live as annotated tags on `main`. The pyproject version is bumped on `develop` first so the tagged commit on `main` is self-consistent (tag `vX.Y.Z` ↔ `version = "X.Y.Z"`).
+
+1. On `develop`, bump `version` in `pyproject.toml`, commit, push, and open a PR into `main`. Merge it.
+2. Cut the tag from a clean working tree:
+
+   ```sh
+   just tag-release 0.7.0
+   ```
+
+   This fast-forwards `main` from `develop`, creates an annotated `v0.7.0` tag, and pushes both.
+
+   <details><summary>Raw commands</summary>
+
+   ```sh
+   git checkout main && git pull --ff-only
+   git merge --ff-only develop
+   git tag -a v0.7.0 -m "Release 0.7.0"
+   git push origin main
+   git push origin v0.7.0
+   ```
+
+   </details>
+
+3. Build, test install, and publish (see below).
+
+> `just publish-test` and `just publish` are **guarded** — they refuse to run unless HEAD is on `main`, the tree is clean, and HEAD is tagged matching the pyproject version.
+
+### Build and publish
 
 1. Build the frontend assets and Python wheel:
 
@@ -235,8 +264,6 @@ To package this component for distribution:
    </details>
 
    You will need a PyPI API token. You can pass it via `--token` or set the `UV_PUBLISH_TOKEN` environment variable.
-
-   To bump the version, edit `version` in `pyproject.toml` before building.
 
 ### Expected output
 

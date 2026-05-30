@@ -99,9 +99,30 @@ build-wheel:
     uv build
 
 # Publish to Test PyPI (set UV_PUBLISH_TOKEN or pass --token)
-publish-test: build
+publish-test: _verify-release-state build
     uv publish --index testpypi
 
 # Publish to PyPI (set UV_PUBLISH_TOKEN or pass --token)
-publish: build
+publish: _verify-release-state build
     uv publish
+
+# --- Release ---
+
+# Cut a release: ff-merge develop into main, annotated tag vX.Y.Z, push both
+tag-release version:
+    @if (git status --porcelain) { Write-Host -ForegroundColor Red "Working tree not clean. Commit or stash first."; exit 1 }
+    @if (git tag --list "v{{version}}") { Write-Host -ForegroundColor Red "Tag v{{version}} already exists"; exit 1 }
+    git fetch origin
+    git checkout main
+    git pull --ff-only origin main
+    git merge --ff-only develop
+    @$pyver = (Select-String -Path pyproject.toml -Pattern '^version = "(.+)"$').Matches.Groups[1].Value; if ($pyver -ne "{{version}}") { Write-Host -ForegroundColor Red "pyproject.toml version ($pyver) does not match {{version}}. Bump it on develop first."; exit 1 }
+    git tag -a "v{{version}}" -m "Release {{version}}"
+    git push origin main
+    git push origin "v{{version}}"
+
+# Guard for publish: must be on main, clean tree, HEAD tagged matching pyproject version
+_verify-release-state:
+    @if ((git rev-parse --abbrev-ref HEAD) -ne "main") { Write-Host -ForegroundColor Red "Must be on main branch to publish"; exit 1 }
+    @if (git status --porcelain) { Write-Host -ForegroundColor Red "Working tree not clean"; exit 1 }
+    @$pyver = (Select-String -Path pyproject.toml -Pattern '^version = "(.+)"$').Matches.Groups[1].Value; $tags = @(git tag --points-at HEAD); if ("v$pyver" -notin $tags) { Write-Host -ForegroundColor Red "HEAD is not tagged v$pyver. Run just tag-release first."; exit 1 }
