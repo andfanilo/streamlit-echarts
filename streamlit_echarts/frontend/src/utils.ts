@@ -30,3 +30,18 @@ function deepMap(obj: any, iterator: Function, context: any): any {
 }
 
 export default deepMap;
+
+/**
+ * Deterministic, non-cryptographic string hash (djb2). Used to derive
+ * stable-but-unique registry keys, e.g. per-theme ECharts theme names so
+ * distinct custom themes don't collide on a shared global key.
+ * @param str input string
+ * @returns unsigned 32-bit hash as a base36 string
+ */
+export function hashString(str: string): string {
+  let hash = 5381;
+  for (let i = 0; i < str.length; i++) {
+    hash = (hash * 33) ^ str.charCodeAt(i);
+  }
+  return (hash >>> 0).toString(36);
+}

@@ -401,4 +401,28 @@ describe("buildPointFromDataItem", () => {
     expect(point.y).toBe(99);
     expect(point.value).toBe(99);
   });
+
+  test("unpacks x/y from array-valued object value", () => {
+    const point = buildPointFromDataItem(
+      { name: "P", value: [10, 20] },
+      0,
+      0,
+      "S",
+    );
+    expect(point.x).toBe(10);
+    expect(point.y).toBe(20);
+    expect(point.value).toEqual([10, 20]);
+    expect(point.name).toBe("P");
+  });
+
+  test("prefers explicit x/y over array value", () => {
+    const point = buildPointFromDataItem(
+      { value: [10, 20], x: 1, y: 2 },
+      0,
+      0,
+      "S",
+    );
+    expect(point.x).toBe(1);
+    expect(point.y).toBe(2);
+  });
 });

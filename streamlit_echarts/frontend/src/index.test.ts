@@ -102,16 +102,27 @@ describe("setThemeGenerator", () => {
     );
   });
 
-  test("should register custom object theme", () => {
+  test("should register custom object theme under a content-based name", () => {
     const customTheme = { color: ["#ff0000"] };
     const result = setTheme(customTheme, container);
 
     expect(result.themeChanged).toBe(true);
-    expect(result.themeName).toBe("custom_theme");
+    expect(result.themeName).toMatch(/^custom_theme_/);
     expect(echarts.registerTheme).toHaveBeenCalledWith(
-      "custom_theme",
+      result.themeName,
       customTheme,
     );
+  });
+
+  test("should register distinct custom themes under different names", () => {
+    const themeA = { color: ["#ff0000"] };
+    const themeB = { color: ["#00ff00"] };
+    const nameA = setTheme(themeA, container).themeName;
+    const nameB = setTheme(themeB, container).themeName;
+
+    expect(nameA).not.toBe(nameB);
+    expect(echarts.registerTheme).toHaveBeenCalledWith(nameA, themeA);
+    expect(echarts.registerTheme).toHaveBeenCalledWith(nameB, themeB);
   });
 
   test("should detect change when theme changes from one to another", () => {

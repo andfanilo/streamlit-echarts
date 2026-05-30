@@ -62,7 +62,9 @@ def _serialize_options(obj):
         return obj.js_code
     if isinstance(obj, dict):
         return {k: _serialize_options(v) for k, v in obj.items()}
-    if isinstance(obj, list):
+    # Convert tuples to lists too so tuple-embedded JsCode is placeholder-
+    # converted and the result stays JSON-serializable.
+    if isinstance(obj, (list, tuple)):
         return [_serialize_options(v) for v in obj]
     return obj
 

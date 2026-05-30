@@ -8,7 +8,7 @@ import "echarts-gl";
 import "echarts-liquidfill";
 import "echarts-wordcloud";
 
-import deepMap from "./utils";
+import deepMap, { hashString } from "./utils";
 import { evalJsCode } from "./parsers";
 import {
   SelectionData,
@@ -91,8 +91,6 @@ export const setThemeGenerator = () => {
     theme: string | object,
     container: HTMLElement,
   ): { themeName: string; themeChanged: boolean } => {
-    const customThemeName = "custom_theme";
-
     // Read CSS vars needed for the "streamlit" theme.
     const getCssVar = (v: string) =>
       getComputedStyle(container).getPropertyValue(v).trim();
@@ -160,6 +158,9 @@ export const setThemeGenerator = () => {
       echarts.registerTheme("streamlit", stTheme);
       currentThemeName = "streamlit";
     } else if (typeof theme === "object" && theme !== null) {
+      // Derive a content-based name so distinct custom themes across multiple
+      // component instances don't overwrite each other on a shared global key.
+      const customThemeName = `custom_theme_${hashString(JSON.stringify(theme))}`;
       echarts.registerTheme(customThemeName, theme);
       currentThemeName = customThemeName;
     } else {

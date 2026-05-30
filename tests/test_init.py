@@ -62,6 +62,14 @@ class TestSerializeOptions:
         opts = {"a": 1, "b": "hello", "c": [1, 2], "d": {"nested": True}}
         assert _serialize_options(opts) == opts
 
+    def test_jscode_inside_tuple(self):
+        opts = {"data": ({"symbolSize": JsCode("(val) => val[2] * 10")}, 20)}
+        result = _serialize_options(opts)
+        # Tuple is converted to a list so the result stays JSON-serializable
+        assert isinstance(result["data"], list)
+        assert JS_PLACEHOLDER in result["data"][0]["symbolSize"]
+        assert result["data"][1] == 20
+
 
 class TestStEchartsSelection:
     """Tests for on_select / selection_mode parameters."""

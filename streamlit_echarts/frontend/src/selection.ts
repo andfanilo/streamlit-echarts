@@ -225,12 +225,16 @@ export function buildPointFromDataItem(
 
   // Object format: { name, value, ... }
   if (typeof dataItem === "object" && dataItem !== null) {
+    // ECharts commonly carries coordinates in an array-valued `value`
+    // (e.g. scatter/geo `{ value: [x, y], ... }`). Fall back to it when
+    // explicit `x`/`y` keys are absent so coordinates aren't dropped.
+    const arrValue = Array.isArray(dataItem.value) ? dataItem.value : null;
     return {
       point_index: dataIdx,
       series_index: seriesIdx,
       series_name: seriesName,
-      x: dataItem.x ?? null,
-      y: dataItem.y ?? null,
+      x: dataItem.x ?? (arrValue ? (arrValue[0] ?? null) : null),
+      y: dataItem.y ?? (arrValue ? (arrValue[1] ?? null) : null),
       value: dataItem.value ?? null,
       name: dataItem.name ?? null,
     };
