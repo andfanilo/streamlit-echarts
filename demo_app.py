@@ -263,6 +263,13 @@ def page_interactions():
         "The handler's **return value** becomes the component's return value in Python. "
         "Use this for events that `on_select` doesn't cover, like `mouseover`."
     )
+    st.info(
+        "`events` and `on_select` can be used together, but when selection is active the "
+        "component already binds some events internally — `click` + blank-canvas `dblclick` "
+        "(points), `brushSelected`/`brushEnd` (box/lasso). If you also handle one of those via "
+        "`events`, both fire (writing to `chart_event` and `selection` respectively); the "
+        "built-in selection behavior can't be suppressed from your handler."
+    )
 
     st.caption("click event")
     click_result = st_echarts(

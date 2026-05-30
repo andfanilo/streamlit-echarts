@@ -126,6 +126,14 @@ def st_echarts(
         Controls selection behavior. 'ignore' disables selection (default).
         'rerun' triggers a Streamlit rerun on selection. A callable is invoked
         as a callback on selection change.
+
+        When selection is active the component binds some ECharts events
+        internally: ``click`` plus a blank-canvas ``dblclick`` to deselect
+        (``'points'`` mode), and ``brushSelected``/``brushEnd``
+        (``'box'``/``'lasso'`` mode). Wiring those same events through
+        ``events`` is allowed and both handlers fire — they write to different
+        result fields (``selection`` vs ``chart_event``) — but the built-in
+        selection behavior cannot be suppressed from your handler.
     selection_mode: str or iterable of str
         Which selection interactions to enable. Valid values: 'points', 'box', 'lasso'.
         Defaults to all three.
