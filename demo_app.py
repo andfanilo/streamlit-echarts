@@ -351,6 +351,137 @@ def page_interactions():
             "Click a bar. `echarts.format.addCommas` adds thousands separators to the value."
         )
 
+    # --- events: zrender (canvas-wide) events via the zr: prefix ---
+    st.divider()
+    st.subheader("Canvas-wide events — the `zr:` prefix")
+    st.markdown(
+        "Prefix an event name with `zr:` to bind it to the underlying "
+        "[ZRender](https://echarts.apache.org/handbook/en/concepts/event/) instance instead "
+        "of the chart. ZRender events fire **everywhere on the canvas** — including blank space, "
+        "where `chart.on('click')` never fires. The official blank-area test is `!event.target`."
+    )
+
+    st.caption("`zr:click` — did I hit an element or blank space?")
+    hit_result = st_echarts(
+        options=OPTIONS,
+        events={
+            "zr:click": (
+                "function (e) {"
+                "  return {"
+                "    hit: e.target ? 'an element' : 'blank canvas',"
+                "    pixel: [e.offsetX, e.offsetY],"
+                "  };"
+                "}"
+            ),
+        },
+        key="zr_hit",
+    )
+    if hit_result and hit_result.chart_event:
+        st.write("Last zr:click:", hit_result.chart_event)
+    else:
+        st.info("Click a bar, then click an empty area — note `target` differs.")
+
+    st.caption(
+        "`zr:click` to add a point, right-click a point to remove it (issue #70)"
+    )
+    st.markdown(
+        "Left-click empty space adds a point (`zr:click` → `convertFromPixel` → returned to "
+        "Python). Right-click an existing point removes it (chart-level `contextmenu`, which "
+        "carries `dataIndex`). Python owns the dataset and re-renders."
+    )
+    if "zr_points" not in st.session_state:
+        st.session_state.zr_points = [[3, 4], [7, 2], [1, 6], [5, 5], [9, 1]]
+
+    edit_result = st_echarts(
+        options={
+            "xAxis": {"type": "value", "min": 0, "max": 10},
+            "yAxis": {"type": "value", "min": 0, "max": 10},
+            "series": [
+                {
+                    "type": "scatter",
+                    "symbolSize": 18,
+                    "data": st.session_state.zr_points,
+                }
+            ],
+        },
+        events={
+            "zr:click": (
+                "function (e) {"
+                "  if (e.target) return null;"  # clicked an existing element → ignore
+                "  const p = [e.offsetX, e.offsetY];"
+                "  if (!chart.containPixel('grid', p)) return null;"  # outside plot → ignore
+                "  const [x, y] = chart.convertFromPixel('grid', p);"
+                "  return { action: 'add', x: Math.round(x * 100) / 100,"
+                "           y: Math.round(y * 100) / 100 };"
+                "}"
+            ),
+            "contextmenu": (
+                "function (params) {"
+                "  params.event?.event?.preventDefault();"  # suppress the browser menu
+                "  if (params.dataIndex == null) return null;"
+                "  return { action: 'remove', index: params.dataIndex };"
+                "}"
+            ),
+        },
+        height="400px",
+        key="zr_edit",
+    )
+    ev = edit_result.chart_event if edit_result else None
+    if isinstance(ev, dict) and ev.get("action") == "add":
+        st.session_state.zr_points.append([ev["x"], ev["y"]])
+        st.rerun()
+    elif isinstance(ev, dict) and ev.get("action") == "remove":
+        i = ev.get("index")
+        if isinstance(i, int) and 0 <= i < len(st.session_state.zr_points):
+            st.session_state.zr_points.pop(i)
+            st.rerun()
+    if st.button("Reset points", key="zr_reset"):
+        st.session_state.zr_points = [[3, 4], [7, 2], [1, 6], [5, 5], [9, 1]]
+        st.rerun()
+
+    st.caption("`zr:mousemove` — live cursor coordinates (client-only, no rerun)")
+    st.markdown(
+        "High-frequency events shouldn't round-trip to Python. Here the handler writes the "
+        "live coordinates into the chart title via `chart.setOption` and returns `null`, so no "
+        "Streamlit rerun fires. (The title resets on the next rerun — a client-only effect.)"
+    )
+    st_echarts(
+        options={
+            "title": {"text": "Move the cursor over the plot", "left": "center"},
+            "xAxis": {"type": "value", "min": 0, "max": 10},
+            "yAxis": {"type": "value", "min": 0, "max": 10},
+            "series": [{"type": "scatter", "data": [[3, 4], [7, 2], [1, 6], [5, 5]]}],
+        },
+        events={
+            "zr:mousemove": (
+                "function (e) {"
+                "  const p = [e.offsetX, e.offsetY];"
+                "  if (!chart.containPixel('grid', p)) return null;"
+                "  const [x, y] = chart.convertFromPixel('grid', p);"
+                "  chart.setOption({ title: { text:"
+                "    'x: ' + x.toFixed(2) + '   y: ' + y.toFixed(2) } });"
+                "  return null;"
+                "}"
+            ),
+        },
+        height="400px",
+        key="zr_cursor",
+    )
+    st.warning(
+        "⚠️ `chart.setOption` from a handler mutates only the browser-side chart. The next "
+        "Streamlit rerun re-applies your Python `options` and **overwrites it** — so use direct "
+        "`setOption` only for ephemeral, client-only effects (like this readout). For changes "
+        "that must persist, return data to Python and let it own the dataset (as in the "
+        "add/remove demo above)."
+    )
+
+    st.warning(
+        "⚠️ ZRender events fire on **every** pixel of the canvas — bars, axes, labels, margins, "
+        "and blank space alike. Always gate on `event.target` (truthy = you hit an element) and, "
+        "before converting coordinates, `chart.containPixel('grid', …)`. Without these guards a "
+        "`zr:` handler reacts to clicks you didn't intend."
+    )
+
     _show_source(page_interactions)
 
 

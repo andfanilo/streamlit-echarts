@@ -229,6 +229,93 @@ describe("setEventsGenerator", () => {
   });
 });
 
+describe("setEventsGenerator — zrender events (zr: prefix)", () => {
+  let setEvents: ReturnType<typeof setEventsGenerator>;
+  let mockChart: any;
+  let mockZr: any;
+  let mockSetTriggerValue: (name: keyof EchartsStateShape, value: any) => void;
+
+  beforeEach(() => {
+    setEvents = setEventsGenerator();
+    mockZr = { on: vi.fn(), off: vi.fn() };
+    mockChart = {
+      on: vi.fn(),
+      off: vi.fn(),
+      getZr: vi.fn(() => mockZr),
+    };
+    mockSetTriggerValue = vi.fn() as any;
+  });
+
+  test("binds a zr:-prefixed event on the zrender instance with the prefix stripped", () => {
+    const onEvents = {
+      "zr:click": "--x_x--0_0--function (e) { return e.offsetX; }--x_x--0_0--",
+    };
+    setEvents(mockChart, onEvents, mockSetTriggerValue);
+
+    expect(mockZr.on).toHaveBeenCalledWith("click", expect.any(Function));
+    // It must NOT leak onto the chart-level emitter (neither stripped nor raw)
+    expect(mockChart.on).not.toHaveBeenCalledWith(
+      "click",
+      expect.any(Function),
+    );
+    expect(mockChart.on).not.toHaveBeenCalledWith(
+      "zr:click",
+      expect.any(Function),
+    );
+  });
+
+  test("routes chart-level and zr-level handlers to their own emitters", () => {
+    const onEvents = {
+      click: "--x_x--0_0--function (p) { return p.name; }--x_x--0_0--",
+      "zr:click": "--x_x--0_0--function (e) { return e.offsetX; }--x_x--0_0--",
+    };
+    setEvents(mockChart, onEvents, mockSetTriggerValue);
+
+    expect(mockChart.on).toHaveBeenCalledWith("click", expect.any(Function));
+    expect(mockZr.on).toHaveBeenCalledWith("click", expect.any(Function));
+  });
+
+  test("unbinds zr handlers from the zrender instance (by reference) on change", () => {
+    const onEvents1 = {
+      "zr:click": "--x_x--0_0--function (e) { return e.offsetX; }--x_x--0_0--",
+    };
+    const onEvents2 = {
+      "zr:mousemove":
+        "--x_x--0_0--function (e) { return e.offsetY; }--x_x--0_0--",
+    };
+    setEvents(mockChart, onEvents1, mockSetTriggerValue);
+    const boundHandler = mockZr.on.mock.calls[0][1];
+    mockZr.on.mockClear();
+
+    setEvents(mockChart, onEvents2, mockSetTriggerValue);
+
+    expect(mockZr.off).toHaveBeenCalledWith("click", boundHandler);
+    expect(mockZr.on).toHaveBeenCalledWith("mousemove", expect.any(Function));
+  });
+
+  test("zr handler forwards its return value through setTriggerValue", () => {
+    const onEvents = {
+      "zr:click":
+        "--x_x--0_0--function (e) { return e.target ? null : 'blank'; }--x_x--0_0--",
+    };
+    setEvents(mockChart, onEvents, mockSetTriggerValue);
+
+    const handler = mockZr.on.mock.calls[0][1];
+    handler({ target: null, offsetX: 5, offsetY: 9 });
+
+    expect(mockSetTriggerValue).toHaveBeenCalledWith("chart_event", "blank");
+  });
+
+  test("does not touch getZr() when there are no zr: handlers", () => {
+    const onEvents = {
+      click: "--x_x--0_0--function (p) { return p.name; }--x_x--0_0--",
+    };
+    setEvents(mockChart, onEvents, mockSetTriggerValue);
+
+    expect(mockChart.getZr).not.toHaveBeenCalled();
+  });
+});
+
 describe("setSelectionGenerator", () => {
   let setSelection: ReturnType<typeof setSelectionGenerator>;
   let mockChart: any;
