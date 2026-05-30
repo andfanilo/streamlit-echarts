@@ -121,10 +121,10 @@ export const setThemeGenerator = () => {
         ? categoricalRaw.split(",").map((c) => c.trim())
         : FALLBACK_PALETTE;
       const tc = textColor || "#31333F";
-      // Subtle color for axis lines, split lines, borders
-      const subtleColor = textColor
-        ? textColor + "33" // 20% opacity
-        : "#31333F33";
+      // Subtle color (~20% opacity) for axis lines, split lines, borders.
+      // echarts.color.modifyAlpha parses any CSS color format Streamlit may
+      // emit (hex/rgb/rgba/named); fall back to tc if the color is unparseable.
+      const subtleColor = echarts.color.modifyAlpha(tc, 0.2) || tc;
       const stTheme = {
         color: palette,
         backgroundColor: backgroundColor || "transparent",

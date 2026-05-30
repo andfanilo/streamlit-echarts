@@ -5,6 +5,9 @@ vi.mock("echarts", () => ({
   registerTheme: vi.fn(),
   registerMap: vi.fn(),
   init: vi.fn(),
+  color: {
+    modifyAlpha: vi.fn((c: string, a: number) => `rgba(0,0,0,${a})`),
+  },
 }));
 vi.mock("echarts-gl", () => ({}));
 vi.mock("echarts-liquidfill", () => ({}));
