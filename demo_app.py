@@ -223,6 +223,36 @@ def page_interactions():
     else:
         st.caption("Use the brush tool in the toolbar to select points.")
 
+    # --- on_select: callback (callable) ---
+    st.subheader("`on_select` — callback (callable)")
+    st.markdown(
+        "Pass a **callable** to `on_select` to run a Python function the moment the selection "
+        "changes — like `on_change`, but for selections. The callback reads the current "
+        "selection from `st.session_state[key]` (the script hasn't re-run yet, so the return "
+        "value isn't available there)."
+    )
+
+    if "select_cb_count" not in st.session_state:
+        st.session_state.select_cb_count = 0
+    if "select_cb_indices" not in st.session_state:
+        st.session_state.select_cb_indices = []
+
+    def _on_points_selected():
+        selection = st.session_state.select_callback["selection"]
+        st.session_state.select_cb_count += 1
+        st.session_state.select_cb_indices = selection["point_indices"]
+
+    st_echarts(
+        options=OPTIONS,
+        key="select_callback",
+        on_select=_on_points_selected,
+        selection_mode="points",
+    )
+    st.metric("Times the callback fired", st.session_state.select_cb_count)
+    st.caption(
+        f"Last selected indices (set by callback): {st.session_state.select_cb_indices}"
+    )
+
     # --- events: lower-level alternative ---
     st.divider()
     st.subheader("`events` — lower-level alternative")
