@@ -21,6 +21,7 @@ import EchartsRenderer, {
   setEventsGenerator,
   setSelectionGenerator,
 } from "./index";
+import { EMPTY_SELECTION } from "./selection";
 
 describe("getOptionsGenerator", () => {
   let getOptions: ReturnType<typeof getOptionsGenerator>;
@@ -343,15 +344,18 @@ describe("setEventsGenerator — zrender events (zr: prefix)", () => {
 describe("setSelectionGenerator", () => {
   let setSelection: ReturnType<typeof setSelectionGenerator>;
   let mockChart: any;
+  let mockZr: any;
   let mockSetStateValue: any;
 
   beforeEach(() => {
     setSelection = setSelectionGenerator();
+    mockZr = { on: vi.fn(), off: vi.fn() };
     mockChart = {
       on: vi.fn(),
       off: vi.fn(),
       getOption: vi.fn(() => ({ series: [] })),
       convertFromPixel: vi.fn(),
+      getZr: vi.fn(() => mockZr),
     };
     mockSetStateValue = vi.fn();
   });
@@ -429,6 +433,39 @@ describe("setSelectionGenerator", () => {
         ]),
       }),
     );
+  });
+
+  test("double-click on blank canvas clears the selection (points mode)", () => {
+    setSelection(mockChart, true, ["points"], mockSetStateValue);
+
+    // points mode wires a single zrender listener: the dblclick deselect.
+    const [event, deselectHandler] = mockZr.on.mock.calls[0];
+    expect(event).toBe("dblclick");
+
+    deselectHandler({ target: null }); // blank canvas → no graphic element hit
+
+    expect(mockSetStateValue).toHaveBeenCalledWith(
+      "selection",
+      EMPTY_SELECTION,
+    );
+  });
+
+  test("double-click on a graphic element does NOT clear the selection", () => {
+    setSelection(mockChart, true, ["points"], mockSetStateValue);
+    const deselectHandler = mockZr.on.mock.calls[0][1];
+
+    deselectHandler({ target: {} }); // hit a bar/point
+
+    expect(mockSetStateValue).not.toHaveBeenCalled();
+  });
+
+  test("unbinds the zrender deselect handler on re-wire", () => {
+    setSelection(mockChart, true, ["points"], mockSetStateValue);
+    const deselectHandler = mockZr.on.mock.calls[0][1];
+
+    setSelection(mockChart, true, ["box"], mockSetStateValue);
+
+    expect(mockZr.off).toHaveBeenCalledWith("dblclick", deselectHandler);
   });
 });
 

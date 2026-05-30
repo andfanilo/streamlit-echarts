@@ -172,7 +172,8 @@ def page_interactions():
     st.subheader("`on_select` — click selection")
     st.markdown(
         'Set `on_select="rerun"` and `selection_mode="points"` to get structured click data. '
-        "Use `point_indices` to filter back to your source data."
+        "Use `point_indices` to filter back to your source data. "
+        "Double-click an empty area to clear the selection (like Plotly)."
     )
     select_result = st_echarts(
         options=OPTIONS,
@@ -228,8 +229,7 @@ def page_interactions():
     st.markdown(
         "Pass a **callable** to `on_select` to run a Python function the moment the selection "
         "changes — like `on_change`, but for selections. The callback reads the current "
-        "selection from `st.session_state[key]` (the script hasn't re-run yet, so the return "
-        "value isn't available there)."
+        "selection from `st.session_state[key]`."
     )
 
     if "select_cb_count" not in st.session_state:

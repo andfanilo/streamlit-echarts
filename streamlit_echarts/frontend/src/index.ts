@@ -246,13 +246,13 @@ export const setEventsGenerator = () => {
 };
 
 /**
- * Memoized selection wiring. Manages click and brush listeners for the
- * structured selection API. Uses handler-specific unbind to coexist with
- * user-defined event handlers.
+ * Memoized selection wiring. Manages click, double-click-to-deselect, and
+ * brush listeners for the structured selection API. Uses handler-specific
+ * unbind (chart- and zrender-level) to coexist with user event handlers.
  */
 export const setSelectionGenerator = () => {
   let savedKey: string | null = null;
-  let savedHandlers: { event: string; handler: Function }[] = [];
+  let savedHandlers: { isZr: boolean; event: string; handler: Function }[] = [];
 
   return (
     chart: echarts.ECharts,
@@ -265,9 +265,15 @@ export const setSelectionGenerator = () => {
       return false;
     }
 
-    // Unbind old handlers by reference
-    for (const { event, handler } of savedHandlers) {
-      chart.off(event, handler as any);
+    // Resolve the zrender instance lazily (only points mode needs it, for
+    // the blank-canvas deselect listener).
+    let zr: ReturnType<echarts.ECharts["getZr"]> | null = null;
+    const getZr = () => (zr ??= chart.getZr());
+
+    // Unbind old handlers by reference, routing each to its emitter.
+    for (const { isZr, event, handler } of savedHandlers) {
+      if (isZr) getZr().off(event, handler as any);
+      else chart.off(event, handler as any);
     }
     savedHandlers = [];
 
@@ -283,7 +289,24 @@ export const setSelectionGenerator = () => {
         setStateValue("selection", selection);
       };
       chart.on("click", clickHandler as any);
-      savedHandlers.push({ event: "click", handler: clickHandler });
+      savedHandlers.push({
+        isZr: false,
+        event: "click",
+        handler: clickHandler,
+      });
+
+      // Double-click on blank canvas clears the selection (Plotly parity).
+      // chart.on("click") never fires on empty space, so listen at the
+      // zrender level and clear only when the click hit no graphic element.
+      const deselectHandler = (e: any) => {
+        if (!e.target) setStateValue("selection", EMPTY_SELECTION);
+      };
+      getZr().on("dblclick", deselectHandler as any);
+      savedHandlers.push({
+        isZr: true,
+        event: "dblclick",
+        handler: deselectHandler,
+      });
     }
 
     // Brush handlers for "box" and "lasso" modes
@@ -309,8 +332,8 @@ export const setSelectionGenerator = () => {
       chart.on("brushEnd", brushEndHandler as any);
       chart.on("brushSelected", brushSelectedHandler as any);
       savedHandlers.push(
-        { event: "brushEnd", handler: brushEndHandler },
-        { event: "brushSelected", handler: brushSelectedHandler },
+        { isZr: false, event: "brushEnd", handler: brushEndHandler },
+        { isZr: false, event: "brushSelected", handler: brushSelectedHandler },
       );
     }
 
