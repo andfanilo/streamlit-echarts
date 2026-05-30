@@ -227,6 +227,30 @@ describe("setEventsGenerator", () => {
       "TEST-VALUE!",
     );
   });
+
+  test("does NOT emit when the handler returns undefined (client-side only)", () => {
+    const onEvents = {
+      click: "--x_x--0_0--function () { /* side effect only */ }--x_x--0_0--",
+    };
+    setEvents(mockChart, onEvents, mockSetTriggerValue);
+
+    const handler = mockChart.on.mock.calls[0][1];
+    handler({ name: "whatever" });
+
+    expect(mockSetTriggerValue).not.toHaveBeenCalled();
+  });
+
+  test("emits null when the handler explicitly returns null", () => {
+    const onEvents = {
+      click: "--x_x--0_0--function () { return null; }--x_x--0_0--",
+    };
+    setEvents(mockChart, onEvents, mockSetTriggerValue);
+
+    const handler = mockChart.on.mock.calls[0][1];
+    handler({});
+
+    expect(mockSetTriggerValue).toHaveBeenCalledWith("chart_event", null);
+  });
 });
 
 describe("setEventsGenerator — zrender events (zr: prefix)", () => {

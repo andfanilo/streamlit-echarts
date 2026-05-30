@@ -222,7 +222,14 @@ export const setEventsGenerator = () => {
         continue;
       }
       const handler = (params: any) => {
-        setTriggerValue("chart_event", fn(params));
+        // Returning undefined (or nothing) marks a client-side-only handler:
+        // skip the round-trip so side-effect handlers (setOption/dispatchAction)
+        // and high-frequency events (zr:mousemove) don't spam reruns. Any other
+        // value, including null, is emitted to Python.
+        const result = fn(params);
+        if (result !== undefined) {
+          setTriggerValue("chart_event", result);
+        }
       };
 
       const isZr = name.startsWith(ZR_PREFIX);

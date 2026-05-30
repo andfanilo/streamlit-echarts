@@ -100,6 +100,10 @@ def st_echarts(
         Prefix an event name with ``zr:`` (e.g. ``"zr:click"``) to bind it to
         the underlying zrender instance, which fires across the whole canvas
         including blank areas, where chart-level events never fire.
+        A handler's return value is sent to Python; returning ``undefined``
+        (or nothing) marks the handler as client-side only and skips the
+        round-trip, so pure side-effect handlers and high-frequency events
+        (e.g. ``zr:mousemove``) don't trigger a rerun.
     height: str
         Height of ECharts chart
     width: str

@@ -407,9 +407,9 @@ def page_interactions():
         events={
             "zr:click": (
                 "function (e) {"
-                "  if (e.target) return null;"  # clicked an existing element → ignore
+                "  if (e.target) return;"  # clicked an existing element → no round-trip
                 "  const p = [e.offsetX, e.offsetY];"
-                "  if (!chart.containPixel('grid', p)) return null;"  # outside plot → ignore
+                "  if (!chart.containPixel('grid', p)) return;"  # outside plot → ignore
                 "  const [x, y] = chart.convertFromPixel('grid', p);"
                 "  return { action: 'add', x: Math.round(x * 100) / 100,"
                 "           y: Math.round(y * 100) / 100 };"
@@ -418,7 +418,7 @@ def page_interactions():
             "contextmenu": (
                 "function (params) {"
                 "  params.event?.event?.preventDefault();"  # suppress the browser menu
-                "  if (params.dataIndex == null) return null;"
+                "  if (params.dataIndex == null) return;"
                 "  return { action: 'remove', index: params.dataIndex };"
                 "}"
             ),
@@ -441,9 +441,10 @@ def page_interactions():
 
     st.caption("`zr:mousemove` — live cursor coordinates (client-only, no rerun)")
     st.markdown(
-        "High-frequency events shouldn't round-trip to Python. Here the handler writes the "
-        "live coordinates into the chart title via `chart.setOption` and returns `null`, so no "
-        "Streamlit rerun fires. (The title resets on the next rerun — a client-only effect.)"
+        "High-frequency events shouldn't round-trip to Python. This handler writes the live "
+        "coordinates into the chart title via `chart.setOption` and **returns nothing** — a "
+        "handler that returns `undefined` is treated as client-side only, so no Streamlit rerun "
+        "fires. (Return any value, including `null`, to send an event to Python instead.)"
     )
     st_echarts(
         options={
@@ -456,12 +457,11 @@ def page_interactions():
             "zr:mousemove": (
                 "function (e) {"
                 "  const p = [e.offsetX, e.offsetY];"
-                "  if (!chart.containPixel('grid', p)) return null;"
+                "  if (!chart.containPixel('grid', p)) return;"
                 "  const [x, y] = chart.convertFromPixel('grid', p);"
                 "  chart.setOption({ title: { text:"
                 "    'x: ' + x.toFixed(2) + '   y: ' + y.toFixed(2) } });"
-                "  return null;"
-                "}"
+                "}"  # returns undefined → client-side only, no rerun
             ),
         },
         height="400px",
