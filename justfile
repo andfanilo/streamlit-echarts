@@ -106,9 +106,9 @@ clean:
     -Remove-Item -Recurse -Force dist, build, *.egg-info -ErrorAction Ignore
     -Remove-Item -Recurse -Force {{frontend}}/node_modules, {{frontend}}/build -ErrorAction Ignore
 
-# Publish to Test PyPI (set UV_PUBLISH_TOKEN or pass --token)
+# Publish to Test PyPI (reads token from UV_PUBLISH_TOKEN_TEST; real PyPI uses UV_PUBLISH_TOKEN)
 publish-test: _verify-release-state build
-    uv publish --index testpypi
+    uv publish --index testpypi --token $env:UV_PUBLISH_TOKEN_TEST
 
 # Publish to PyPI (set UV_PUBLISH_TOKEN or pass --token)
 publish: _verify-release-state build
