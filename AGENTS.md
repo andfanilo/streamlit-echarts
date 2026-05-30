@@ -2,10 +2,12 @@
 
 ## Platform & Requirements
 
-- **Python** >= 3.10, **Node.js** >= 24, **npm** with `--legacy-peer-deps`
-- `streamlit >= 1.53`, `echarts ^6.0.0`, `@streamlit/component-v2-lib ^0.2.0`
-- Extensions: `echarts-gl`, `echarts-liquidfill`, `echarts-wordcloud`
-- Build: Vite 7 (library mode, ES modules), TypeScript 5.8
+Major-version intent below; exact pins live in `pyproject.toml` and `streamlit_echarts/frontend/package.json` — read those for specifics.
+
+- **Python** 3.10+, **Node.js** 24+, **Streamlit** 1.x (Streamlit ≥ 1.53, uses the `components.v2` API)
+- **echarts** 6.x (the `components.v2` renderer assumes echarts 6 option/theme APIs)
+- Extensions: `echarts-gl`, `echarts-liquidfill`, `echarts-wordcloud` — these peer-depend on echarts **^5**, so frontend installs need `npm install --legacy-peer-deps`
+- Build: Vite 7 (library mode, ES modules), TypeScript 5.x
 - Test: Vitest 4 (jsdom), pytest, Playwright (E2E)
 - Lint: Ruff (Python), Prettier (TypeScript)
 
@@ -53,8 +55,9 @@ All commands assume working directory is `streamlit-echarts/`. Workflows are wra
 just setup        # uv sync + npm install + pre-commit hook
 just demo         # streamlit run demo_app.py
 
-# --- Inner loop: frontend changes ---
-just dev          # Vite watch mode (auto-rebuild on save)
+# --- Inner loop: frontend changes (two terminals) ---
+just dev          # Vite watch-rebuild on save (no dev server) — keep running
+just demo         # Streamlit reruns and serves the rebuilt bundle
 just test         # Python + frontend unit tests
 just lint         # ruff check + prettier check
 
@@ -84,7 +87,7 @@ Publish recipes are guarded: they refuse to run unless HEAD is on `main`, the tr
 | Recipe | What it does |
 |---|---|
 | `setup` / `setup-py` / `setup-frontend` | Install deps (full / Python only / frontend only) |
-| `dev` | Vite watch mode for frontend |
+| `dev` | Vite watch-rebuild frontend on save (no dev server / HMR — run alongside `just demo`) |
 | `demo` | `uv run streamlit run demo_app.py` |
 | `lint` / `lint-py` / `lint-frontend` | ruff check + prettier check (combined / split) |
 | `format` / `format-py` / `format-frontend` | ruff format + prettier write |
@@ -92,7 +95,9 @@ Publish recipes are guarded: they refuse to run unless HEAD is on `main`, the tr
 | `test` / `test-py` / `test-frontend` | Unit tests (Python + Vitest) |
 | `test-frontend-watch` | Vitest watch mode |
 | `e2e-setup` / `e2e` / `e2e-clean` | Playwright deps install / run tests / uninstall browsers |
-| `build` / `build-frontend` / `build-wheel` | Build frontend bundle + Python wheel |
+| `build` / `build-frontend` / `build-wheel` | Build frontend bundle + Python wheel (assumes deps installed) |
+| `build-clean` | From-scratch wheel: `clean` + reinstall frontend deps (reconciles `package.json`, dedupes) + `build` |
+| `clean` | Remove `dist/`, `build/`, `*.egg-info`, and frontend `node_modules/` + `build/` |
 | `tag-release X.Y.Z` | Ff-merge develop → main, annotated tag `vX.Y.Z`, push both |
 | `publish-test` / `publish` | Guarded build + publish to Test PyPI / PyPI |
 | `merge-dependabot` | Squash-merge every green, conflict-free Dependabot PR + delete branch, then sync develop (needs `gh`) |

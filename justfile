@@ -1,7 +1,7 @@
 # streamlit-echarts — task runner
 # Usage: `just <recipe>`  |  list recipes: `just --list`
 
-set windows-shell := ["powershell.exe", "-NoLogo", "-Command"]
+set windows-shell := ["pwsh.exe", "-NoLogo", "-Command"]
 
 frontend := "streamlit_echarts/frontend"
 
@@ -23,7 +23,7 @@ setup-py:
 setup-frontend:
     cd {{frontend}} && npm i --legacy-peer-deps
 
-# Vite watch mode — auto-rebuild frontend on save
+# Vite watch-rebuild on save (no dev server) — run alongside `just demo` to iterate on frontend
 dev:
     cd {{frontend}} && npm run dev
 
@@ -89,7 +89,7 @@ e2e-clean:
 
 # --- Build & publish ---
 
-# Build frontend assets + Python wheel into dist/ (assumes `just setup` has run)
+# Build frontend assets + Python wheel into dist/ (assumes deps are installed)
 build: build-frontend build-wheel
 
 build-frontend:
@@ -97,6 +97,14 @@ build-frontend:
 
 build-wheel:
     uv build
+
+# Full from-scratch wheel: wipe deps + artifacts, reinstall (reconciles package.json + dedupes), rebuild
+build-clean: clean setup-frontend build
+
+# Remove build outputs + installed frontend deps (Windows/pwsh)
+clean:
+    -Remove-Item -Recurse -Force dist, build, *.egg-info -ErrorAction Ignore
+    -Remove-Item -Recurse -Force {{frontend}}/node_modules, {{frontend}}/build -ErrorAction Ignore
 
 # Publish to Test PyPI (set UV_PUBLISH_TOKEN or pass --token)
 publish-test: _verify-release-state build
