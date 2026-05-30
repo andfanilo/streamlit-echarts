@@ -27,20 +27,38 @@ This project includes configuration for AI coding agents in `.claude/` and `.gem
 
 **Prerequisites:** Node.js >= 24 (LTS)
 
+> Common workflows are wrapped in a [`justfile`](./justfile). Run `just` (or `just --list`) to see all recipes. Each section below shows both the `just` shortcut and the raw commands.
+
 When developing locally, install in editable mode so Streamlit picks up **Python** code changes without rebuilding a wheel:
+
+```sh
+just setup     # uv sync + npm install + pre-commit install
+```
+
+<details><summary>Raw commands</summary>
 
 ```sh
 uv sync
 uv run pre-commit install  # install git hook (one-time)
 ```
 
+</details>
+
 For **frontend** (TypeScript/React) changes, you still need to rebuild. Use Vite's watch mode for automatic rebuilds on save:
+
+```sh
+just dev
+```
+
+<details><summary>Raw commands</summary>
 
 ```sh
 cd streamlit_echarts/frontend
 npm i --legacy-peer-deps
 npm run dev
 ```
+
+</details>
 
 ## Linting & Formatting
 
@@ -112,31 +130,45 @@ uv run python -m playwright uninstall --all
 
 To package this component for distribution:
 
-1. Build the frontend assets (from `streamlit_echarts/frontend`):
+1. Build the frontend assets and Python wheel:
 
    ```sh
-   npm i --legacy-peer-deps
-   npm run build
+   just build
    ```
 
-2. Build the Python package (from the project root):
+   <details><summary>Raw commands</summary>
 
    ```sh
+   # from streamlit_echarts/frontend
+   npm i --legacy-peer-deps
+   npm run build
+
+   # from the project root
    uv build
    ```
 
-3. Test install the built wheel in another project (e.g. `streamlit-echarts-demo`):
+   </details>
+
+2. Test install the built wheel in another project (e.g. `streamlit-echarts-demo`):
 
    ```sh
    uv pip install ../streamlit-echarts/dist/streamlit_echarts-<version>-py3-none-any.whl --force-reinstall
    uv run streamlit run app.py
    ```
 
-4. Publish to Test PyPI (dry-run):
+3. Publish to Test PyPI (dry-run):
+
+   ```sh
+   just publish-test
+   ```
+
+   <details><summary>Raw command</summary>
 
    ```sh
    uv publish --index testpypi
    ```
+
+   </details>
 
    You will need a [Test PyPI API token](https://test.pypi.org/manage/account/#api-tokens). Pass it via `--token` or set `UV_PUBLISH_TOKEN`.
 
@@ -146,11 +178,19 @@ To package this component for distribution:
    uv pip install --index-url https://test.pypi.org/simple/ --extra-index-url https://pypi.org/simple/ streamlit-echarts
    ```
 
-5. Publish to PyPI:
+4. Publish to PyPI:
+
+   ```sh
+   just publish
+   ```
+
+   <details><summary>Raw command</summary>
 
    ```sh
    uv publish
    ```
+
+   </details>
 
    You will need a PyPI API token. You can pass it via `--token` or set the `UV_PUBLISH_TOKEN` environment variable.
 
