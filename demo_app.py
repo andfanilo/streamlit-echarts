@@ -150,12 +150,12 @@ def page_theme():
     _show_source(page_theme)
 
 
-def page_interactions():
-    st.header("5. Interactions")
+def page_on_select():
+    st.header("5. `on_select`")
     st.markdown(
-        "`on_select` is the recommended way to handle chart interactions — "
+        "`on_select` is the recommended way to handle chart selections — "
         "it returns structured selection data without writing JavaScript, similar to Plotly's selection API. "
-        "For advanced use cases (e.g. `mouseover`, custom return values), use the lower-level `events` dict."
+        "For lower-level events (e.g. `mouseover`, custom return values), see the **`events`** page."
     )
 
     SALES_DATA = [
@@ -261,15 +261,18 @@ def page_interactions():
         f"Last selected indices (set by callback): {st.session_state.select_cb_indices}"
     )
 
-    # --- events: lower-level alternative ---
-    st.divider()
-    st.subheader("`events` — lower-level alternative")
+    _show_source(page_on_select)
+
+
+def page_events():
+    st.header("6. `events`")
     st.markdown(
         "`events` maps ECharts event names "
         "([full list](https://echarts.apache.org/en/api.html#events)) "
         "to JavaScript handler strings. "
         "The handler's **return value** becomes the component's return value in Python. "
-        "Use this for events that `on_select` doesn't cover, like `mouseover`."
+        "Use this for lower-level control — events that `on_select` doesn't cover "
+        "(like `mouseover`), custom return values, or driving the chart from a handler."
     )
     st.info(
         "`events` and `on_select` can be used together, but when selection is active the "
@@ -527,11 +530,11 @@ def page_interactions():
         "`zr:` handler reacts to clicks you didn't intend."
     )
 
-    _show_source(page_interactions)
+    _show_source(page_events)
 
 
 def page_key():
-    st.header("6. `key`")
+    st.header("7. `key`")
     st.markdown(
         "Without `key`, Streamlit may remount the component on each rerun (e.g. after a widget interaction), "
         "replaying the entry animation and losing any internal ECharts state. "
@@ -571,7 +574,7 @@ def page_key():
 
 
 def page_replace_merge():
-    st.header("7. `replace_merge`")
+    st.header("8. `replace_merge`")
     st.markdown(
         "`replace_merge` controls how ECharts merges new options with the previous state. "
         'Set it to `"series"` to enable `universalTransition` — smooth morph animations '
@@ -644,7 +647,7 @@ def page_replace_merge():
 
 
 def page_on_change():
-    st.header("8. `on_change`")
+    st.header("9. `on_change`")
     st.markdown(
         "`on_change` is a Python callback that runs server-side each time a chart event fires. "
         "Here, clicking any bar triggers the `click` event, which calls `on_change` — "
@@ -681,7 +684,7 @@ def page_on_change():
 
 
 def page_map():
-    st.header("9. `map` and the `Map` class")
+    st.header("10. `map` and the `Map` class")
     st.markdown(
         "Register a custom GeoJSON map with `Map(map_name=..., geo_json=...)`, "
         "then reference `map_name` in a `geo` or `map` series."
@@ -743,7 +746,7 @@ def page_map():
 
 
 def page_jscode():
-    st.header("10. `JsCode`")
+    st.header("11. `JsCode`")
     st.markdown(
         "`JsCode` wraps a JavaScript string so the frontend evaluates it as a live function "
         "rather than passing it as a plain string. Use it wherever ECharts expects a callback "
@@ -753,7 +756,7 @@ def page_jscode():
     st.info(
         "`JsCode` is for callbacks embedded in `options` (formatters, sizes, colors). "
         "For event handlers (`click`, `mouseover`, …) — which also get the live `chart` "
-        "instance — use the `events` parameter shown on the **Interactions** page."
+        "instance — use the `events` parameter shown on the **`events`** page."
     )
 
     st.subheader("a) Custom tooltip formatter")
@@ -815,7 +818,7 @@ def page_jscode():
 
 
 def page_layouts():
-    st.header("11. Collapsible layouts")
+    st.header("12. Collapsible layouts")
     st.markdown(
         "Charts inside containers that hide content initially "
         "resize correctly when revealed."
@@ -853,7 +856,7 @@ def page_layouts():
 
 
 def page_pyecharts():
-    st.header("12. PyECharts")
+    st.header("13. PyECharts")
     st.markdown(
         "`st_pyecharts` accepts a PyECharts chart object directly. "
         "Install with `pip install streamlit-echarts[pyecharts]`."
@@ -944,18 +947,19 @@ pg = st.navigation(
         ),
         st.Page(page_renderer, title="3. renderer", icon=":material/tune:"),
         st.Page(page_theme, title="4. theme", icon=":material/palette:"),
-        st.Page(page_interactions, title="5. interactions", icon=":material/mouse:"),
-        st.Page(page_key, title="6. key", icon=":material/key:"),
+        st.Page(page_on_select, title="5. on_select", icon=":material/ads_click:"),
+        st.Page(page_events, title="6. events", icon=":material/bolt:"),
+        st.Page(page_key, title="7. key", icon=":material/key:"),
         st.Page(
-            page_replace_merge, title="7. replace_merge", icon=":material/animation:"
+            page_replace_merge, title="8. replace_merge", icon=":material/animation:"
         ),
-        st.Page(page_on_change, title="8. on_change", icon=":material/notifications:"),
-        st.Page(page_map, title="9. map / Map", icon=":material/map:"),
-        st.Page(page_jscode, title="10. JsCode", icon=":material/code:"),
+        st.Page(page_on_change, title="9. on_change", icon=":material/notifications:"),
+        st.Page(page_map, title="10. map / Map", icon=":material/map:"),
+        st.Page(page_jscode, title="11. JsCode", icon=":material/code:"),
         st.Page(
-            page_layouts, title="11. collapsible layouts", icon=":material/dashboard:"
+            page_layouts, title="12. collapsible layouts", icon=":material/dashboard:"
         ),
-        st.Page(page_pyecharts, title="12. pyecharts", icon=":material/auto_awesome:"),
+        st.Page(page_pyecharts, title="13. pyecharts", icon=":material/auto_awesome:"),
     ]
 )
 pg.run()
