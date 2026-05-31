@@ -3,6 +3,7 @@ from __future__ import annotations
 import importlib.metadata
 import json
 from collections.abc import Callable, Iterable
+from pathlib import Path
 from typing import Literal
 
 import streamlit as st
@@ -33,10 +34,30 @@ class Map:
         }
 
 
+def _resolve_js(js_code: str | Path) -> str:
+    """Return JS source, reading from a local file when given a path.
+
+    Mirrors ``st.html``: a ``Path`` — or a single-line ``str`` ending in
+    ``.js``/``.mjs`` that points to an existing file — is read from disk;
+    anything else is treated as inline JavaScript. A file must hold a single
+    function expression, the same contract as an inline handler/callback.
+    """
+    if isinstance(js_code, Path):
+        return js_code.read_text(encoding="utf-8")
+    if (
+        isinstance(js_code, str)
+        and "\n" not in js_code
+        and js_code.endswith((".js", ".mjs"))
+        and Path(js_code).is_file()
+    ):
+        return Path(js_code).read_text(encoding="utf-8")
+    return js_code
+
+
 class JsCode:
-    def __init__(self, js_code: str):
+    def __init__(self, js_code: str | Path):
         js_placeholder = "--x_x--0_0--"
-        self.js_code = f"{js_placeholder}{js_code}{js_placeholder}"
+        self.js_code = f"{js_placeholder}{_resolve_js(js_code)}{js_placeholder}"
 
     def __str__(self):
         return self.js_code
@@ -72,7 +93,7 @@ def _serialize_options(obj):
 def st_echarts(
     options: dict,
     theme: str | dict = "streamlit",
-    events: dict[str, str] | None = None,
+    events: dict[str, str | Path] | None = None,
     height: str = "300px",
     width: str = "100%",
     renderer: str = "canvas",
@@ -88,12 +109,18 @@ def st_echarts(
     Parameters
     ----------
     options: dict
-        Dictionary of echarts options. JS code should have been wrapped beforehand.
+        Dictionary of echarts options. JS callbacks should be wrapped with
+        ``JsCode`` beforehand; ``JsCode`` accepts an inline string or a path to
+        a local ``.js`` file.
     theme: str | dict
         Prebuilt theme, or object defining theme. Defaults to ``"streamlit"``
         which automatically adapts to Streamlit's light/dark mode.
     events: dict
-        Dictionary of mouse events to string JS functions.
+        Dictionary of mouse events to JS function handlers. Each value is
+        either an inline JS string or a path to a local ``.js`` file (a
+        ``pathlib.Path``, or a single-line path string) holding a single
+        function expression — handy for longer handlers you want to lint,
+        format, and test as real JavaScript.
         Don't wrap values with JsCode placeholder. Each handler is evaluated
         with the live ``chart`` instance and the ``echarts`` namespace in scope
         (e.g. ``chart.convertFromPixel(...)``, ``chart.dispatchAction(...)``).
@@ -213,7 +240,7 @@ def st_echarts(
 def st_pyecharts(
     chart,
     theme: str | dict = "streamlit",
-    events: dict[str, str] | None = None,
+    events: dict[str, str | Path] | None = None,
     height: str = "300px",
     width: str = "100%",
     renderer: str = "canvas",

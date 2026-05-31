@@ -1,5 +1,6 @@
 import inspect
 import json
+from pathlib import Path
 from urllib.request import urlopen
 
 import streamlit as st
@@ -303,6 +304,49 @@ def page_events():
         st.write("Last mouseover:", mouseover_result)
     else:
         st.info("Hover over a bar to fire a mouseover event.")
+
+    # --- events: handler loaded from a local .js file ---
+    st.divider()
+    st.subheader("Loading a handler from a `.js` file")
+    st.markdown(
+        "Instead of an inline string, pass a `pathlib.Path` (or a `.js` file path) — like "
+        "`st.html`. The file is read server-side and must hold a single function expression. "
+        "Longer handlers can then live in a real `.js` file you lint, format, and test."
+    )
+    handler_path = Path(__file__).parent / "demo_handlers" / "click_handler.js"
+    if handler_path.is_file():
+        with st.expander("demo_handlers/click_handler.js"):
+            st.code(handler_path.read_text(encoding="utf-8"), language="javascript")
+        file_result = st_echarts(
+            options={
+                **OPTIONS,
+                "series": [
+                    {
+                        "data": [
+                            1200000,
+                            2000500,
+                            1503000,
+                            800250,
+                            700000,
+                            1100400,
+                            1300999,
+                        ],
+                        "type": "bar",
+                    }
+                ],
+            },
+            events={"click": handler_path},
+            key="events_from_file",
+        )
+        if file_result and file_result.chart_event:
+            st.write("Last click:", file_result.chart_event)
+        else:
+            st.info("Click a bar — the handler comes from `click_handler.js`.")
+    else:
+        st.caption(
+            "(`demo_handlers/click_handler.js` not found next to this app — "
+            "skipping the file-loaded handler example.)"
+        )
 
     # --- events: the live chart and echarts in handler scope ---
     st.divider()
