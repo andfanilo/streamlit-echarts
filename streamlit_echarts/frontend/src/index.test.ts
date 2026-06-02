@@ -21,6 +21,7 @@ import EchartsRenderer, {
   setEventsGenerator,
   setSelectionGenerator,
 } from "./index";
+import { EMPTY_SELECTION } from "./selection";
 
 describe("getOptionsGenerator", () => {
   let getOptions: ReturnType<typeof getOptionsGenerator>;
@@ -102,6 +103,20 @@ describe("setThemeGenerator", () => {
     expect(echarts.registerTheme).toHaveBeenCalledWith(
       "streamlit",
       expect.objectContaining({ color: expect.any(Array) }),
+    );
+  });
+
+  test("should swap double quotes in --st-font for single quotes (SVG-safe, issue #82)", () => {
+    container.style.setProperty("--st-font", '"Source Sans", sans-serif');
+    setTheme("streamlit", container);
+
+    expect(echarts.registerTheme).toHaveBeenCalledWith(
+      "streamlit",
+      expect.objectContaining({
+        textStyle: expect.objectContaining({
+          fontFamily: "'Source Sans', sans-serif",
+        }),
+      }),
     );
   });
 
@@ -213,20 +228,134 @@ describe("setEventsGenerator", () => {
       "TEST-VALUE!",
     );
   });
+
+  test("does NOT emit when the handler returns undefined (client-side only)", () => {
+    const onEvents = {
+      click: "--x_x--0_0--function () { /* side effect only */ }--x_x--0_0--",
+    };
+    setEvents(mockChart, onEvents, mockSetTriggerValue);
+
+    const handler = mockChart.on.mock.calls[0][1];
+    handler({ name: "whatever" });
+
+    expect(mockSetTriggerValue).not.toHaveBeenCalled();
+  });
+
+  test("emits null when the handler explicitly returns null", () => {
+    const onEvents = {
+      click: "--x_x--0_0--function () { return null; }--x_x--0_0--",
+    };
+    setEvents(mockChart, onEvents, mockSetTriggerValue);
+
+    const handler = mockChart.on.mock.calls[0][1];
+    handler({});
+
+    expect(mockSetTriggerValue).toHaveBeenCalledWith("chart_event", null);
+  });
+});
+
+describe("setEventsGenerator — zrender events (zr: prefix)", () => {
+  let setEvents: ReturnType<typeof setEventsGenerator>;
+  let mockChart: any;
+  let mockZr: any;
+  let mockSetTriggerValue: (name: keyof EchartsStateShape, value: any) => void;
+
+  beforeEach(() => {
+    setEvents = setEventsGenerator();
+    mockZr = { on: vi.fn(), off: vi.fn() };
+    mockChart = {
+      on: vi.fn(),
+      off: vi.fn(),
+      getZr: vi.fn(() => mockZr),
+    };
+    mockSetTriggerValue = vi.fn() as any;
+  });
+
+  test("binds a zr:-prefixed event on the zrender instance with the prefix stripped", () => {
+    const onEvents = {
+      "zr:click": "--x_x--0_0--function (e) { return e.offsetX; }--x_x--0_0--",
+    };
+    setEvents(mockChart, onEvents, mockSetTriggerValue);
+
+    expect(mockZr.on).toHaveBeenCalledWith("click", expect.any(Function));
+    // It must NOT leak onto the chart-level emitter (neither stripped nor raw)
+    expect(mockChart.on).not.toHaveBeenCalledWith(
+      "click",
+      expect.any(Function),
+    );
+    expect(mockChart.on).not.toHaveBeenCalledWith(
+      "zr:click",
+      expect.any(Function),
+    );
+  });
+
+  test("routes chart-level and zr-level handlers to their own emitters", () => {
+    const onEvents = {
+      click: "--x_x--0_0--function (p) { return p.name; }--x_x--0_0--",
+      "zr:click": "--x_x--0_0--function (e) { return e.offsetX; }--x_x--0_0--",
+    };
+    setEvents(mockChart, onEvents, mockSetTriggerValue);
+
+    expect(mockChart.on).toHaveBeenCalledWith("click", expect.any(Function));
+    expect(mockZr.on).toHaveBeenCalledWith("click", expect.any(Function));
+  });
+
+  test("unbinds zr handlers from the zrender instance (by reference) on change", () => {
+    const onEvents1 = {
+      "zr:click": "--x_x--0_0--function (e) { return e.offsetX; }--x_x--0_0--",
+    };
+    const onEvents2 = {
+      "zr:mousemove":
+        "--x_x--0_0--function (e) { return e.offsetY; }--x_x--0_0--",
+    };
+    setEvents(mockChart, onEvents1, mockSetTriggerValue);
+    const boundHandler = mockZr.on.mock.calls[0][1];
+    mockZr.on.mockClear();
+
+    setEvents(mockChart, onEvents2, mockSetTriggerValue);
+
+    expect(mockZr.off).toHaveBeenCalledWith("click", boundHandler);
+    expect(mockZr.on).toHaveBeenCalledWith("mousemove", expect.any(Function));
+  });
+
+  test("zr handler forwards its return value through setTriggerValue", () => {
+    const onEvents = {
+      "zr:click":
+        "--x_x--0_0--function (e) { return e.target ? null : 'blank'; }--x_x--0_0--",
+    };
+    setEvents(mockChart, onEvents, mockSetTriggerValue);
+
+    const handler = mockZr.on.mock.calls[0][1];
+    handler({ target: null, offsetX: 5, offsetY: 9 });
+
+    expect(mockSetTriggerValue).toHaveBeenCalledWith("chart_event", "blank");
+  });
+
+  test("does not touch getZr() when there are no zr: handlers", () => {
+    const onEvents = {
+      click: "--x_x--0_0--function (p) { return p.name; }--x_x--0_0--",
+    };
+    setEvents(mockChart, onEvents, mockSetTriggerValue);
+
+    expect(mockChart.getZr).not.toHaveBeenCalled();
+  });
 });
 
 describe("setSelectionGenerator", () => {
   let setSelection: ReturnType<typeof setSelectionGenerator>;
   let mockChart: any;
+  let mockZr: any;
   let mockSetStateValue: any;
 
   beforeEach(() => {
     setSelection = setSelectionGenerator();
+    mockZr = { on: vi.fn(), off: vi.fn() };
     mockChart = {
       on: vi.fn(),
       off: vi.fn(),
       getOption: vi.fn(() => ({ series: [] })),
       convertFromPixel: vi.fn(),
+      getZr: vi.fn(() => mockZr),
     };
     mockSetStateValue = vi.fn();
   });
@@ -304,6 +433,39 @@ describe("setSelectionGenerator", () => {
         ]),
       }),
     );
+  });
+
+  test("double-click on blank canvas clears the selection (points mode)", () => {
+    setSelection(mockChart, true, ["points"], mockSetStateValue);
+
+    // points mode wires a single zrender listener: the dblclick deselect.
+    const [event, deselectHandler] = mockZr.on.mock.calls[0];
+    expect(event).toBe("dblclick");
+
+    deselectHandler({ target: null }); // blank canvas → no graphic element hit
+
+    expect(mockSetStateValue).toHaveBeenCalledWith(
+      "selection",
+      EMPTY_SELECTION,
+    );
+  });
+
+  test("double-click on a graphic element does NOT clear the selection", () => {
+    setSelection(mockChart, true, ["points"], mockSetStateValue);
+    const deselectHandler = mockZr.on.mock.calls[0][1];
+
+    deselectHandler({ target: {} }); // hit a bar/point
+
+    expect(mockSetStateValue).not.toHaveBeenCalled();
+  });
+
+  test("unbinds the zrender deselect handler on re-wire", () => {
+    setSelection(mockChart, true, ["points"], mockSetStateValue);
+    const deselectHandler = mockZr.on.mock.calls[0][1];
+
+    setSelection(mockChart, true, ["box"], mockSetStateValue);
+
+    expect(mockZr.off).toHaveBeenCalledWith("dblclick", deselectHandler);
   });
 });
 

@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from pathlib import Path
 from unittest.mock import MagicMock, patch
 
 import pytest
@@ -28,6 +29,23 @@ class TestJsCode:
         code = "function(a, b) { return a + b; }"
         js = JsCode(code)
         assert js.js_code == f"{JS_PLACEHOLDER}{code}{JS_PLACEHOLDER}"
+
+    def test_from_path(self, tmp_path: Path):
+        f = tmp_path / "handler.js"
+        f.write_text("function (e) { return e.target; }", encoding="utf-8")
+        assert JsCode(f).js_code == f"{JS_PLACEHOLDER}{f.read_text()}{JS_PLACEHOLDER}"
+
+    def test_from_path_string(self, tmp_path: Path):
+        f = tmp_path / "handler.js"
+        f.write_text("e => e.target", encoding="utf-8")
+        assert (
+            JsCode(str(f)).js_code == f"{JS_PLACEHOLDER}e => e.target{JS_PLACEHOLDER}"
+        )
+
+    def test_pathlike_string_that_is_not_a_file_stays_inline(self):
+        # Looks path-like but no such file exists -> treated as inline JS.
+        code = "return a.js"
+        assert JsCode(code).js_code == f"{JS_PLACEHOLDER}{code}{JS_PLACEHOLDER}"
 
 
 class TestSerializeOptions:

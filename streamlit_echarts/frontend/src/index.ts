@@ -98,7 +98,9 @@ export const setThemeGenerator = () => {
     const backgroundColor =
       theme === "streamlit" ? getCssVar("--st-background-color") : "";
     const textColor = theme === "streamlit" ? getCssVar("--st-text-color") : "";
-    const font = theme === "streamlit" ? getCssVar("--st-font") : "";
+    // Single-quote font names so they survive ECharts' SVG export (issue #82).
+    const font =
+      theme === "streamlit" ? getCssVar("--st-font").replace(/"/g, "'") : "";
     const categoricalRaw =
       theme === "streamlit" ? getCssVar("--st-chart-categorical-colors") : "";
 
@@ -171,13 +173,18 @@ export const setThemeGenerator = () => {
   };
 };
 
+// Event names prefixed with this bind to the underlying zrender instance
+// (canvas-wide, fires on blank space) instead of the chart (graphic elements
+// only). See the "Listen to Events on the Blank Area" ECharts handbook page.
+const ZR_PREFIX = "zr:";
+
 /**
- * Memoized event wiring. Calls chart.off/chart.on only when the serialized
- * onEvents change.
+ * Memoized event wiring. Calls chart.off/chart.on (or the zrender instance's
+ * off/on for `zr:`-prefixed names) only when the serialized onEvents change.
  */
 export const setEventsGenerator = () => {
   let savedKey: string | null = null;
-  let savedHandlers: Record<string, Function> = {};
+  let savedHandlers: { isZr: boolean; event: string; handler: Function }[] = [];
 
   return (
     chart: echarts.ECharts,
@@ -189,26 +196,47 @@ export const setEventsGenerator = () => {
       return false;
     }
 
-    // Unbind old handlers by reference (not by name) to preserve other listeners
-    for (const eventName of Object.keys(savedHandlers)) {
-      chart.off(eventName, savedHandlers[eventName] as any);
+    // Resolve the zrender instance lazily so the chart-only path never calls
+    // getZr() (it's only needed when a zr: handler is bound or unbound).
+    let zr: ReturnType<echarts.ECharts["getZr"]> | null = null;
+    const getZr = () => (zr ??= chart.getZr());
+
+    // Unbind old handlers by reference (not by name) to preserve other
+    // listeners, routing each to the emitter it was bound on.
+    for (const { isZr, event, handler } of savedHandlers) {
+      if (isZr) getZr().off(event, handler as any);
+      else chart.off(event, handler as any);
     }
 
     // Build and bind new handlers
-    const handlers: Record<string, Function> = {};
-    for (const eventName of Object.keys(onEvents)) {
-      const fn = evalJsCode(onEvents[eventName], { echarts });
+    const handlers: typeof savedHandlers = [];
+    for (const name of Object.keys(onEvents)) {
+      // `chart` is in scope so handlers can call instance methods (e.g.
+      // convertFromPixel, dispatchAction). Safe because this generator is
+      // reset on every chart dispose, so `chart` is never stale (issue #70).
+      const fn = evalJsCode(onEvents[name], { echarts, chart });
       if (typeof fn !== "function") {
         console.error(
-          `JsCode for event "${eventName}" did not evaluate to a function`,
+          `JsCode for event "${name}" did not evaluate to a function`,
         );
         continue;
       }
       const handler = (params: any) => {
-        setTriggerValue("chart_event", fn(params));
+        // Returning undefined (or nothing) marks a client-side-only handler:
+        // skip the round-trip so side-effect handlers (setOption/dispatchAction)
+        // and high-frequency events (zr:mousemove) don't spam reruns. Any other
+        // value, including null, is emitted to Python.
+        const result = fn(params);
+        if (result !== undefined) {
+          setTriggerValue("chart_event", result);
+        }
       };
-      handlers[eventName] = handler;
-      chart.on(eventName, handler as any);
+
+      const isZr = name.startsWith(ZR_PREFIX);
+      const event = isZr ? name.slice(ZR_PREFIX.length) : name;
+      if (isZr) getZr().on(event, handler as any);
+      else chart.on(event, handler as any);
+      handlers.push({ isZr, event, handler });
     }
 
     savedKey = key;
@@ -218,13 +246,13 @@ export const setEventsGenerator = () => {
 };
 
 /**
- * Memoized selection wiring. Manages click and brush listeners for the
- * structured selection API. Uses handler-specific unbind to coexist with
- * user-defined event handlers.
+ * Memoized selection wiring. Manages click, double-click-to-deselect, and
+ * brush listeners for the structured selection API. Uses handler-specific
+ * unbind (chart- and zrender-level) to coexist with user event handlers.
  */
 export const setSelectionGenerator = () => {
   let savedKey: string | null = null;
-  let savedHandlers: { event: string; handler: Function }[] = [];
+  let savedHandlers: { isZr: boolean; event: string; handler: Function }[] = [];
 
   return (
     chart: echarts.ECharts,
@@ -237,9 +265,15 @@ export const setSelectionGenerator = () => {
       return false;
     }
 
-    // Unbind old handlers by reference
-    for (const { event, handler } of savedHandlers) {
-      chart.off(event, handler as any);
+    // Resolve the zrender instance lazily (only points mode needs it, for
+    // the blank-canvas deselect listener).
+    let zr: ReturnType<echarts.ECharts["getZr"]> | null = null;
+    const getZr = () => (zr ??= chart.getZr());
+
+    // Unbind old handlers by reference, routing each to its emitter.
+    for (const { isZr, event, handler } of savedHandlers) {
+      if (isZr) getZr().off(event, handler as any);
+      else chart.off(event, handler as any);
     }
     savedHandlers = [];
 
@@ -255,7 +289,24 @@ export const setSelectionGenerator = () => {
         setStateValue("selection", selection);
       };
       chart.on("click", clickHandler as any);
-      savedHandlers.push({ event: "click", handler: clickHandler });
+      savedHandlers.push({
+        isZr: false,
+        event: "click",
+        handler: clickHandler,
+      });
+
+      // Double-click on blank canvas clears the selection (Plotly parity).
+      // chart.on("click") never fires on empty space, so listen at the
+      // zrender level and clear only when the click hit no graphic element.
+      const deselectHandler = (e: any) => {
+        if (!e.target) setStateValue("selection", EMPTY_SELECTION);
+      };
+      getZr().on("dblclick", deselectHandler as any);
+      savedHandlers.push({
+        isZr: true,
+        event: "dblclick",
+        handler: deselectHandler,
+      });
     }
 
     // Brush handlers for "box" and "lasso" modes
@@ -281,8 +332,8 @@ export const setSelectionGenerator = () => {
       chart.on("brushEnd", brushEndHandler as any);
       chart.on("brushSelected", brushSelectedHandler as any);
       savedHandlers.push(
-        { event: "brushEnd", handler: brushEndHandler },
-        { event: "brushSelected", handler: brushSelectedHandler },
+        { isZr: false, event: "brushEnd", handler: brushEndHandler },
+        { isZr: false, event: "brushSelected", handler: brushSelectedHandler },
       );
     }
 
