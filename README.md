@@ -50,7 +50,7 @@ st_echarts(options=options, height="400px")
 |---|---|---|---|
 | `options` | `dict` | **required** | ECharts [option object](https://echarts.apache.org/en/option.html) |
 | `theme` | `str \| dict` | `""` | `"streamlit"`, `"dark"`, or a custom theme dict |
-| `events` | `dict[str, str]` | `None` | Map of ECharts event names to JS handler strings; return value becomes the component return value |
+| `events` | `dict[str, str \| Path]` | `None` | Map of ECharts event names to JS handler strings (or paths to a `.js` file). Handlers run with `chart` and `echarts` in scope; prefix a name with `zr:` to listen across the whole canvas, including blank areas. A handler's return value surfaces in Python as `result.chart_event`; returning `undefined` skips the rerun. |
 | `height` | `str` | `"300px"` | Any valid CSS height (e.g. `"500px"`, `"50vh"`) |
 | `width` | `str` | `"100%"` | Any valid CSS width (e.g. `"100%"`, `"600px"`) |
 | `renderer` | `"canvas" \| "svg"` | `"canvas"` | ECharts renderer; `"svg"` is better for print/accessibility |
@@ -60,16 +60,21 @@ st_echarts(options=options, height="400px")
 | `on_select` | `"ignore" \| "rerun" \| callable` | `"ignore"` | Selection behavior: `"rerun"` triggers a Streamlit rerun; a callable is invoked on selection change |
 | `selection_mode` | `str \| tuple[str]` | `("points","box","lasso")` | Which interactions to enable: `"points"` (click), `"box"` (rect brush), `"lasso"` (polygon brush) |
 
+For advanced `events` and `JsCode` handler examples — chart-scope helpers, the `zr:` prefix, and loading handlers from a file — see the [live demo app](https://echarts.streamlit.app/).
+
 ### `st_pyecharts(chart, ...)`
 
 Convenience wrapper that converts a PyECharts chart instance to a dict and calls `st_echarts`. Requires `pip install streamlit-echarts[pyecharts]`. Accepts the same parameters as `st_echarts` (replacing `options` with `chart`).
 
-### `JsCode(js_string)`
+### `JsCode(js_string_or_path)`
 
-Wraps a JavaScript string so the frontend evaluates it as a live function rather than a plain string. Use wherever ECharts expects a callback (formatters, symbol sizes, color functions, …).
+Wraps a JavaScript string so the frontend evaluates it as a live function rather than a plain string. Use wherever ECharts expects a callback (formatters, symbol sizes, color functions, …). Also accepts a `pathlib.Path` (or a single-line `.js`/`.mjs` path string) to load the function from a local file — handy for longer callbacks you want to lint, format, and test as real JavaScript.
 
 ```python
+from pathlib import Path
+
 JsCode("function(params){ return params.value * 2 }")
+JsCode(Path("callbacks/label_formatter.js"))  # file holds one function expression
 ```
 
 ### `Map(map_name, geo_json, special_areas=None)`
