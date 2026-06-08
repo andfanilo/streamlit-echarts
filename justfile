@@ -96,6 +96,7 @@ build-frontend:
     cd {{frontend}} && npm run build
 
 build-wheel:
+    -Remove-Item dist/*.whl, dist/*.tar.gz -Force -ErrorAction Ignore
     uv build
 
 # Full from-scratch wheel: wipe deps + artifacts, reinstall (reconciles package.json + dedupes), rebuild
