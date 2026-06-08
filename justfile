@@ -116,6 +116,17 @@ publish: _verify-release-state build
 
 # --- Release ---
 
+# Bump version on develop: sync every version field (root + inner pyproject, uv.lock, frontend package + lock), then commit
+bump version:
+    @if ((git rev-parse --abbrev-ref HEAD) -ne "develop") { Write-Host -ForegroundColor Red "Must be on develop to bump version"; exit 1 }
+    @if (git status --porcelain) { Write-Host -ForegroundColor Red "Working tree not clean. Commit or stash first."; exit 1 }
+    (Get-Content pyproject.toml -Raw) -replace '(?m)^version = "[^"]*"', 'version = "{{version}}"' | Set-Content pyproject.toml -NoNewline
+    uv lock
+    (Get-Content streamlit_echarts/pyproject.toml -Raw) -replace '(?m)^version = "[^"]*"', 'version = "{{version}}"' | Set-Content streamlit_echarts/pyproject.toml -NoNewline
+    cd {{frontend}} && npm version {{version}} --no-git-tag-version --allow-same-version
+    git add pyproject.toml streamlit_echarts/pyproject.toml uv.lock {{frontend}}/package.json {{frontend}}/package-lock.json
+    git commit -m "Bump version to {{version}}"
+
 # Cut a release: ff-merge develop into main, annotated tag vX.Y.Z, push both
 tag-release version:
     @if (git status --porcelain) { Write-Host -ForegroundColor Red "Working tree not clean. Commit or stash first."; exit 1 }

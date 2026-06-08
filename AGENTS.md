@@ -73,7 +73,8 @@ just e2e          # uv run pytest e2e_playwright -n auto
 just build              # frontend assets + Python wheel into dist/
 
 # --- Release (cut a new version) ---
-# 1. On develop: bump `version` in pyproject.toml, commit, PR → main, merge.
+# 1. On develop: bump version, then PR → main, merge.
+just bump 0.7.0         # sync version everywhere (root + inner pyproject, uv.lock, frontend package + lock), commit
 # 2. From main:
 just tag-release 0.7.0  # ff-merge develop → main, annotated tag v0.7.0, push
 just publish-test       # guarded build + uv publish --index testpypi
@@ -98,6 +99,7 @@ Publish recipes are guarded: they refuse to run unless HEAD is on `main`, the tr
 | `build` / `build-frontend` / `build-wheel` | Build frontend bundle + Python wheel (assumes deps installed) |
 | `build-clean` | From-scratch wheel: `clean` + reinstall frontend deps (reconciles `package.json`, dedupes) + `build` |
 | `clean` | Remove `dist/`, `build/`, `*.egg-info`, and frontend `node_modules/` + `build/` |
+| `bump X.Y.Z` | Sync version across root `pyproject.toml`, `streamlit_echarts/pyproject.toml`, `uv.lock`, frontend `package.json` + `package-lock.json`; commit on develop |
 | `tag-release X.Y.Z` | Ff-merge develop → main, annotated tag `vX.Y.Z`, push both |
 | `publish-test` / `publish` | Guarded build + publish to Test PyPI / PyPI |
 | `merge-dependabot` | Squash-merge every green, conflict-free Dependabot PR + delete branch, then sync develop (needs `gh`) |
