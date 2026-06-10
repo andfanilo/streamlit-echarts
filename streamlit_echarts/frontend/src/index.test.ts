@@ -766,4 +766,141 @@ describe("selection brush clear wiring", () => {
 
     cleanup!();
   });
+
+  test("re-applies brush overlay when options change but selection config does not", () => {
+    const base = {
+      parentElement,
+      setTriggerValue: mockSetTriggerValue,
+      setStateValue: mockSetStateValue,
+    };
+
+    EchartsRenderer({ ...base, data: mkData(true, ["box"]) } as any);
+    mockChart.setOption.mockClear();
+    mockChart.dispatchAction.mockClear();
+
+    // Same selection config, new options. The notMerge:true options apply
+    // wipes the previously merged brush, so it must be merged back.
+    const cleanup = EchartsRenderer({
+      ...base,
+      data: {
+        ...mkData(true, ["box"]),
+        options: { xAxis: { type: "value" as const } },
+      },
+    } as any);
+
+    expect(mockChart.setOption).toHaveBeenCalledWith(
+      expect.objectContaining({ brush: expect.anything() }),
+      { notMerge: false },
+    );
+    // The clear path must not run on a plain options update.
+    expect(mockChart.dispatchAction).not.toHaveBeenCalled();
+
+    cleanup!();
+  });
+
+  test("does not touch brush config on options change when no brush mode is wanted", () => {
+    const base = {
+      parentElement,
+      setTriggerValue: mockSetTriggerValue,
+      setStateValue: mockSetStateValue,
+    };
+
+    EchartsRenderer({ ...base, data: mkData(false, []) } as any);
+    mockChart.setOption.mockClear();
+    mockChart.dispatchAction.mockClear();
+
+    const cleanup = EchartsRenderer({
+      ...base,
+      data: {
+        ...mkData(false, []),
+        options: { xAxis: { type: "value" as const } },
+      },
+    } as any);
+
+    // Only the options apply — no brush merge, no clear path.
+    expect(mockChart.setOption).toHaveBeenCalledTimes(1);
+    expect(mockChart.setOption).toHaveBeenCalledWith(expect.any(Object), {
+      notMerge: true,
+    });
+    expect(mockChart.dispatchAction).not.toHaveBeenCalled();
+
+    cleanup!();
+  });
+});
+
+describe("external dispose recovery", () => {
+  let parentElement: HTMLDivElement;
+  let mockSetTriggerValue: any;
+  let mockSetStateValue: any;
+
+  const makeMockChart = () => ({
+    on: vi.fn(),
+    off: vi.fn(),
+    setOption: vi.fn(),
+    getOption: vi.fn(() => ({})),
+    dispatchAction: vi.fn(),
+    resize: vi.fn(),
+    dispose: vi.fn(),
+    isDisposed: vi.fn(() => false),
+    getZr: vi.fn(() => ({ on: vi.fn(), off: vi.fn() })),
+  });
+
+  beforeEach(() => {
+    globalThis.ResizeObserver = vi.fn(function () {
+      return { observe: vi.fn(), unobserve: vi.fn(), disconnect: vi.fn() };
+    }) as any;
+    globalThis.IntersectionObserver = vi.fn(function () {
+      return { observe: vi.fn(), unobserve: vi.fn(), disconnect: vi.fn() };
+    }) as any;
+
+    parentElement = document.createElement("div");
+    const container = document.createElement("div");
+    container.className = "echarts-container";
+    parentElement.appendChild(container);
+    document.body.appendChild(parentElement);
+
+    mockSetTriggerValue = vi.fn();
+    mockSetStateValue = vi.fn();
+  });
+
+  test("re-inits and rebinds options/handlers when the chart was disposed externally", () => {
+    const firstChart = makeMockChart();
+    vi.mocked(echarts.init).mockReturnValue(firstChart as any);
+
+    const args = {
+      data: {
+        options: { xAxis: { type: "category" as const } },
+        theme: "dark" as const,
+        onEvents: {},
+        height: "400px",
+        width: "100%",
+        renderer: "canvas" as const,
+        map: null,
+        selectionActive: true,
+        selectionMode: ["points"],
+      },
+      parentElement,
+      setTriggerValue: mockSetTriggerValue,
+      setStateValue: mockSetStateValue,
+    };
+
+    EchartsRenderer(args as any);
+    expect(firstChart.on).toHaveBeenCalledWith("click", expect.any(Function));
+
+    // Simulate a dispose that happened outside the renderer between reruns.
+    firstChart.isDisposed.mockReturnValue(true);
+    const freshChart = makeMockChart();
+    vi.mocked(echarts.init).mockReturnValue(freshChart as any);
+
+    // Identical data: nothing changed, yet the dead chart must be replaced
+    // and options + selection handlers re-applied to the fresh instance.
+    const cleanup = EchartsRenderer(args as any);
+
+    expect(freshChart.setOption).toHaveBeenCalledWith(expect.any(Object), {
+      notMerge: true,
+    });
+    expect(freshChart.on).toHaveBeenCalledWith("click", expect.any(Function));
+
+    cleanup!();
+  });
 });

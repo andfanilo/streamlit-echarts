@@ -442,8 +442,17 @@ const EchartsRenderer: FrontendRenderer<EchartsStateShape, EchartsDataShape> = (
     state.setSelection = setSelectionGenerator();
   }
 
-  // 4. Create chart if needed
-  if (!state.chart || state.chart.isDisposed()) {
+  // 4. Create chart if needed. If the previous instance was disposed outside
+  //    the theme/renderer path above, the memoized generators still hold keys
+  //    and handlers for the dead chart — reset them so options are re-applied
+  //    and event/selection handlers are rebound on the fresh instance.
+  if (state.chart?.isDisposed()) {
+    state.chart = null;
+    state.getOptions = getOptionsGenerator();
+    state.setEvents = setEventsGenerator();
+    state.setSelection = setSelectionGenerator();
+  }
+  if (!state.chart) {
     state.chart = echarts.init(container, themeName, { renderer });
   }
 
@@ -469,27 +478,30 @@ const EchartsRenderer: FrontendRenderer<EchartsStateShape, EchartsDataShape> = (
     selectionMode,
     setStateValue,
   );
-  if (selectionChanged) {
-    const wantBrush =
-      selectionMode.includes("box") || selectionMode.includes("lasso");
-    if (wantBrush) {
-      // Merge brush + toolbox brush feature on top of the user's options so
-      // any user-defined toolbox features are preserved.
+  const wantBrush =
+    selectionMode.includes("box") || selectionMode.includes("lasso");
+  if (wantBrush) {
+    // Merge brush + toolbox brush feature on top of the user's options so
+    // any user-defined toolbox features are preserved. Re-applied not only
+    // on selection-config changes but also whenever options were re-applied:
+    // step 5's notMerge:true setOption wipes the previously merged brush
+    // component and toolbox button.
+    if (selectionChanged || optionsChanged) {
       state.chart.setOption(buildBrushOption(selectionMode), {
         notMerge: false,
       });
-    } else {
-      // No brush wanted: clear any drawn areas, then remove the brush
-      // component via replaceMerge (a plain merge leaves it stale) while the
-      // toolbox merge unsets its brush feature. User toolbox features survive.
-      const current = state.chart.getOption() as { brush?: unknown[] };
-      if (Array.isArray(current.brush) && current.brush.length > 0) {
-        state.chart.dispatchAction({ type: "brush", areas: [] });
-      }
-      state.chart.setOption(buildBrushOption(selectionMode), {
-        replaceMerge: ["brush"],
-      });
     }
+  } else if (selectionChanged) {
+    // No brush wanted: clear any drawn areas, then remove the brush
+    // component via replaceMerge (a plain merge leaves it stale) while the
+    // toolbox merge unsets its brush feature. User toolbox features survive.
+    const current = state.chart.getOption() as { brush?: unknown[] };
+    if (Array.isArray(current.brush) && current.brush.length > 0) {
+      state.chart.dispatchAction({ type: "brush", areas: [] });
+    }
+    state.chart.setOption(buildBrushOption(selectionMode), {
+      replaceMerge: ["brush"],
+    });
   }
 
   // 7. Set up ResizeObserver (once per instance)
