@@ -68,6 +68,7 @@ export function transformBrushToSelection(
   chart: ECharts,
 ): SelectionData {
   const chartOption = chart.getOption() as EChartsOption;
+  const seriesArr = Array.isArray(chartOption.series) ? chartOption.series : [];
 
   // Phase 1: Extract selected points from brushSelected batch
   const points: SelectionPoint[] = [];
@@ -80,14 +81,11 @@ export function transformBrushToSelection(
 
     for (const sel of selected) {
       const seriesIdx = sel.seriesIndex;
-      const seriesArr = Array.isArray(chartOption.series)
-        ? chartOption.series
-        : [];
-      const seriesName =
-        (seriesArr[seriesIdx] as any)?.name ?? String(seriesIdx);
+      const series = seriesArr[seriesIdx] as any;
+      const seriesName = series?.name ?? String(seriesIdx);
 
       for (const dataIdx of sel.dataIndex) {
-        const dataItem = resolveDataItem(chartOption, seriesIdx, dataIdx);
+        const dataItem = resolveDataItem(chartOption, series, dataIdx);
         if (dataItem != null) {
           points.push(
             buildPointFromDataItem(dataItem, dataIdx, seriesIdx, seriesName),
@@ -170,12 +168,9 @@ export function buildBrushOption(selectionMode: string[]): Record<string, any> {
 
 export function resolveDataItem(
   chartOption: EChartsOption,
-  seriesIdx: number,
+  series: any,
   dataIdx: number,
 ): any {
-  const seriesArr = Array.isArray(chartOption.series) ? chartOption.series : [];
-  const series = seriesArr[seriesIdx] as any;
-
   // Try series.data first
   if (
     series?.data &&

@@ -215,26 +215,22 @@ def st_echarts(
         "replaceMerge": replace_merge,
         "map": map.to_json() if map is not None else None,
         "selectionActive": selection_active,
-        "selectionMode": list(selection_mode) if selection_active else [],
+        "selectionMode": selection_mode if selection_active else [],
     }
 
     mount_kwargs: dict = {
         "data": data,
         "key": key,
-        "on_chart_event_change": on_change if on_change else lambda: None,
+        "on_chart_event_change": on_change or (lambda: None),
+        "default": {"selection": EMPTY_SELECTION} if selection_active else {},
     }
 
     if selection_active:
         mount_kwargs["on_selection_change"] = (
             on_select if callable(on_select) else lambda: None
         )
-        mount_kwargs["default"] = {"selection": EMPTY_SELECTION}
-    else:
-        mount_kwargs["default"] = {}
 
-    component_value = out(**mount_kwargs)
-
-    return component_value
+    return out(**mount_kwargs)
 
 
 def st_pyecharts(

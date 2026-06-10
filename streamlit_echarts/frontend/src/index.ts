@@ -178,13 +178,54 @@ export const setThemeGenerator = () => {
 // only). See the "Listen to Events on the Blank Area" ECharts handbook page.
 const ZR_PREFIX = "zr:";
 
+type HandlerEntry = { name: string; handler: (params: any) => void };
+type BoundHandler = { isZr: boolean; event: string; handler: Function };
+
+// Resolve the zrender instance lazily so chart-only paths never call getZr()
+// (it's only needed when a zr: handler is bound or unbound).
+const makeGetZr = (chart: echarts.ECharts) => {
+  let zr: ReturnType<echarts.ECharts["getZr"]> | null = null;
+  return () => (zr ??= chart.getZr());
+};
+
+/**
+ * Bind handlers to the chart, routing `zr:`-prefixed names (prefix stripped)
+ * to the zrender instance. Returns records that let unbindHandlers remove
+ * exactly these listeners later.
+ */
+const bindHandlers = (
+  chart: echarts.ECharts,
+  entries: HandlerEntry[],
+): BoundHandler[] => {
+  const getZr = makeGetZr(chart);
+  return entries.map(({ name, handler }) => {
+    const isZr = name.startsWith(ZR_PREFIX);
+    const event = isZr ? name.slice(ZR_PREFIX.length) : name;
+    if (isZr) getZr().on(event, handler as any);
+    else chart.on(event, handler as any);
+    return { isZr, event, handler };
+  });
+};
+
+/**
+ * Unbind handlers by reference (not by name) to preserve other listeners,
+ * routing each to the emitter it was bound on.
+ */
+const unbindHandlers = (chart: echarts.ECharts, bound: BoundHandler[]) => {
+  const getZr = makeGetZr(chart);
+  for (const { isZr, event, handler } of bound) {
+    if (isZr) getZr().off(event, handler as any);
+    else chart.off(event, handler as any);
+  }
+};
+
 /**
  * Memoized event wiring. Calls chart.off/chart.on (or the zrender instance's
  * off/on for `zr:`-prefixed names) only when the serialized onEvents change.
  */
 export const setEventsGenerator = () => {
   let savedKey: string | null = null;
-  let savedHandlers: { isZr: boolean; event: string; handler: Function }[] = [];
+  let savedHandlers: BoundHandler[] = [];
 
   return (
     chart: echarts.ECharts,
@@ -196,20 +237,9 @@ export const setEventsGenerator = () => {
       return false;
     }
 
-    // Resolve the zrender instance lazily so the chart-only path never calls
-    // getZr() (it's only needed when a zr: handler is bound or unbound).
-    let zr: ReturnType<echarts.ECharts["getZr"]> | null = null;
-    const getZr = () => (zr ??= chart.getZr());
+    unbindHandlers(chart, savedHandlers);
 
-    // Unbind old handlers by reference (not by name) to preserve other
-    // listeners, routing each to the emitter it was bound on.
-    for (const { isZr, event, handler } of savedHandlers) {
-      if (isZr) getZr().off(event, handler as any);
-      else chart.off(event, handler as any);
-    }
-
-    // Build and bind new handlers
-    const handlers: typeof savedHandlers = [];
+    const entries: HandlerEntry[] = [];
     for (const name of Object.keys(onEvents)) {
       // `chart` is in scope so handlers can call instance methods (e.g.
       // convertFromPixel, dispatchAction). Safe because this generator is
@@ -231,16 +261,11 @@ export const setEventsGenerator = () => {
           setTriggerValue("chart_event", result);
         }
       };
-
-      const isZr = name.startsWith(ZR_PREFIX);
-      const event = isZr ? name.slice(ZR_PREFIX.length) : name;
-      if (isZr) getZr().on(event, handler as any);
-      else chart.on(event, handler as any);
-      handlers.push({ isZr, event, handler });
+      entries.push({ name, handler });
     }
 
     savedKey = key;
-    savedHandlers = handlers;
+    savedHandlers = bindHandlers(chart, entries);
     return true;
   };
 };
@@ -252,7 +277,7 @@ export const setEventsGenerator = () => {
  */
 export const setSelectionGenerator = () => {
   let savedKey: string | null = null;
-  let savedHandlers: { isZr: boolean; event: string; handler: Function }[] = [];
+  let savedHandlers: BoundHandler[] = [];
 
   return (
     chart: echarts.ECharts,
@@ -265,79 +290,64 @@ export const setSelectionGenerator = () => {
       return false;
     }
 
-    // Resolve the zrender instance lazily (only points mode needs it, for
-    // the blank-canvas deselect listener).
-    let zr: ReturnType<echarts.ECharts["getZr"]> | null = null;
-    const getZr = () => (zr ??= chart.getZr());
+    unbindHandlers(chart, savedHandlers);
 
-    // Unbind old handlers by reference, routing each to its emitter.
-    for (const { isZr, event, handler } of savedHandlers) {
-      if (isZr) getZr().off(event, handler as any);
-      else chart.off(event, handler as any);
-    }
-    savedHandlers = [];
+    const entries: HandlerEntry[] = [];
 
-    if (!selectionActive) {
-      savedKey = key;
-      return true;
-    }
-
-    // Click handler for "points" mode
-    if (selectionMode.includes("points")) {
-      const clickHandler = (params: any) => {
-        const selection = transformClickToSelection(params);
-        setStateValue("selection", selection);
-      };
-      chart.on("click", clickHandler as any);
-      savedHandlers.push({
-        isZr: false,
-        event: "click",
-        handler: clickHandler,
+    if (selectionActive && selectionMode.includes("points")) {
+      entries.push({
+        name: "click",
+        handler: (params: any) => {
+          setStateValue("selection", transformClickToSelection(params));
+        },
       });
 
       // Double-click on blank canvas clears the selection (Plotly parity).
       // chart.on("click") never fires on empty space, so listen at the
-      // zrender level and clear only when the click hit no graphic element.
-      const deselectHandler = (e: any) => {
-        if (!e.target) setStateValue("selection", EMPTY_SELECTION);
-      };
-      getZr().on("dblclick", deselectHandler as any);
-      savedHandlers.push({
-        isZr: true,
-        event: "dblclick",
-        handler: deselectHandler,
+      // zrender level (zr: prefix) and clear only when the double-click hit
+      // no graphic element.
+      entries.push({
+        name: "zr:dblclick",
+        handler: (e: any) => {
+          if (!e.target) setStateValue("selection", EMPTY_SELECTION);
+        },
       });
     }
 
     // Brush handlers for "box" and "lasso" modes
     // ECharts fires brushEnd (areas) BEFORE the final brushSelected (batch),
     // so we cache areas from brushEnd and trigger state from brushSelected.
-    if (selectionMode.includes("box") || selectionMode.includes("lasso")) {
+    if (
+      selectionActive &&
+      (selectionMode.includes("box") || selectionMode.includes("lasso"))
+    ) {
       let cachedAreas: any[] = [];
 
-      const brushEndHandler = (params: any) => {
-        cachedAreas = params.areas ?? [];
-        if (cachedAreas.length === 0) {
-          setStateValue("selection", EMPTY_SELECTION);
-        }
-      };
+      entries.push({
+        name: "brushEnd",
+        handler: (params: any) => {
+          cachedAreas = params.areas ?? [];
+          if (cachedAreas.length === 0) {
+            setStateValue("selection", EMPTY_SELECTION);
+          }
+        },
+      });
 
-      const brushSelectedHandler = (params: any) => {
-        const batch = params.batch ?? [];
-        if (cachedAreas.length === 0) return;
-        const selection = transformBrushToSelection(batch, cachedAreas, chart);
-        setStateValue("selection", selection);
-      };
-
-      chart.on("brushEnd", brushEndHandler as any);
-      chart.on("brushSelected", brushSelectedHandler as any);
-      savedHandlers.push(
-        { isZr: false, event: "brushEnd", handler: brushEndHandler },
-        { isZr: false, event: "brushSelected", handler: brushSelectedHandler },
-      );
+      entries.push({
+        name: "brushSelected",
+        handler: (params: any) => {
+          const batch = params.batch ?? [];
+          if (cachedAreas.length === 0) return;
+          setStateValue(
+            "selection",
+            transformBrushToSelection(batch, cachedAreas, chart),
+          );
+        },
+      });
     }
 
     savedKey = key;
+    savedHandlers = bindHandlers(chart, entries);
     return true;
   };
 };
@@ -416,31 +426,20 @@ const EchartsRenderer: FrontendRenderer<EchartsStateShape, EchartsDataShape> = (
     echarts.registerMap(map.mapName, map.geoJson, map.specialAreas);
   }
 
-  // 3. Resolve theme (memoized). If theme changed, dispose existing chart
-  //    because ECharts requires re-init for theme changes.
+  // 3. Resolve theme (memoized). A theme or renderer change requires a chart
+  //    re-init, so dispose the existing chart and reset the memoized
+  //    generators — stale references are cleared and options are re-applied
+  //    to the new chart instance (preserving animations).
   const { themeName, themeChanged } = state.setTheme(theme, container);
+  const rendererChanged = renderer !== state.currentRenderer;
+  state.currentRenderer = renderer;
 
-  if (themeChanged && state.chart) {
+  if ((themeChanged || rendererChanged) && state.chart) {
     state.chart.dispose();
     state.chart = null;
-    // Reset memoized generators so stale references are cleared and
-    // options are re-applied to the new chart instance (preserving animations).
     state.getOptions = getOptionsGenerator();
     state.setEvents = setEventsGenerator();
     state.setSelection = setSelectionGenerator();
-  }
-
-  // 3b. If renderer changed, dispose existing chart (ECharts requires re-init).
-  const rendererChanged = renderer !== state.currentRenderer;
-  if (rendererChanged) {
-    state.currentRenderer = renderer;
-    if (state.chart) {
-      state.chart.dispose();
-      state.chart = null;
-      state.getOptions = getOptionsGenerator();
-      state.setEvents = setEventsGenerator();
-      state.setSelection = setSelectionGenerator();
-    }
   }
 
   // 4. Create chart if needed

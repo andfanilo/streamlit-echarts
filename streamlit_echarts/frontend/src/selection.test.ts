@@ -349,7 +349,7 @@ describe("coordinate conversion", () => {
 describe("resolveDataItem", () => {
   test("returns series data when available", () => {
     const option = { series: [{ data: [10, 20, 30] }] };
-    expect(resolveDataItem(option, 0, 1)).toBe(20);
+    expect(resolveDataItem(option, option.series[0], 1)).toBe(20);
   });
 
   test("falls back to dataset source", () => {
@@ -364,12 +364,12 @@ describe("resolveDataItem", () => {
         },
       ],
     };
-    expect(resolveDataItem(option, 0, 0)).toEqual([1, 2]);
+    expect(resolveDataItem(option, option.series[0], 0)).toEqual([1, 2]);
   });
 
   test("returns null when data not found", () => {
     const option = { series: [{}] };
-    expect(resolveDataItem(option, 0, 5)).toBeNull();
+    expect(resolveDataItem(option, option.series[0], 5)).toBeNull();
   });
 });
 

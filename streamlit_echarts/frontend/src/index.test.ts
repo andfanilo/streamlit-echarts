@@ -469,23 +469,19 @@ describe("setSelectionGenerator", () => {
   });
 });
 
-describe("renderer change handling", () => {
+describe("chart re-init on renderer/theme change", () => {
   let parentElement: HTMLDivElement;
   let mockSetTriggerValue: any;
   let mockSetStateValue: any;
   let mockChart: any;
 
-  const makeData = (
-    renderer: "canvas" | "svg",
-    replaceMerge?: string | string[],
-  ) => ({
+  const makeData = (renderer: "canvas" | "svg", theme: string = "dark") => ({
     options: { xAxis: { type: "category" as const } },
-    theme: "dark" as const,
+    theme,
     onEvents: {},
     height: "400px",
     width: "100%",
     renderer,
-    replaceMerge,
     map: null,
     selectionActive: false,
     selectionMode: [] as string[],
@@ -552,6 +548,32 @@ describe("renderer change handling", () => {
 
     // Clean up
     cleanup2!();
+  });
+
+  test("should dispose and re-init chart when theme changes", () => {
+    const args = {
+      data: makeData("canvas"),
+      parentElement,
+      setTriggerValue: mockSetTriggerValue,
+      setStateValue: mockSetStateValue,
+    };
+
+    EchartsRenderer(args as any);
+    vi.mocked(echarts.init).mockClear();
+
+    const args2 = { ...args, data: makeData("canvas", "light") };
+    const cleanup = EchartsRenderer(args2 as any);
+
+    expect(mockChart.dispose).toHaveBeenCalled();
+    expect(echarts.init).toHaveBeenCalledWith(
+      expect.any(HTMLDivElement),
+      "light",
+      {
+        renderer: "canvas",
+      },
+    );
+
+    cleanup!();
   });
 
   test("should NOT dispose chart when renderer stays the same", () => {
