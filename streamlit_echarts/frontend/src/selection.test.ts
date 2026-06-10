@@ -98,6 +98,52 @@ describe("transformClickToSelection", () => {
     expect(result.point_indices).toEqual([0]);
     expect(result.series_point_indices).toEqual({ "": [0] });
   });
+
+  test("falls back to params.value for dataset-backed series (no params.data)", () => {
+    const params = {
+      componentType: "series",
+      dataIndex: 1,
+      seriesIndex: 0,
+      seriesName: "DS",
+      value: [3, 4],
+    };
+    const result = transformClickToSelection(params);
+
+    expect(result.points[0].x).toBe(3);
+    expect(result.points[0].y).toBe(4);
+    expect(result.points[0].value).toBe(4);
+  });
+
+  test("uses params.name as category label for scalar data", () => {
+    const params = {
+      componentType: "series",
+      dataIndex: 1,
+      seriesIndex: 0,
+      seriesName: "Sales",
+      data: 932,
+      name: "Tue",
+    };
+    const result = transformClickToSelection(params);
+
+    expect(result.points[0].x).toBe("Tue");
+    expect(result.points[0].y).toBe(932);
+    expect(result.points[0].name).toBe("Tue");
+  });
+
+  test("treats an empty params.name as no label", () => {
+    const params = {
+      componentType: "series",
+      dataIndex: 2,
+      seriesIndex: 0,
+      seriesName: "S",
+      data: 7,
+      name: "",
+    };
+    const result = transformClickToSelection(params);
+
+    expect(result.points[0].x).toBe(2);
+    expect(result.points[0].name).toBeNull();
+  });
 });
 
 // --- transformBrushToSelection ---
@@ -222,6 +268,41 @@ describe("transformBrushToSelection", () => {
     expect(result.points[0].value).toBe(42);
     expect(result.points[0].x).toBe(0);
     expect(result.points[0].y).toBe(42);
+  });
+
+  test("resolves category labels from the x axis for scalar data", () => {
+    const chart = {
+      getOption: vi.fn(() => ({
+        series: [{ name: "S0", data: [10, 20, 30] }],
+        // getOption() normalizes axes to arrays; entries may be objects.
+        xAxis: [{ type: "category", data: ["Mon", "Tue", { value: "Wed" }] }],
+      })),
+      convertFromPixel: vi.fn(),
+    };
+    const batch = [{ selected: [{ seriesIndex: 0, dataIndex: [1, 2] }] }];
+
+    const result = transformBrushToSelection(batch, [], chart as any);
+
+    expect(result.points[0].x).toBe("Tue");
+    expect(result.points[0].name).toBe("Tue");
+    expect(result.points[1].x).toBe("Wed");
+    expect(result.points[1].name).toBe("Wed");
+  });
+
+  test("keeps index as x for scalar data on a non-category axis", () => {
+    const chart = {
+      getOption: vi.fn(() => ({
+        series: [{ name: "S0", data: [10, 20] }],
+        xAxis: [{ type: "value" }],
+      })),
+      convertFromPixel: vi.fn(),
+    };
+    const batch = [{ selected: [{ seriesIndex: 0, dataIndex: [1] }] }];
+
+    const result = transformBrushToSelection(batch, [], chart as any);
+
+    expect(result.points[0].x).toBe(1);
+    expect(result.points[0].name).toBeNull();
   });
 
   test("skips null data items", () => {
@@ -424,5 +505,23 @@ describe("buildPointFromDataItem", () => {
     );
     expect(point.x).toBe(1);
     expect(point.y).toBe(2);
+  });
+
+  test("scalar data uses the label as x and name when provided", () => {
+    const point = buildPointFromDataItem(99, 3, 1, "Line", "Thu");
+    expect(point.x).toBe("Thu");
+    expect(point.y).toBe(99);
+    expect(point.name).toBe("Thu");
+  });
+
+  test("object data's own name wins over the label", () => {
+    const point = buildPointFromDataItem(
+      { name: "Own", value: 1 },
+      0,
+      0,
+      "S",
+      "Label",
+    );
+    expect(point.name).toBe("Own");
   });
 });

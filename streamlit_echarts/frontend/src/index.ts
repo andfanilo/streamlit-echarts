@@ -314,21 +314,38 @@ export const setSelectionGenerator = () => {
       });
     }
 
-    // Brush handlers for "box" and "lasso" modes
-    // ECharts fires brushEnd (areas) BEFORE the final brushSelected (batch),
-    // so we cache areas from brushEnd and trigger state from brushSelected.
+    // Brush handlers for "box" and "lasso" modes.
+    // The event order is not fixed: with debounce throttling the final
+    // brushSelected (batch) usually fires AFTER brushEnd (areas), but when
+    // the user pauses mid-drag and releases without moving, the last
+    // brushSelected lands BEFORE brushEnd and nothing follows. Cache both
+    // halves and emit from whichever arrives second.
     if (
       selectionActive &&
       (selectionMode.includes("box") || selectionMode.includes("lasso"))
     ) {
       let cachedAreas: any[] = [];
+      let cachedBatch: any[] | null = null;
+
+      const emit = (batch: any[]) => {
+        setStateValue(
+          "selection",
+          transformBrushToSelection(batch, cachedAreas, chart),
+        );
+        // Consume the batch so a gesture is emitted once, not re-emitted
+        // stale by the other handler.
+        cachedBatch = null;
+      };
 
       entries.push({
         name: "brushEnd",
         handler: (params: any) => {
           cachedAreas = params.areas ?? [];
           if (cachedAreas.length === 0) {
+            cachedBatch = null;
             setStateValue("selection", EMPTY_SELECTION);
+          } else if (cachedBatch) {
+            emit(cachedBatch);
           }
         },
       });
@@ -337,11 +354,22 @@ export const setSelectionGenerator = () => {
         name: "brushSelected",
         handler: (params: any) => {
           const batch = params.batch ?? [];
-          if (cachedAreas.length === 0) return;
-          setStateValue(
-            "selection",
-            transformBrushToSelection(batch, cachedAreas, chart),
-          );
+          // The toolbox "clear" button removes all areas through a brush
+          // action that fires brushSelected (with empty batch areas) but no
+          // brushEnd — detect it here or the last selection would go stale.
+          const liveAreas = batch.flatMap((b: any) => b.areas ?? []);
+          if (liveAreas.length === 0) {
+            if (cachedAreas.length > 0) {
+              cachedAreas = [];
+              cachedBatch = null;
+              setStateValue("selection", EMPTY_SELECTION);
+            }
+            return;
+          }
+          cachedBatch = batch;
+          if (cachedAreas.length > 0) {
+            emit(batch);
+          }
         },
       });
     }

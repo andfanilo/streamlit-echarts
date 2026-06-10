@@ -467,6 +467,87 @@ describe("setSelectionGenerator", () => {
 
     expect(mockZr.off).toHaveBeenCalledWith("dblclick", deselectHandler);
   });
+
+  describe("brush event ordering", () => {
+    const handlerFor = (name: string) =>
+      mockChart.on.mock.calls.find((c: any) => c[0] === name)![1];
+
+    const areas = [
+      {
+        brushType: "rect",
+        range: [
+          [0, 10],
+          [0, 10],
+        ],
+      },
+    ];
+    const batch = [{ areas, selected: [{ seriesIndex: 0, dataIndex: [1] }] }];
+
+    test("emits once when brushSelected arrives after brushEnd (fast drag, debounce trailing)", () => {
+      setSelection(mockChart, true, ["box"], mockSetStateValue);
+
+      handlerFor("brushEnd")({ areas });
+      expect(mockSetStateValue).not.toHaveBeenCalled();
+
+      handlerFor("brushSelected")({ batch });
+      expect(mockSetStateValue).toHaveBeenCalledTimes(1);
+      expect(mockSetStateValue).toHaveBeenCalledWith(
+        "selection",
+        expect.objectContaining({ point_indices: [1] }),
+      );
+    });
+
+    test("emits once when brushEnd arrives after brushSelected (pause mid-drag, release without moving)", () => {
+      setSelection(mockChart, true, ["box"], mockSetStateValue);
+
+      handlerFor("brushSelected")({ batch });
+      expect(mockSetStateValue).not.toHaveBeenCalled();
+
+      handlerFor("brushEnd")({ areas });
+      expect(mockSetStateValue).toHaveBeenCalledTimes(1);
+      expect(mockSetStateValue).toHaveBeenCalledWith(
+        "selection",
+        expect.objectContaining({ point_indices: [1] }),
+      );
+    });
+
+    test("toolbox clear (brushSelected with empty areas, no brushEnd) empties the selection", () => {
+      setSelection(mockChart, true, ["box"], mockSetStateValue);
+
+      // Complete a gesture first so there is a selection to clear.
+      handlerFor("brushEnd")({ areas });
+      handlerFor("brushSelected")({ batch });
+      mockSetStateValue.mockClear();
+
+      handlerFor("brushSelected")({ batch: [{ areas: [], selected: [] }] });
+
+      expect(mockSetStateValue).toHaveBeenCalledTimes(1);
+      expect(mockSetStateValue).toHaveBeenCalledWith(
+        "selection",
+        EMPTY_SELECTION,
+      );
+    });
+
+    test("brushEnd with no areas empties the selection", () => {
+      setSelection(mockChart, true, ["box"], mockSetStateValue);
+
+      handlerFor("brushEnd")({ areas: [] });
+
+      expect(mockSetStateValue).toHaveBeenCalledWith(
+        "selection",
+        EMPTY_SELECTION,
+      );
+    });
+
+    test("does not emit anything before any gesture completes", () => {
+      setSelection(mockChart, true, ["box"], mockSetStateValue);
+
+      // e.g. the brushSelected ECharts fires right after brush setup
+      handlerFor("brushSelected")({ batch: [] });
+
+      expect(mockSetStateValue).not.toHaveBeenCalled();
+    });
+  });
 });
 
 describe("chart re-init on renderer/theme change", () => {

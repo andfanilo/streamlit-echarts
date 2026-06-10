@@ -44,11 +44,14 @@ export function transformClickToSelection(params: any): SelectionData {
     return EMPTY_SELECTION;
   }
 
+  // Dataset-backed series carry the row in params.value, not params.data.
+  // params.name holds the category label (empty string when there is none).
   const point: SelectionPoint = buildPointFromDataItem(
-    params.data,
+    params.data ?? params.value,
     params.dataIndex,
     params.seriesIndex ?? 0,
     params.seriesName ?? "",
+    params.name || null,
   );
 
   return {
@@ -88,7 +91,13 @@ export function transformBrushToSelection(
         const dataItem = resolveDataItem(chartOption, series, dataIdx);
         if (dataItem != null) {
           points.push(
-            buildPointFromDataItem(dataItem, dataIdx, seriesIdx, seriesName),
+            buildPointFromDataItem(
+              dataItem,
+              dataIdx,
+              seriesIdx,
+              seriesName,
+              categoryLabel(chartOption, series, dataIdx),
+            ),
           );
         }
 
@@ -204,6 +213,7 @@ export function buildPointFromDataItem(
   dataIdx: number,
   seriesIdx: number,
   seriesName: string,
+  label: string | null = null,
 ): SelectionPoint {
   // Array format: [x, y] or [x, y, ...]
   if (Array.isArray(dataItem)) {
@@ -214,7 +224,7 @@ export function buildPointFromDataItem(
       x: dataItem[0] ?? null,
       y: dataItem[1] ?? null,
       value: dataItem[1] ?? dataItem[0] ?? null,
-      name: null,
+      name: label,
     };
   }
 
@@ -231,20 +241,45 @@ export function buildPointFromDataItem(
       x: dataItem.x ?? (arrValue ? (arrValue[0] ?? null) : null),
       y: dataItem.y ?? (arrValue ? (arrValue[1] ?? null) : null),
       value: dataItem.value ?? null,
-      name: dataItem.name ?? null,
+      name: dataItem.name ?? label,
     };
   }
 
-  // Scalar format
+  // Scalar format: the y value of a category-axis series — use the category
+  // label as x when one is known so bar/line points aren't reduced to indices.
   return {
     point_index: dataIdx,
     series_index: seriesIdx,
     series_name: seriesName,
-    x: dataIdx,
+    x: label ?? dataIdx,
     y: dataItem,
     value: dataItem,
-    name: null,
+    name: label,
   };
+}
+
+/**
+ * Resolve the category label for a data index from the series' x axis.
+ * Scalar series data carries no label of its own — on a category axis the
+ * label lives in `xAxis.data`. Returns null for non-category axes.
+ */
+function categoryLabel(
+  chartOption: EChartsOption,
+  series: any,
+  dataIdx: number,
+): string | null {
+  const xAxis = (chartOption as any).xAxis;
+  const axes = Array.isArray(xAxis) ? xAxis : xAxis ? [xAxis] : [];
+  const axis = axes[series?.xAxisIndex ?? 0];
+  if (axis?.type !== "category" || !Array.isArray(axis.data)) {
+    return null;
+  }
+  const entry = axis.data[dataIdx];
+  // Category entries may be objects: { value: "Mon", textStyle: {...} }
+  if (entry != null && typeof entry === "object") {
+    return entry.value ?? null;
+  }
+  return entry ?? null;
 }
 
 function buildFinder(
