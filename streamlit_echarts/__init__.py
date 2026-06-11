@@ -93,10 +93,10 @@ def _serialize_options(obj):
 def st_echarts(
     options: dict,
     theme: str | dict = "streamlit",
-    events: dict[str, str | Path] | None = None,
+    events: dict[str, str | Path | JsCode] | None = None,
     height: str = "300px",
     width: str = "100%",
-    renderer: str = "canvas",
+    renderer: Literal["canvas", "svg"] = "canvas",
     replace_merge: str | list[str] | None = None,
     map: Map | None = None,
     key: str | None = None,
@@ -121,7 +121,8 @@ def st_echarts(
         ``pathlib.Path``, or a single-line path string) holding a single
         function expression — handy for longer handlers you want to lint,
         format, and test as real JavaScript.
-        Don't wrap values with JsCode placeholder. Each handler is evaluated
+        Values may also be pre-wrapped ``JsCode`` instances; plain strings
+        and paths are wrapped automatically. Each handler is evaluated
         with the live ``chart`` instance and the ``echarts`` namespace in scope
         (e.g. ``chart.convertFromPixel(...)``, ``chart.dispatchAction(...)``).
         Prefix an event name with ``zr:`` (e.g. ``"zr:click"``) to bind it to
@@ -203,12 +204,20 @@ def st_echarts(
             f"on_select must be 'ignore', 'rerun', or a callable, got {on_select!r}"
         )
 
+    if renderer not in ("canvas", "svg"):
+        raise ValueError(f"renderer must be 'canvas' or 'svg', got {renderer!r}")
+
     selection_active = on_select != "ignore"
 
     data = {
         "options": _serialize_options(options),
         "theme": theme,
-        "onEvents": {k: JsCode(v).js_code for k, v in events.items()},
+        # Accept pre-wrapped JsCode values too — re-wrapping one would nest
+        # the placeholders and the frontend would silently drop the handler.
+        "onEvents": {
+            k: (v if isinstance(v, JsCode) else JsCode(v)).js_code
+            for k, v in events.items()
+        },
         "height": height,
         "width": width,
         "renderer": renderer,
@@ -236,10 +245,11 @@ def st_echarts(
 def st_pyecharts(
     chart,
     theme: str | dict = "streamlit",
-    events: dict[str, str | Path] | None = None,
+    events: dict[str, str | Path | JsCode] | None = None,
     height: str = "300px",
     width: str = "100%",
-    renderer: str = "canvas",
+    renderer: Literal["canvas", "svg"] = "canvas",
+    replace_merge: str | list[str] | None = None,
     map: Map | None = None,
     key: str | None = None,
     on_change: Callable[[], None] | None = None,
@@ -256,7 +266,7 @@ def st_pyecharts(
     ----------
     chart
         A pyecharts chart instance (e.g. ``Bar()``, ``Line()``, etc.).
-    theme, events, height, width, renderer, map, key, on_change, on_select, selection_mode
+    theme, events, height, width, renderer, replace_merge, map, key, on_change, on_select, selection_mode
         Same as :func:`st_echarts`.
     """
     try:
@@ -276,6 +286,7 @@ def st_pyecharts(
         height=height,
         width=width,
         renderer=renderer,
+        replace_merge=replace_merge,
         map=map,
         key=key,
         on_change=on_change,

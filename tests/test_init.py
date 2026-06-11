@@ -153,6 +153,45 @@ class TestStEchartsSelection:
             st_echarts(options={"series": []}, on_select="invalid")
 
 
+class TestEventsJsCode:
+    """Events accept plain strings and pre-wrapped JsCode alike."""
+
+    @patch("streamlit_echarts.out")
+    def test_plain_string_wrapped_once(self, mock_out: MagicMock):
+        mock_out.return_value = {}
+        st_echarts(
+            options={"series": []},
+            events={"click": "function(p) { return p.name; }"},
+        )
+
+        on_events = mock_out.call_args.kwargs["data"]["onEvents"]
+        assert on_events["click"].count(JS_PLACEHOLDER) == 2
+
+    @patch("streamlit_echarts.out")
+    def test_jscode_instance_not_double_wrapped(self, mock_out: MagicMock):
+        mock_out.return_value = {}
+        st_echarts(
+            options={"series": []},
+            events={"click": JsCode("p => p.name")},
+        )
+
+        on_events = mock_out.call_args.kwargs["data"]["onEvents"]
+        assert on_events["click"] == f"{JS_PLACEHOLDER}p => p.name{JS_PLACEHOLDER}"
+
+
+class TestRendererValidation:
+    @patch("streamlit_echarts.out")
+    def test_invalid_renderer_raises(self, mock_out: MagicMock):
+        with pytest.raises(ValueError, match="renderer must be"):
+            st_echarts(options={"series": []}, renderer="webgl")
+
+    @patch("streamlit_echarts.out")
+    def test_svg_renderer_forwarded(self, mock_out: MagicMock):
+        mock_out.return_value = {}
+        st_echarts(options={"series": []}, renderer="svg")
+        assert mock_out.call_args.kwargs["data"]["renderer"] == "svg"
+
+
 class TestReplaceMerge:
     """Tests for replace_merge parameter."""
 
@@ -278,6 +317,24 @@ class TestStPyecharts:
 
         data = mock_out.call_args.kwargs["data"]
         assert "click" in data["onEvents"]
+
+    @patch("streamlit_echarts.out")
+    def test_forwards_replace_merge(self, mock_out: MagicMock):
+        mock_out.return_value = {}
+        chart, _ = self._make_mock_chart()
+
+        with patch.dict(
+            "sys.modules",
+            {
+                "pyecharts": MagicMock(),
+                "pyecharts.charts": MagicMock(),
+                "pyecharts.charts.base": MagicMock(),
+            },
+        ):
+            st_pyecharts(chart, replace_merge="series")
+
+        data = mock_out.call_args.kwargs["data"]
+        assert data["replaceMerge"] == "series"
 
     def test_import_error_without_pyecharts(self):
         chart = MagicMock()

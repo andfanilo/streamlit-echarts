@@ -292,11 +292,15 @@ function buildFinder(
     return { geoIndex: 0 };
   }
 
-  // Parse grid index from area
-  const gridIndex =
-    area.panelId != null ? parseInt(String(area.panelId), 10) : 0;
-  return { gridIndex: isNaN(gridIndex) ? 0 : gridIndex };
+  // panelId looks like "grid--1" — the grid index is the trailing integer.
+  const match = /(\d+)$/.exec(String(area.panelId ?? ""));
+  return { gridIndex: match ? parseInt(match[1], 10) : 0 };
 }
+
+// Pixel y grows downward (and axes may be inverted), so converted range ends
+// can come out descending — normalize to [min, max].
+const ascending = (a: number, b: number): [number, number] =>
+  b < a ? [b, a] : [a, b];
 
 function convertRectArea(
   area: any,
@@ -312,8 +316,8 @@ function convertRectArea(
     const min = chart.convertFromPixel(finder, [range[0][0], range[1][0]]);
     const max = chart.convertFromPixel(finder, [range[0][1], range[1][1]]);
     return {
-      x_range: [min[0], max[0]],
-      y_range: [min[1], max[1]],
+      x_range: ascending(min[0], max[0]),
+      y_range: ascending(min[1], max[1]),
     };
   } catch {
     // Fallback to raw pixel coordinates for unsupported coord systems

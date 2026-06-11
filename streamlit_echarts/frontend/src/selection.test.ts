@@ -400,6 +400,52 @@ describe("coordinate conversion", () => {
     ]);
   });
 
+  test("resolves the grid index from the area panelId for multi-grid charts", () => {
+    const chart = {
+      getOption: vi.fn(() => ({ series: [] })),
+      convertFromPixel: vi.fn((_f: any, p: number[]) => [p[0], p[1]]),
+    };
+    const areas = [
+      {
+        brushType: "rect",
+        panelId: "grid--1",
+        range: [
+          [0, 10],
+          [0, 10],
+        ],
+      },
+    ];
+
+    transformBrushToSelection([], areas, chart as any);
+
+    expect(chart.convertFromPixel).toHaveBeenCalledWith(
+      { gridIndex: 1 },
+      expect.anything(),
+    );
+  });
+
+  test("orders y_range ascending despite the inverted pixel axis", () => {
+    // Pixel y grows downward: the top pixel converts to the larger value.
+    const chart = {
+      getOption: vi.fn(() => ({ series: [] })),
+      convertFromPixel: vi.fn((_f: any, p: number[]) => [p[0], 100 - p[1]]),
+    };
+    const areas = [
+      {
+        brushType: "rect",
+        range: [
+          [10, 20],
+          [30, 40],
+        ],
+      },
+    ];
+
+    const result = transformBrushToSelection([], areas, chart as any);
+
+    expect(result.box[0].x_range).toEqual([10, 20]);
+    expect(result.box[0].y_range).toEqual([60, 70]);
+  });
+
   test("falls back to raw pixels when convertFromPixel throws", () => {
     const chart = {
       getOption: vi.fn(() => ({ series: [] })),
