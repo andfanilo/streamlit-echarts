@@ -95,8 +95,11 @@ build: build-frontend build-wheel
 build-frontend:
     cd {{frontend}} && npm run build
 
+# Stale egg-info is removed because setuptools re-reads SOURCES.txt and would
+# re-include files no longer matched by the packaging config
 build-wheel:
     -Remove-Item dist/*.whl, dist/*.tar.gz -Force -ErrorAction Ignore
+    -Remove-Item -Recurse -Force *.egg-info -ErrorAction Ignore
     uv build
 
 # Full from-scratch wheel: wipe deps + artifacts, reinstall (reconciles package.json + dedupes), rebuild

@@ -56,6 +56,10 @@ explicit = true
 
 [tool.setuptools.packages.find]
 include = ["streamlit_echarts*"]
+# Keep find_packages semantics: without this, the pyproject.toml default
+# (namespaces = true) discovers every node_modules dir as a namespace package
+# and ships stray .py files (e.g. claygl's fbx2gltf.py) in the wheel.
+namespaces = false
 
 [tool.setuptools]
 include-package-data = true
