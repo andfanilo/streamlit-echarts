@@ -1,5 +1,13 @@
 # Streamlit - ECharts
 
+---
+
+This project is [best effort](https://www.youtube.com/watch?v=1RFJF_ETpLk). Every now and then I'll add something I need myself and let a coding agent do most of the typing, but I don't have the time to go through bigger issues or pull requests. If there's a larger feature you want, fork away!
+
+Please add a thumbs up [HERE](https://github.com/streamlit/streamlit/issues/1564) if you wish to see a native implementation maintained by the Streamlit team.
+
+---
+
 A Streamlit component to display ECharts.
 
 [![Streamlit App](https://static.streamlit.io/badges/streamlit_badge_black_white.svg)](https://echarts.streamlit.app/)
@@ -152,12 +160,6 @@ uv run streamlit run demo_app.py
 ```
 
 ---
-
-## Project status
-
-This project is in [best-effort status](https://www.youtube.com/watch?v=1RFJF_ETpLk) — I occasionally add features I personally need through agentic coding, but I'm not actively reviewing larger issues or pull requests from the community. If you're looking to add a bigger feature, you're welcome to fork it!
-
-Please add a thumbs up [HERE](https://github.com/streamlit/streamlit/issues/1564) if you wish to see a native implementation maintained by the Streamlit team.
 
 ## Contributing
 
